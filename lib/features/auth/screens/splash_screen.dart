@@ -5,78 +5,71 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('IBACOS'),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Logo and Tagline
-            Center(
-              child: Column(
-                children: [
-                  Image.network(
-                    'https://i.ibb.co/L1LqgGJ/logo.png',
-                    width: 100,
-                  ), // Replace with your logo path
-                  SizedBox(height: 10),
-                  Text(
-                    'Field Service Management Platform',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-                  ),
-                ],
-              ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Logo and Tagline
+          Center(
+            child: Column(
+              children: [
+                Image.network(
+                  "https://img.pikbest.com/png-images/20241022/st"
+                      "ealth-masked-hacker-gaming-logo-for-gamers_10991"
+                      "543.png!bw700"       ,
+                  width: 100,
+                ), // Replace with your logo path
+                SizedBox(height: 10),
+                Text(
+                  'Field Service Management Platform',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                ),
+              ],
             ),
-            SizedBox(height: 40),
+          ),
+          SizedBox(height: 40),
 
-            // Role selection
-            Text(
-              'Select Your Role',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
+          // Role selection
+          Text(
+            'Select Your Role',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
 
-            // Customer Role
-            RoleCard(
-              color: Colors.red,
-              title: 'Customer',
-              description: 'Book and manage service requests',
-              icon: Icons.person,
-              onTap: () {
-                // Handle Customer Role selection
-              },
-            ),
-            SizedBox(height: 16),
+          // Customer Role
+          RoleCard(
+            color: Colors.red,
+            title: 'Customer',
+            description: 'Book and manage service requests',
+            icon: Icons.person,
+            onTap: () {
+              // Handle Customer Role selection
+            },
+          ),
+          SizedBox(height: 16),
 
-            // Freelancer Technician Role
-            RoleCard(
-              color: Colors.orange,
-              title: 'Freelancer Technician',
-              description: 'Accept jobs and earn commissions',
-              icon: Icons.work,
-              onTap: () {
-                // Handle Freelancer Technician Role selection
-              },
-            ),
-            SizedBox(height: 16),
+          // Freelancer Technician Role
+          RoleCard(
+            color: Colors.orange,
+            title: 'Freelancer Technician',
+            description: 'Accept jobs and earn commissions',
+            icon: Icons.work,
+            onTap: () {
+              // Handle Freelancer Technician Role selection
+            },
+          ),
+          SizedBox(height: 16),
 
-            // Internal Technician Role
-            RoleCard(
-              color: Colors.blue,
-              title: 'Internal Technician',
-              description: 'Manage assigned jobs and schedule',
-              icon: Icons.settings,
-              onTap: () {
-                // Handle Internal Technician Role selection
-              },
-            ),
-          ],
-        ),
+          // Internal Technician Role
+          RoleCard(
+            color: Colors.blue,
+            title: 'Internal Technician',
+            description: 'Manage assigned jobs and schedule',
+            icon: Icons.settings,
+            onTap: () {
+              // Handle Internal Technician Role selection
+            },
+          ),
+        ],
       ),
     );
   }
