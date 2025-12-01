@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/auth/screens/customer_seleced_login_screen.dart';
 import 'package:workpleis/features/auth/widgets/Customer_portal_top_section.dart';
 
-class CustomerPortalTopSection extends StatelessWidget {
-  const CustomerPortalTopSection({super.key});
+class RoleSelelctionScreen extends StatelessWidget {
+  const RoleSelelctionScreen({super.key});
   static final String routeName = '/role-selection';
 
   @override

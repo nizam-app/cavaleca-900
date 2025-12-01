@@ -1,59 +1,74 @@
 import 'package:flutter/material.dart';
-import 'package:workpleis/features/customer/Customer_guest_home_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
+import 'package:workpleis/features/customer/screen/guest_profile_screen.dart';
 
-class RootScreen extends StatefulWidget {
-  const RootScreen({super.key});
+import '../logic/botton_nav_index_logic.dart';
 
-  @override
-  State<RootScreen> createState() => _RootScreenState();
-}
-
-class _RootScreenState extends State<RootScreen> {
-  int _currentIndex = 0;
+class CustomerMainShell extends ConsumerWidget {
+  const CustomerMainShell({super.key});
+  static const routeName = '/customer-main';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(bottomNavIndexProvider);
+    const activeColor = Color(0xFFCF2626); // red
+    const inactiveColor = Color(0xFFB0B0B0); // grey
+
     return Scaffold(
-      backgroundColor: kBgColor,
-      body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: const [
-            GuestHomeScreen(),
-            BookingsScreen(),
-            ProfileScreen(),
+      backgroundColor: const Color(0xFFF2F2F2),
+      body: IndexedStack(
+        index: currentIndex,
+        children: [const GuestHomeScreen(), GuestProfileScreen()],
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x14000000),
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        backgroundColor: Colors.white,
-        elevation: 8,
-        selectedItemColor: kPrimaryRed,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+        child: BottomNavigationBar(
+          currentIndex: currentIndex,
+          onTap: (index) =>
+              ref.read(bottomNavIndexProvider.notifier).state = index,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          selectedItemColor: activeColor,
+          unselectedItemColor: inactiveColor,
+          selectedLabelStyle: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt_long),
-            label: 'Bookings',
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+          showUnselectedLabels: true,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.assignment_outlined),
+              activeIcon: Icon(Icons.assignment),
+              label: 'Bookings',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-const Color kBgColor = Color(0xFFF6F6F6);

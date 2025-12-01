@@ -98,13 +98,13 @@ class PhoneLoginScreen extends StatelessWidget {
                                 vertical: 0,
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(28.r),
+                                borderRadius: BorderRadius.circular(10.r),
                                 borderSide: const BorderSide(
                                   color: Color(0xFFE0E0E0),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(28.r),
+                                borderRadius: BorderRadius.circular(10.r),
                                 borderSide: const BorderSide(
                                   color: Color(0xFFCF2626),
                                   width: 1.4,

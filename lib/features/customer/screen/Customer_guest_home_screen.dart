@@ -4,12 +4,9 @@ const Color kPrimaryRed = Color(0xFFE32021);
 const Color kPrimaryRedDark = Color(0xFFB01016);
 const Color kAccentYellow = Color(0xFFFFC833);
 
-/// Root scaffold with bottom navigation
-
-/// -------------------- HOME SCREEN --------------------
-
 class GuestHomeScreen extends StatelessWidget {
   const GuestHomeScreen({super.key});
+  static const String routeName = '/guest-home';
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +14,10 @@ class GuestHomeScreen extends StatelessWidget {
 
     return Column(
       children: [
-        // ---------- Red header ----------
+        // ---------- RED HEADER ----------
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 26),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [kPrimaryRed, kPrimaryRedDark],
@@ -35,6 +32,7 @@ class GuestHomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // top row: text + avatar
               Row(
                 children: [
                   Expanded(
@@ -48,11 +46,12 @@ class GuestHomeScreen extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           'Booking as guest',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.white.withOpacity(0.85),
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -63,9 +62,9 @@ class GuestHomeScreen extends StatelessWidget {
                     width: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withOpacity(0.16),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withOpacity(0.45),
                         width: 1.2,
                       ),
                     ),
@@ -76,24 +75,26 @@ class GuestHomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
-              // Book New Service button
+
+              const SizedBox(height: 18),
+
+              // ---------- BOOK NEW SERVICE BUTTON ----------
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: kAccentYellow,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(22), // pill feel
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.18),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: Colors.black.withOpacity(0.22),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
-                  vertical: 14,
+                  vertical: 13,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -114,22 +115,24 @@ class GuestHomeScreen extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
 
-        // ---------- Body ----------
+        // ---------- BODY ----------
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title + arrows
+                // title + arrows
                 Row(
                   children: [
                     Text(
                       'Service Categories',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: const Color(0xFF44474F),
                       ),
                     ),
                     const Spacer(),
@@ -138,9 +141,10 @@ class GuestHomeScreen extends StatelessWidget {
                     _ArrowCircle(icon: Icons.chevron_right, onTap: () {}),
                   ],
                 ),
-                const SizedBox(height: 14),
 
-                // Horizontal categories
+                const SizedBox(height: 12),
+
+                // horizontal category list
                 SizedBox(
                   height: 170,
                   child: ListView.separated(
@@ -154,14 +158,14 @@ class GuestHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
 
-                // Guest info banner
+                // guest info banner
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
-                    vertical: 16,
+                    vertical: 14,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF4DD),
@@ -170,6 +174,7 @@ class GuestHomeScreen extends StatelessWidget {
                   ),
                   child: Text(
                     "You're browsing as a guest. Create an account to view booking history and track your requests.",
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF8C5C11),
                       height: 1.4,
@@ -187,7 +192,7 @@ class GuestHomeScreen extends StatelessWidget {
   }
 }
 
-/// Small circular arrow button
+/// small circular arrow button
 class _ArrowCircle extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -200,11 +205,11 @@ class _ArrowCircle extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: Container(
-        height: 32,
-        width: 32,
+        height: 30,
+        width: 30,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.08),
@@ -213,13 +218,13 @@ class _ArrowCircle extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, size: 20, color: Colors.grey[700]),
+        child: Icon(icon, size: 18, color: Colors.grey[700]),
       ),
     );
   }
 }
 
-/// Category model
+/// model
 class ServiceCategory {
   final String title;
   final String subtitle;
@@ -237,25 +242,25 @@ class ServiceCategory {
 const _serviceCategories = <ServiceCategory>[
   ServiceCategory(
     title: 'General',
-    subtitle: 'Regular maintenance and\nrepairs',
+    subtitle: 'Regular maintenance and repairs',
     servicesCount: '9 services',
     icon: Icons.build_outlined,
   ),
   ServiceCategory(
     title: 'HVAC Services',
-    subtitle: 'Heating, cooling, and\nventilation',
+    subtitle: 'Heating, cooling, and ventilation',
     servicesCount: '8 services',
     icon: Icons.ac_unit_outlined,
   ),
   ServiceCategory(
     title: 'Cleaning',
-    subtitle: 'Professional home and\noffice cleaning',
+    subtitle: 'Professional home and office cleaning',
     servicesCount: '8 services',
     icon: Icons.cleaning_services_outlined,
   ),
 ];
 
-/// Card widget (white card with red icon)
+/// card widget
 class _CategoryCard extends StatelessWidget {
   final ServiceCategory category;
 
@@ -266,10 +271,10 @@ class _CategoryCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 180,
+      width: 155, // slightly narrow to match figma
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
@@ -293,9 +298,11 @@ class _CategoryCard extends StatelessWidget {
             ),
             child: Icon(category.icon, color: Colors.white, size: 22),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             category.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -320,30 +327,6 @@ class _CategoryCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// -------------------- OTHER TABS (simple placeholders) --------------------
-
-class BookingsScreen extends StatelessWidget {
-  const BookingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Bookings screen', style: TextStyle(fontSize: 18)),
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Profile screen', style: TextStyle(fontSize: 18)),
     );
   }
 }

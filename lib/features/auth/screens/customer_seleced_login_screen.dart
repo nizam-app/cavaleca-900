@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/auth/logic/check_login_screen.dart';
+import 'package:workpleis/features/auth/logic/screen_check_enum.dart';
+import 'package:workpleis/features/auth/screens/customer_create_account_screen.dart';
 import 'package:workpleis/features/auth/screens/phone_login_screen.dart';
 
 import '../widgets/customer_portal_top_section.dart';
 
-class CustomerLoginSceled extends StatelessWidget {
+class CustomerLoginSceled extends ConsumerWidget {
   const CustomerLoginSceled({super.key});
   static const String routeName = '/customer-portal';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       body: SingleChildScrollView(
@@ -76,7 +80,10 @@ class CustomerLoginSceled extends StatelessWidget {
                         width: double.infinity,
                         height: 55.h,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            ref.read(screenCheckProvider.notifier).state =
+                                ScreenName.guest;
+                          },
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
                             backgroundColor: const Color(0xFFF4A623),
@@ -133,6 +140,8 @@ class CustomerLoginSceled extends StatelessWidget {
                         height: 55.h,
                         child: OutlinedButton(
                           onPressed: () {
+                            ref.read(screenCheckProvider.notifier).state =
+                                ScreenName.login;
                             context.push(PhoneLoginScreen.routeName);
                           },
                           style: OutlinedButton.styleFrom(
@@ -162,7 +171,11 @@ class CustomerLoginSceled extends StatelessWidget {
                         width: double.infinity,
                         height: 55.h,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            ref.read(screenCheckProvider.notifier).state =
+                                ScreenName.register;
+                            context.push(CustomerCreateAccountScreen.routeName);
+                          },
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
                             backgroundColor: const Color(0xFFCF2626),

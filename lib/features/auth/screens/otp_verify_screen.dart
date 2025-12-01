@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/auth/logic/check_login_screen.dart';
+import 'package:workpleis/features/auth/logic/screen_check_enum.dart';
 import 'package:workpleis/features/auth/widgets/Customer_portal_top_section.dart';
+import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
+
+import 'set_password_screen.dart';
 
 const Color kPrimaryRed = Color(0xFFD4161F); // main red color
 
-class OtpVerifyScreen extends StatelessWidget {
-  const OtpVerifyScreen({
-    super.key,
-    this.sentTo = 'fdsfa', // এখানে তুমি real phone/email পাঠাবে
-  });
+class OtpVerifyScreen extends ConsumerWidget {
+  const OtpVerifyScreen({super.key});
 
-  final String sentTo;
   static const String routeName = '/otp-verify';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-
+    final screenChcek = ref.watch(screenCheckProvider);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F9),
       body: Column(
@@ -68,7 +72,7 @@ class OtpVerifyScreen extends StatelessWidget {
                               Text(
                                 'Step 2 of 3: Enter the 6-digit code',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: const Color(0xFF757575),
                                 ),
                                 textAlign: TextAlign.center,
@@ -82,15 +86,6 @@ class OtpVerifyScreen extends StatelessWidget {
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 2),
-                              Text(
-                                sentTo,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: kPrimaryRed,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
                             ],
                           ),
                         ),
@@ -175,14 +170,22 @@ class OtpVerifyScreen extends StatelessWidget {
                           height: 48,
                           child: ElevatedButton(
                             onPressed: () {
-                              // TODO: verify & continue
+                              if (screenChcek == ScreenName.guest) {
+                                context.push(CustomerMainShell.routeName);
+                              } else if (screenChcek == ScreenName.login) {
+                                context.push(CustomerMainShell.routeName);
+                              } else if (screenChcek == ScreenName.register) {
+                                context.push(SetPasswordScreen.routeName);
+                              } else {
+                                throw Exception('Invalid screen check');
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: kPrimaryRed,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                                borderRadius: BorderRadius.circular(10.h),
                               ),
                             ),
                             child: const Text(
@@ -202,12 +205,11 @@ class OtpVerifyScreen extends StatelessWidget {
             ),
           ),
 
-          // ---------- BOTTOM BACK BUTTON ----------
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 40,
               child: TextButton.icon(
                 onPressed: () => Navigator.of(context).maybePop(),
                 style: TextButton.styleFrom(
