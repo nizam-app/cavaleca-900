@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/auth/screens/customer_seleced_login_screen.dart';
 import 'package:workpleis/features/auth/widgets/Customer_portal_top_section.dart';
+import 'package:workpleis/features/internal_technician/screen/internal_technician_home.dart';
+import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
 
 class RoleSelelctionScreen extends StatelessWidget {
   const RoleSelelctionScreen({super.key});
@@ -60,6 +62,9 @@ class RoleSelelctionScreen extends StatelessWidget {
                     subtitle: 'Manage assigned jobs and\nschedule',
                     color: Color(0xFF273142),
                     icon: Icons.manage_accounts_outlined,
+                    onTap: (){
+                      context.push(InternalBottomNavBar.routeName);
+                    },
                   ),
                 ],
               ),
