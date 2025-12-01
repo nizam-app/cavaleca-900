@@ -1,13 +1,19 @@
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/global_snack_bar.dart';
-import 'package:workpleis/features/auth/screens/login_screen.dart';
-import 'package:workpleis/features/auth/screens/register_screen.dart';
-import 'package:workpleis/features/auth/screens/splash_screen.dart';
+import 'package:workpleis/features/auth/screens/customer_seleced_login_screen.dart';
+import 'package:workpleis/features/auth/screens/otp_verify_screen.dart';
+import 'package:workpleis/features/auth/screens/role_selection_screen.dart';
+import 'package:workpleis/features/auth/screens/set_password_screen.dart';
+import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
+import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 
+import '../features/auth/screens/customer_create_account_screen.dart';
+import '../features/auth/screens/phone_login_screen.dart';
+import '../features/customer/screen/guest_profile_screen.dart';
 import 'error_screen.dart';
 
 class AppRouter {
-  static final String initial = RoleSelectionScreen.routeName;
+  static final String initial = RoleSelelctionScreen.routeName;
   static final GoRouter appRouter = GoRouter(
     initialLocation: initial,
     errorBuilder: (context, state) {
@@ -28,19 +34,49 @@ class AppRouter {
 
     routes: <RouteBase>[
       GoRoute(
-        path: RoleSelectionScreen.routeName,
-        name: RoleSelectionScreen.routeName,
-        builder: (context, state) => RoleSelectionScreen(),
+        path: RoleSelelctionScreen.routeName,
+        name: RoleSelelctionScreen.routeName,
+        builder: (context, state) => const RoleSelelctionScreen(),
       ),
       GoRoute(
-        path: LoginScreen.routeName,
-        name: LoginScreen.routeName,
-        builder: (context, state) => const LoginScreen(),
+        path: CustomerLoginSceled.routeName,
+        name: CustomerLoginSceled.routeName,
+        builder: (context, state) => const CustomerLoginSceled(),
       ),
       GoRoute(
-        path: RegisterScreen.routeName,
-        name: RegisterScreen.routeName,
-        builder: (context, state) => const RegisterScreen(),
+        path: PhoneLoginScreen.routeName,
+        name: PhoneLoginScreen.routeName,
+        builder: (context, state) => const PhoneLoginScreen(),
+      ),
+      GoRoute(
+        path: OtpVerifyScreen.routeName,
+        name: OtpVerifyScreen.routeName,
+        builder: (context, state) => const OtpVerifyScreen(),
+      ),
+      GoRoute(
+        path: CustomerCreateAccountScreen.routeName,
+        name: CustomerCreateAccountScreen.routeName,
+        builder: (context, state) => const CustomerCreateAccountScreen(),
+      ),
+      GoRoute(
+        path: GuestHomeScreen.routeName,
+        name: GuestHomeScreen.routeName,
+        builder: (context, state) => const GuestHomeScreen(),
+      ),
+      GoRoute(
+        path: SetPasswordScreen.routeName,
+        name: SetPasswordScreen.routeName,
+        builder: (context, state) => const SetPasswordScreen(),
+      ),
+      GoRoute(
+        path: CustomerMainShell.routeName,
+        name: CustomerMainShell.routeName,
+        builder: (context, state) => const CustomerMainShell(),
+      ),
+      GoRoute(
+        path: GuestProfileScreen.routeName,
+        name: GuestProfileScreen.routeName,
+        builder: (context, state) => const GuestProfileScreen(),
       ),
     ],
   );
