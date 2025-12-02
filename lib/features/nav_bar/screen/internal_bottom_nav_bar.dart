@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
+import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_technician_home.dart';
 
@@ -19,7 +21,7 @@ class InternalBottomNavBar extends ConsumerWidget {
       backgroundColor: const Color(0xFFF2F2F2),
       body: IndexedStack(
         index: currentIndex,
-        children: [InternalDashboardV2Screen(), InternalJobs()],
+        children: [InternalDashboardV2Screen(), InternalJobs(), Earningsscreen(),  InternalJobProfile()],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
