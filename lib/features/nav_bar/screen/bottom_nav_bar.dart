@@ -1,70 +1,288 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
-import 'package:workpleis/features/customer/screen/guest_profile_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/auth/screens/customer/screen/customer_auth_screen.dart';
+import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
+import 'package:workpleis/features/customer/logic/custom_logic.dart';
+import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
+import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
+import 'package:workpleis/features/notification/customer_notifications_screen.dart';
+import 'package:workpleis/features/profile/screen/customer_profile_screen.dart';
 
-import '../logic/botton_nav_index_logic.dart';
+const Color kPrimaryRed = Color(0xFFC20001);
+const Color kNavInactive = Color(0xFF9CA3AF);
 
-class CustomerMainShell extends ConsumerWidget {
-  const CustomerMainShell({super.key});
-  static const routeName = '/customer-main';
+/// ------------------------------------------------------
+///  User data model
+/// ------------------------------------------------------
+class CustomerUserData {
+  final bool isGuest;
+  final String? name;
+  final String? phone;
+
+  const CustomerUserData({required this.isGuest, this.name, this.phone});
+
+  CustomerUserData copyWith({bool? isGuest, String? name, String? phone}) {
+    return CustomerUserData(
+      isGuest: isGuest ?? this.isGuest,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+    );
+  }
+}
+
+class CustomerAppScreen extends ConsumerWidget {
+  const CustomerAppScreen({super.key});
+
+  static const String routeName = '/customerApp';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = ref.watch(bottomNavIndexProvider);
-    const activeColor = Color(0xFFCF2626); // red
-    const inactiveColor = Color(0xFFB0B0B0); // grey
+    final state = ref.watch(customerAppControllerProvider);
+    final controller = ref.read(customerAppControllerProvider.notifier);
 
+    // 1) Auth hoy nai -> auth screen dekhabo
+    if (!state.isAuthenticated) {
+      return CustomerAuthScreen(
+        // back dile role selection e jabe
+        onBack: () => context.go(RoleSelectionScreen.routeName),
+      );
+    }
+
+    final bool isGuest = state.userData.isGuest;
+
+    // 2) Auth hoye gele bottom-nav shell
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
-      body: IndexedStack(
-        index: currentIndex,
-        children: [const GuestHomeScreen(), GuestProfileScreen()],
+      backgroundColor: const Color(0xFFF8F8F8),
+      body: SafeArea(child: _buildPage(context, state, controller)),
+      bottomNavigationBar: _CustomerBottomNavBar(
+        activeIndex: state.activeIndex,
+        isGuest: isGuest,
+        unreadNotifications: 3, // TODO: backend theke ashbe
+        onTap: controller.selectTab,
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x14000000),
-              blurRadius: 10,
-              offset: Offset(0, -2),
-            ),
-          ],
+    );
+  }
+
+  Widget _buildPage(
+    BuildContext context,
+    CustomerAppState state,
+    CustomerAppController controller,
+  ) {
+    final bool isGuest = state.userData.isGuest;
+
+    /// Guest & Logged-in er jonno alada mapping
+    if (isGuest) {
+      // Guest -> 3 tab: 0=Home, 1=Bookings, 2=Profile
+      switch (state.activeIndex) {
+        case 0:
+          return CustomerDashboardScreen(
+            isGuest: true,
+            userName: state.userData.name,
+            onViewAllPressed: controller.goToBookings,
+          );
+        case 1:
+          return CustomerBookingsScreen(
+            isGuest: true,
+            onSignUp: controller.resetForSignUpFromGuest,
+          );
+        case 2:
+        default:
+          return CustomerProfileScreen(
+            isGuest: true,
+            userName: state.userData.name,
+            userPhone: state.userData.phone,
+            onLogout: () {
+              controller.logout();
+              context.go(RoleSelectionScreen.routeName);
+            },
+            onNavigateToNotifications: () {
+              // guest er jonno notifications nai -> kichu korbo na / toast dite paro
+            },
+            onSignUp: controller.resetForSignUpFromGuest,
+          );
+      }
+    } else {
+      // Logged-in -> 4 tab: 0=Home, 1=Bookings, 2=Alerts, 3=Profile
+      switch (state.activeIndex) {
+        case 0:
+          return CustomerDashboardScreen(
+            isGuest: false,
+            userName: state.userData.name,
+            onViewAllPressed: controller.goToBookings,
+          );
+        case 1:
+          return CustomerBookingsScreen(
+            isGuest: false,
+            onSignUp: controller.resetForSignUpFromGuest,
+          );
+        case 2:
+          return CustomerNotificationsScreen(
+            isGuest: false,
+            onSignUp: controller.resetForSignUpFromGuest,
+          );
+        case 3:
+        default:
+          return CustomerProfileScreen(
+            isGuest: false,
+            userName: state.userData.name,
+            userPhone: state.userData.phone,
+            onLogout: () {
+              controller.logout();
+              context.go(RoleSelectionScreen.routeName);
+            },
+            onNavigateToNotifications: () {
+              // Profile theke "Notifications" btn -> Alerts tab e jao
+              controller.selectTab(2);
+            },
+            onSignUp: controller.resetForSignUpFromGuest,
+          );
+      }
+    }
+  }
+}
+
+/// ---------------- Bottom Nav : guest vs logged-in ----------------
+
+class _CustomerBottomNavBar extends StatelessWidget {
+  const _CustomerBottomNavBar({
+    required this.activeIndex,
+    required this.isGuest,
+    required this.unreadNotifications,
+    required this.onTap,
+  });
+
+  final int activeIndex;
+  final bool isGuest;
+  final int unreadNotifications;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(top: BorderSide(color: Color(0xFFF3F4F6))),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: [
+              _NavItem(
+                label: 'Home',
+                icon: Icons.home_outlined,
+                isActive: activeIndex == 0,
+                onTap: () => onTap(0),
+              ),
+              _NavItem(
+                label: 'Bookings',
+                icon: Icons.assignment_outlined,
+                isActive: activeIndex == 1,
+                onTap: () => onTap(1),
+              ),
+
+              /// Guest hole Alerts tab hide
+              if (!isGuest)
+                _NavItem(
+                  label: 'Alerts',
+                  icon: Icons.notifications_none_rounded,
+                  isActive: activeIndex == 2,
+                  onTap: () => onTap(2),
+                  badgeCount: unreadNotifications,
+                ),
+
+              // Profile index: guest -> 2, logged-in -> 3
+              _NavItem(
+                label: 'Profile',
+                icon: Icons.person_outline,
+                isActive: activeIndex == (isGuest ? 2 : 3),
+                onTap: () => onTap(isGuest ? 2 : 3),
+              ),
+            ],
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) =>
-              ref.read(bottomNavIndexProvider.notifier).state = index,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          backgroundColor: Colors.white,
-          selectedItemColor: activeColor,
-          unselectedItemColor: inactiveColor,
-          selectedLabelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-          showUnselectedLabels: true,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.label,
+    required this.icon,
+    required this.isActive,
+    required this.onTap,
+    this.badgeCount,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool isActive;
+  final VoidCallback onTap;
+  final int? badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = isActive ? kPrimaryRed : kNavInactive;
+
+    Widget iconWidget = Icon(icon, size: 24, color: color);
+
+    if (badgeCount != null && badgeCount! > 0) {
+      iconWidget = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Icon(icon, size: 24, color: color),
+          Positioned(
+            right: -4,
+            top: -4,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: kPrimaryRed,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                badgeCount! > 9 ? '9+' : badgeCount!.toString(),
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment),
-              label: 'Bookings',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
+          ),
+        ],
+      );
+    }
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            iconWidget,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+              ),
             ),
           ],
         ),

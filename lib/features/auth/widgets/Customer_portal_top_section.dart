@@ -22,10 +22,9 @@ class RoleSelectionCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ✅ Logo – choto & center, NO crop
             Image.asset(
-              "assets/images/logo.png",
-              height: 70, // ei height diye perfect hoy
+              "assets/images/Logo.png",
+              height: 70,
               fit: BoxFit.contain, // IMPORTANT: contain, cover na
             ),
 
