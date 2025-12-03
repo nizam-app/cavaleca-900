@@ -770,9 +770,16 @@ class _InternalJobsState extends State<InternalJobs> {
                       ),
                     ),
                     onPressed: () {
-                      setState(() {
-                        _selectedJobForDetails = job;
-                      });
+                      // setState(() {
+                      //   _selectedJobForDetails = job;
+                      // });
+
+                      // showDialog(
+                      //   context: context,
+                      //   barrierDismissible: true,
+                      //   builder: (_) => JobDetailOverlay(),
+                      // );
+
                     },
                     child: Text(
                       'View Details',

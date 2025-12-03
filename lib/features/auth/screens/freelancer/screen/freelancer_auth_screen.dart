@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -73,7 +75,7 @@ class _FreelancerAuthScreenState extends State<FreelancerAuthScreen> {
       _showSnack('Please enter your password', error: true);
       return;
     }
-
+    context.push(FreelancerBottomNavBar.routeName);
     _showSnack('Login successful!');
     widget.onAuthComplete(
       FreelancerUserData(

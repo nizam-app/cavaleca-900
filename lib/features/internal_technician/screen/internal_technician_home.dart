@@ -966,6 +966,8 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                     height: 32,
                     child: ElevatedButton(
 
+                      // Continue and View Details Button;
+
                         onPressed: () {
                           if (isInProgress) {
                             showDialog(
