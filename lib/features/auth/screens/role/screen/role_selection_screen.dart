@@ -40,7 +40,9 @@ class RoleSelectionScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
+                                  // LKeys.hello.tr(),
+                                  // "hello".tr(),
                                   'Select Your Role',
                                   style: TextStyle(
                                     fontSize:

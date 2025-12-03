@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:workpleis/features/customer/widget/book_a_service.dart';
 import 'package:workpleis/features/customer/widget/custom_booking_details.dart';
-import 'package:workpleis/features/customer/widget/dd.dart';
 import 'package:workpleis/features/customer/widget/genarel_maintenance.dart';
+import 'package:workpleis/features/customer/widget/repairs_&_fixes.dart';
+import 'package:workpleis/features/customer/widget/service_details.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -265,6 +266,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                           onSelect: (opt) {
                             // ekhane tumi go_router diye ager step e jete / confirmation screen e nite paro
                             // context.goNamed('bookingSummary', extra: opt.title);
+                            showServiceDetailsDialog(
+                              context,
+                              selectedService: 'Window Repair',
+                              categoryPath:
+                                  'General Maintenance → Repairs & fixes',
+                            );
                           },
                         );
 
