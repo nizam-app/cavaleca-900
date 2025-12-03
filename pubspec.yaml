@@ -68,8 +68,8 @@ flutter_native_splash:
     android: true
     ios: true
     color: "#ffffff"
-    image: assets/logo.jpg
-    branding: assets/logo.jpg
+    image: assets/images/Short.png
+    branding: assets/images/Short.png
 
     branding_bottom_padding_ios: 35
 #
@@ -78,7 +78,7 @@ flutter_native_splash:
     android_12:
       color: "#ffffff"
       color_dark: "#332828"
-      image: assets/logo.jpg
+      image: assets/images/Short.png
 #      branding: assets/logo.jpg
 
   # For information on the generic Dart part of this file, see the
@@ -86,9 +86,9 @@ flutter_native_splash:
 flutter_launcher_icons:
     android: true
     ios: true
-    image_path: "assets/logo.jpg"
-    adaptive_icon_foreground: "assets/logo.jpg"
-    adaptive_icon_background: "assets/logo.jpg"
+    image_path: "assets/images/Short.png"
+    adaptive_icon_foreground: "assets/images/Short.png"
+    adaptive_icon_background: "assets/images/Short.png"
     remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
