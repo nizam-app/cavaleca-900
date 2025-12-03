@@ -106,6 +106,7 @@ flutter:
   assets:
      - assets/images/
      - assets/images/Logo.png
+     - assets/images/Short.png
      - assets/langs/en.json
      - assets/langs/fr.json
 
