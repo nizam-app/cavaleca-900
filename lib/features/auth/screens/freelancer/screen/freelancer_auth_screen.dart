@@ -70,6 +70,17 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
     );
   }
 
+  void _showToast(String msg, {bool success = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: success
+            ? const Color(0xFF16A34A)
+            : const Color(0xFFDC2626),
+      ),
+    );
+  }
+
   // ------------------- Login / Signup Flow -------------------
 
   void _handleLoginSubmit() async {
@@ -98,6 +109,9 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
       data: (InternalLoginResponse? res) {
         if (res != null) {
           // backend theke asha user object use korbo
+
+          _showToast('Login successful!');
+          context.push(FreelancerBottomNavBar.routeName);
           final user = res.user;
 
           widget.onAuthComplete(
