@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
 import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_technician_home.dart';
 
+import '../../freelancer_pages/screen/freelarcer_job_screen.dart';
 import '../logic/botton_nav_index_logic.dart';
 
-class InternalBottomNavBar extends ConsumerWidget {
-  const InternalBottomNavBar({super.key});
-  static const routeName = '/internalBottomNavBar';
+class FreelancerBottomNavBar extends ConsumerWidget {
+  const FreelancerBottomNavBar({super.key});
+  static const routeName = '/freelancerBottomNavBar';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,7 +22,7 @@ class InternalBottomNavBar extends ConsumerWidget {
       backgroundColor: const Color(0xFFF2F2F2),
       body: IndexedStack(
         index: currentIndex,
-        children: [InternalDashboardV2Screen(), InternalJobs(), Earningsscreen(),  InternalJobProfile()],
+        children: [FreelancerHomeScreen(), FreelarcerJobScreen(), Earningsscreen(),  InternalJobProfile()],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(

@@ -528,7 +528,6 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                               ],
                             ),
                             SizedBox(height: 14.h),
-
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton(
@@ -574,7 +573,6 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                           ],
                         ),
                       ),
-
                       SizedBox(height: 16.h),
                     ],
                   ),

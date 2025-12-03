@@ -65,10 +65,10 @@ class CustomerAppScreen extends ConsumerWidget {
   }
 
   Widget _buildPage(
-    BuildContext context,
-    CustomerAppState state,
-    CustomerAppController controller,
-  ) {
+      BuildContext context,
+      CustomerAppState state,
+      CustomerAppController controller,
+      ) {
     final bool isGuest = state.userData.isGuest;
 
     /// Guest & Logged-in er jonno alada mapping
