@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_technician_home.dart';
+import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
 
 /// -----------------------------
@@ -8,15 +9,15 @@ import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
 /// -----------------------------
 enum InternalAuthMode { welcome, login, signup, signupOtp, setPassword }
 
-class InternalAuthScreen extends StatefulWidget {
+class InternalAuthScreen extends ConsumerStatefulWidget {
   const InternalAuthScreen({super.key});
   static final String routeName = '/internal_auth';
 
   @override
-  State<InternalAuthScreen> createState() => _InternalAuthScreenState();
+  ConsumerState<InternalAuthScreen> createState() => _InternalAuthScreenState();
 }
 
-class _InternalAuthScreenState extends State<InternalAuthScreen> {
+class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
   InternalAuthMode _mode = InternalAuthMode.welcome;
   bool _showPassword = false;
 
@@ -51,23 +52,37 @@ class _InternalAuthScreenState extends State<InternalAuthScreen> {
   //  FLOW HANDLERS
   // -----------------------------
 
-  // Login: phone + password
-  void _handleLoginSubmit() {
-    if (_phoneController.text.trim().isEmpty) {
-      _showToast('Please enter your phone number', success: false);
-      return;
-    }
-    if (_passwordController.text.trim().isEmpty) {
-      _showToast('Please enter your password', success: false);
-      return;
-    }
-    context.push(InternalBottomNavBar.routeName);
+  void _handleLoginSubmit() async {
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
 
-    // TODO: call backend here
-    _showToast('Login successful!');
-    InternalDashboardV2Screen(userName: 'cavaleca');
-    //)
-    // onAuthComplete({ name: 'Internal Tech', phone: _phoneController.text });
+    if (phone.isEmpty) {
+      _showToast('Please enter phone', success: false);
+      return;
+    }
+    if (password.isEmpty) {
+      _showToast('Please enter password', success: false);
+      return;
+    }
+
+    final auth = ref.read(internalAuthProvider.notifier);
+
+    await auth.login(phone, password);
+
+    final result = ref.read(internalAuthProvider);
+
+    result.when(
+      data: (data) {
+        if (data != null) {
+          _showToast('Login successful!');
+          context.push(InternalBottomNavBar.routeName);
+        }
+      },
+      loading: () {},
+      error: (err, _) {
+        _showToast(err.toString(), success: false);
+      },
+    );
   }
 
   // Signup: name + employee ID + phone -> OTP
@@ -346,6 +361,7 @@ class _InternalAuthScreenState extends State<InternalAuthScreen> {
   }
 
   Widget _buildLogin() {
+    final loginState = ref.watch(internalAuthProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -422,21 +438,23 @@ class _InternalAuthScreenState extends State<InternalAuthScreen> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: _handleLoginSubmit,
+            onPressed: loginState.isLoading ? null : _handleLoginSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC20001),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text(
-              'Login',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
+            child: loginState.isLoading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
           ),
         ),
 
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

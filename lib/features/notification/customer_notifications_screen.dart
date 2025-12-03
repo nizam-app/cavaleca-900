@@ -1,65 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/notification/data/notificaion_data.dart';
+import 'package:workpleis/features/notification/model/notification_model.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
 
-class CustomerNotificationsScreen extends StatelessWidget {
+class CustomerNotificationsScreen extends ConsumerWidget {
   const CustomerNotificationsScreen({
     super.key,
     this.isGuest = false,
     this.onSignUp,
   });
+
   static const String routeName = '/customerNotifications';
 
   final bool isGuest;
   final VoidCallback? onSignUp;
 
   @override
-  Widget build(BuildContext context) {
-    // dummy data – React er moto
-    final List<_NotificationItem> notifications = [
-      _NotificationItem(
-        id: 1,
-        title: 'Technician On The Way',
-        message: 'John Smith is heading to your location. ETA: 15 minutes',
-        time: '10 minutes ago',
-        unread: true,
-        type: NotificationType.status,
-      ),
-      _NotificationItem(
-        id: 2,
-        title: 'Service Completed',
-        message: 'Your HVAC maintenance has been completed successfully',
-        time: '2 hours ago',
-        unread: true,
-        type: NotificationType.completed,
-      ),
-      _NotificationItem(
-        id: 3,
-        title: 'Rate Your Experience',
-        message: 'How was your service with Mike Davis?',
-        time: '1 day ago',
-        unread: false,
-        type: NotificationType.rating,
-      ),
-      _NotificationItem(
-        id: 4,
-        title: 'New Message',
-        message: 'Sarah Johnson sent you a message about your upcoming booking',
-        time: '2 days ago',
-        unread: false,
-        type: NotificationType.message,
-      ),
-      _NotificationItem(
-        id: 5,
-        title: 'Upcoming Service',
-        message: 'Your electrical repair is scheduled for tomorrow at 10:00 AM',
-        time: '2 days ago',
-        unread: false,
-        type: NotificationType.reminder,
-      ),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notificationsState = ref.watch(notificationsProvider);
+    final notifier = ref.read(notificationsProvider.notifier);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
@@ -78,24 +41,118 @@ class CustomerNotificationsScreen extends StatelessWidget {
                     children: [
                       const _NotificationsHeader(),
                       SizedBox(height: 16.h),
-                      // -------- Guest view ----------
+
                       if (isGuest) ...[
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 24.0.w),
                           child: _GuestLimitedCard(onSignUp: onSignUp),
                         ),
                       ] else ...[
-                        // -------- Normal notifications list ----------
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.0.w),
-                          child: Column(
-                            children: [
-                              for (final item in notifications)
-                                Padding(
-                                  padding: EdgeInsets.only(bottom: 12.0.h),
-                                  child: _NotificationCard(item: item),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.0.w,
+                            vertical: 4.h,
+                          ),
+                          child: notificationsState.when(
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            error: (err, _) => Column(
+                              children: [
+                                Text(
+                                  'Failed to load notifications',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13.sp,
+                                  ),
                                 ),
-                            ],
+                                SizedBox(height: 8.h),
+                                TextButton(
+                                  onPressed: notifier.refresh,
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                            data: (list) {
+                              if (list.isEmpty) {
+                                return Padding(
+                                  padding: EdgeInsets.only(top: 40.h),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.notifications_off_outlined,
+                                        size: 40.sp,
+                                        color: const Color(0xFF9CA3AF),
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      Text(
+                                        'No notifications yet',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: const Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+
+                              final hasUnread = list.any((n) => !n.isRead);
+
+                              return Column(
+                                children: [
+                                  // Mark all as read row
+                                  if (hasUnread)
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Recent',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: const Color(0xFF6B7280),
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: notifier.markAllAsRead,
+                                          child: Text(
+                                            'Mark all as read',
+                                            style: TextStyle(
+                                              fontSize: 13.sp,
+                                              color: kPrimaryRed,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        'Recent',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: const Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ),
+                                  SizedBox(height: 8.h),
+
+                                  for (final item in list)
+                                    Padding(
+                                      padding: EdgeInsets.only(bottom: 12.0.h),
+                                      child: GestureDetector(
+                                        onTap: () =>
+                                            notifier.markAsRead(item.id),
+                                        child: _NotificationCard(item: item),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -274,17 +331,18 @@ class _NotificationItem {
 class _NotificationCard extends StatelessWidget {
   const _NotificationCard({required this.item});
 
-  final _NotificationItem item;
+  final FsNotification item;
 
   @override
   Widget build(BuildContext context) {
     final _IconStyles iconStyles = _mapTypeToIconStyles(item.type);
+    final bool unread = !item.isRead;
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22.r),
-        border: item.unread
+        border: unread
             ? Border(
                 left: BorderSide(color: kPrimaryRed, width: 4.w),
               )
@@ -330,11 +388,11 @@ class _NotificationCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF111827),
+                            color: const Color(0xFF111827),
                           ),
                         ),
                       ),
-                      if (item.unread)
+                      if (unread)
                         Container(
                           width: 8.r,
                           height: 8.r,
@@ -353,14 +411,18 @@ class _NotificationCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: Color(0xFF6B7280),
+                      color: const Color(0xFF6B7280),
                       height: 1.3,
                     ),
                   ),
                   SizedBox(height: 6.h),
                   Text(
-                    item.time,
-                    style: TextStyle(fontSize: 11.sp, color: Color(0xFF9CA3AF)),
+                    item.createdAtFormatted ??
+                        timeAgo(item.createdAt), // চাইলে helper বানাও
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: const Color(0xFF9CA3AF),
+                    ),
                   ),
                 ],
               ),
@@ -371,38 +433,65 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  _IconStyles _mapTypeToIconStyles(NotificationType type) {
+  _IconStyles _mapTypeToIconStyles(String type) {
+    // backend type er উপর ভিত্তি করে আলাদা icon/color
     switch (type) {
-      case NotificationType.status:
-        return _IconStyles(
-          iconData: Icons.access_time,
-          iconColor: const Color(0xFF2563EB),
-          bgColor: const Color(0xFFDBEAFE),
+      case 'WO_ASSIGNED':
+        return const _IconStyles(
+          iconData: Icons.assignment_turned_in_outlined,
+          iconColor: Color(0xFF2563EB),
+          bgColor: Color(0xFFDBEAFE),
         );
-      case NotificationType.completed:
-        return _IconStyles(
-          iconData: Icons.check_circle,
-          iconColor: const Color(0xFF16A34A),
-          bgColor: const Color(0xFFD1FAE5),
+
+      case 'WO_COMPLETED':
+        return const _IconStyles(
+          iconData: Icons.check_circle_outline,
+          iconColor: Color(0xFF16A34A),
+          bgColor: Color(0xFFD1FAE5),
         );
-      case NotificationType.rating:
-        return _IconStyles(
-          iconData: Icons.star,
-          iconColor: const Color(0xFFF59E0B),
-          bgColor: const Color(0xFFFEF3C7),
-        );
-      case NotificationType.message:
-        return _IconStyles(
+
+      case 'MESSAGE':
+        return const _IconStyles(
           iconData: Icons.chat_bubble_outline,
-          iconColor: const Color(0xFF8B5CF6),
-          bgColor: const Color(0xFFEDE9FE),
+          iconColor: Color(0xFF8B5CF6),
+          bgColor: Color(0xFFEDE9FE),
         );
-      case NotificationType.reminder:
-        return _IconStyles(
-          iconData: Icons.error_outline,
-          iconColor: const Color(0xFFF97316),
-          bgColor: const Color(0xFFFFEDD5),
+
+      case 'REMINDER':
+        return const _IconStyles(
+          iconData: Icons.notifications_active_outlined,
+          iconColor: Color(0xFFF97316),
+          bgColor: Color(0xFFFFEDD5),
         );
+
+      default:
+        // generic / unknown
+        return const _IconStyles(
+          iconData: Icons.notifications_none,
+          iconColor: Color(0xFF6B7280),
+          bgColor: Color(0xFFE5E7EB),
+        );
+    }
+  }
+
+  String timeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+
+    if (diff.inSeconds < 60) {
+      return 'Just now';
+    } else if (diff.inMinutes < 60) {
+      final m = diff.inMinutes;
+      return '$m min${m > 1 ? 's' : ''} ago';
+    } else if (diff.inHours < 24) {
+      final h = diff.inHours;
+      return '$h hour${h > 1 ? 's' : ''} ago';
+    } else if (diff.inDays < 7) {
+      final d = diff.inDays;
+      return '$d day${d > 1 ? 's' : ''} ago';
+    } else {
+      // 7 দিনের বেশি হলে শুধু তারিখ দেখাই
+      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
     }
   }
 }
