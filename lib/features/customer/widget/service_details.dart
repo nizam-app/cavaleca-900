@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/customer/model/map_local_data_map.dart';
+import 'package:workpleis/features/customer/screen/map.dart';
 
 const _kPrimaryRed = Color(0xFFC20001);
 const _kPrimaryRedDark = Color(0xFF9A0001);
@@ -354,7 +357,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Service Address *',
+          'Service Address*',
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -373,10 +376,17 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
                 color: _kPrimaryRed,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.location_on_outlined,
-                color: Colors.white,
-                size: 20,
+              child: GestureDetector(
+                onTap: () async {
+                  final result = await context.push<LocationData>(
+                    MapAddressPickerScreen.routeName,
+                  );
+                },
+                child: const Icon(
+                  Icons.location_on_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(

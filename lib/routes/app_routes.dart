@@ -8,6 +8,7 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
+import 'package:workpleis/features/customer/screen/map.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/profile/screen/customer_profile_screen.dart';
@@ -194,6 +195,11 @@ class AppRouter {
         path: CustomerAppScreen.routeName, // '/customerApp'
         name: CustomerAppScreen.routeName,
         builder: (context, state) => const CustomerAppScreen(),
+      ),
+      GoRoute(
+        path: MapAddressPickerScreen.routeName, // '/customerApp'
+        name: MapAddressPickerScreen.routeName,
+        builder: (context, state) => const MapAddressPickerScreen(),
       ),
 
       // GoRoute(

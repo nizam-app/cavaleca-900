@@ -51,6 +51,8 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_svg: ^2.2.2
   easy_localization: ^3.0.8
+  geolocator: ^14.0.2
+  google_maps_flutter: ^2.14.0
 
 dev_dependencies:
   flutter_test:
