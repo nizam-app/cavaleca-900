@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
+import 'gPSCheckInPopup.dart';
+
 /// ------------------- COLORS --------------------
 const kDialogBg = Color(0xFFF4F4F4);
 const kCardBg = Colors.white;
@@ -246,7 +248,13 @@ class Viewjobdetails extends StatelessWidget {
   // ---------------- PRIMARY ACTION BUTTON ----------------
   Widget _buildStartButton(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (_) =>Gpscheckinpopup(),
+        );
+      },
       child: Container(
         height: 48.h,
         decoration: BoxDecoration(
