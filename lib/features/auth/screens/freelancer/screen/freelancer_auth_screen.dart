@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
+import 'package:workpleis/features/auth/model/auth_login_model.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
+
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -16,7 +23,7 @@ typedef FreelancerAuthComplete = void Function(FreelancerUserData user);
 
 enum AuthMode { welcome, login, signup, signupOtp, setPassword }
 
-class FreelancerAuthScreen extends StatefulWidget {
+class FreelancerAuthScreen extends ConsumerStatefulWidget {
   const FreelancerAuthScreen({
     super.key,
     required this.onAuthComplete,
@@ -32,10 +39,11 @@ class FreelancerAuthScreen extends StatefulWidget {
   final VoidCallback onBack;
 
   @override
-  State<FreelancerAuthScreen> createState() => _FreelancerAuthScreenState();
+  ConsumerState<FreelancerAuthScreen> createState() =>
+      _FreelancerAuthScreenState();
 }
 
-class _FreelancerAuthScreenState extends State<FreelancerAuthScreen> {
+class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
   AuthMode _mode = AuthMode.welcome;
   bool _showPassword = false;
 
@@ -64,24 +72,44 @@ class _FreelancerAuthScreenState extends State<FreelancerAuthScreen> {
 
   // ------------------- Login / Signup Flow -------------------
 
-  void _handleLoginSubmit() {
+  void _handleLoginSubmit() async {
     FocusScope.of(context).unfocus();
 
-    if (_phoneController.text.trim().isEmpty) {
-      _showSnack('Please enter your phone number', error: true);
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (phone.isEmpty) {
+      _showSnack('Please enter phone', error: true);
       return;
     }
-    if (_passwordController.text.isEmpty) {
-      _showSnack('Please enter your password', error: true);
+    if (password.isEmpty) {
+      _showSnack('Please enter password', error: true);
       return;
     }
-    context.push(FreelancerBottomNavBar.routeName);
-    _showSnack('Login successful!');
-    widget.onAuthComplete(
-      FreelancerUserData(
-        name: 'Freelancer Tech',
-        phone: _phoneController.text.trim(),
-      ),
+
+    // 🔴 ekhane SAME provider use – internalAuthProvider
+    final auth = ref.read(internalAuthProvider.notifier);
+
+    await auth.login(phone, password);
+
+    final result = ref.read(internalAuthProvider);
+
+    result.when(
+      data: (InternalLoginResponse? res) {
+        if (res != null) {
+          // backend theke asha user object use korbo
+          final user = res.user;
+
+          widget.onAuthComplete(
+            FreelancerUserData(name: user.name, phone: user.phone),
+          );
+        }
+      },
+      loading: () {},
+      error: (err, _) {
+        _showSnack(err.toString(), error: true);
+      },
+
     );
   }
 
@@ -177,6 +205,7 @@ class _FreelancerAuthScreenState extends State<FreelancerAuthScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -379,213 +408,224 @@ class _FreelancerAuthScreenState extends State<FreelancerAuthScreen> {
   }
 
   Widget _buildLogin() {
-    return Column(
-      key: const ValueKey('login'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'Welcome Back',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
+    final loginState = ref.watch(internalAuthProvider);
+    return SingleChildScrollView(
+      child: Column(
+        key: const ValueKey('login'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Welcome Back',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF111827),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Login to your account',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-        ),
-        const SizedBox(height: 24),
+          const SizedBox(height: 4),
+          const Text(
+            'Login to your account',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 24),
 
-        const Text(
-          'Phone Number (User ID)',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _phoneController,
-          keyboardType: TextInputType.phone,
-          decoration: _inputDecoration(
-            hintText: 'Enter your phone number',
-            icon: Icons.phone,
+          const Text(
+            'Phone Number (User ID)',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            decoration: _inputDecoration(
+              hintText: 'Enter your phone number',
+              icon: Icons.phone,
+            ),
+          ),
+          const SizedBox(height: 16),
 
-        const Text(
-          'Password',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _passwordController,
-          obscureText: !_showPassword,
-          decoration: _inputDecoration(
-            hintText: 'Enter your password',
-            icon: Icons.lock_outline,
-            suffix: IconButton(
-              onPressed: () {
-                setState(() {
-                  _showPassword = !_showPassword;
-                });
-              },
-              icon: Icon(
-                _showPassword ? Icons.visibility_off : Icons.visibility,
-                size: 20,
-                color: const Color(0xFF9CA3AF),
-              ),
-            ),
+          const Text(
+            'Password',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
-        ),
-        const SizedBox(height: 24),
-        SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: _handleLoginSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryRed,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: const Text(
-              'Login',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Don't have an account? ",
-              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-            ),
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _resetForm();
-                  _mode = AuthMode.signup;
-                });
-              },
-              child: const Text(
-                'Sign up',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kPrimaryRed,
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
+          const SizedBox(height: 8),
+          TextField(
+            controller: _passwordController,
+            obscureText: !_showPassword,
+            decoration: _inputDecoration(
+              hintText: 'Enter your password',
+              icon: Icons.lock_outline,
+              suffix: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _showPassword = !_showPassword;
+                  });
+                },
+                icon: Icon(
+                  _showPassword ? Icons.visibility_off : Icons.visibility,
+                  size: 20,
+                  color: const Color(0xFF9CA3AF),
                 ),
               ),
             ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: loginState.isLoading ? null : _handleLoginSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: loginState.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'Login',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Don't have an account? ",
+                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _resetForm();
+                    _mode = AuthMode.signup;
+                  });
+                },
+                child: const Text(
+                  'Sign up',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: kPrimaryRed,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 80.h),
+        ],
+      ),
     );
   }
 
   Widget _buildSignup() {
-    return Column(
-      key: const ValueKey('signup'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'Join as Freelancer',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
+    return SingleChildScrollView(
+      child: Column(
+        key: const ValueKey('signup'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Join as Freelancer',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF111827),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Step 1 of 3: Enter your details',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-        ),
-        const SizedBox(height: 24),
+          const SizedBox(height: 4),
+          const Text(
+            'Step 1 of 3: Enter your details',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 24),
 
-        const Text(
-          'Full Name',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _nameController,
-          decoration: _inputDecoration(
-            hintText: 'Enter your full name',
-            icon: Icons.person_outline,
+          const Text(
+            'Full Name',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _nameController,
+            decoration: _inputDecoration(
+              hintText: 'Enter your full name',
+              icon: Icons.person_outline,
+            ),
+          ),
+          const SizedBox(height: 16),
 
-        const Text(
-          'Phone Number',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _phoneController,
-          keyboardType: TextInputType.phone,
-          decoration: _inputDecoration(
-            hintText: 'Enter your phone number',
-            icon: Icons.phone,
+          const Text(
+            'Phone Number',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
-        ),
-        const SizedBox(height: 24),
-        SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: _handleSignupSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryRed,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: const Text(
-              'Continue',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            decoration: _inputDecoration(
+              hintText: 'Enter your phone number',
+              icon: Icons.phone,
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Already have an account? ',
-              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-            ),
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _resetForm();
-                  _mode = AuthMode.login;
-                });
-              },
-              child: const Text(
-                'Login',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: kPrimaryRed,
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _handleSignupSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
+              child: const Text(
+                'Continue',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
             ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Already have an account? ',
+                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _resetForm();
+                    _mode = AuthMode.login;
+                  });
+                },
+                child: const Text(
+                  'Login',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: kPrimaryRed,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -764,7 +804,11 @@ class _FreelancerHeader extends StatelessWidget {
       child: Column(
         children: [
           // TODO: nijer logo path boshao (TSX er logoVertical)
-          Image.asset('assets/images/L.png', height: 80, fit: BoxFit.contain),
+          Image.asset(
+            'assets/images/Logo.png',
+            height: 80,
+            fit: BoxFit.contain,
+          ),
           const SizedBox(height: 12),
           const Text(
             'Freelancer Portal',

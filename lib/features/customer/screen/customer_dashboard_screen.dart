@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:workpleis/features/customer/widget/book_a_service.dart';
 import 'package:workpleis/features/customer/widget/custom_booking_details.dart';
 import 'package:workpleis/features/customer/widget/genarel_maintenance.dart';
+import 'package:workpleis/features/customer/widget/repairs_&_fixes.dart';
+import 'package:workpleis/features/customer/widget/service_details.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -239,10 +241,39 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                         ),
                       ],
                       onSelect: (option) {
-                        // ekhane tumi next action nibe
-                        // go_router diye next step e niye jete paro
-                        // example:
-                        // context.goNamed('serviceList', extra: option.title);
+                        showSpecificServiceDialog(
+                          context,
+                          title: 'Repairs & Fixes',
+                          stepText: 'Step 3 of 3 - Select specific service',
+                          options: [
+                            SpecificServiceOption(
+                              title: 'Door Repair',
+                              priceRange: 'Est. \$50–80',
+                            ),
+                            SpecificServiceOption(
+                              title: 'Window Repair',
+                              priceRange: 'Est. \$40–70',
+                            ),
+                            SpecificServiceOption(
+                              title: 'Wall Patching',
+                              priceRange: 'Est. \$60–100',
+                            ),
+                            SpecificServiceOption(
+                              title: 'Floor Repair',
+                              priceRange: 'Est. \$80–150',
+                            ),
+                          ],
+                          onSelect: (opt) {
+                            // ekhane tumi go_router diye ager step e jete / confirmation screen e nite paro
+                            // context.goNamed('bookingSummary', extra: opt.title);
+                            showServiceDetailsDialog(
+                              context,
+                              selectedService: 'Window Repair',
+                              categoryPath:
+                                  'General Maintenance → Repairs & fixes',
+                            );
+                          },
+                        );
 
                         debugPrint('Selected: ${option.title}');
                       },

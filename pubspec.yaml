@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   get: ^4.7.2
   http: ^1.4.0
-  logger: ^2.6.0
+  logger: ^2.6.2
   shared_preferences: ^2.5.3
   flutter_screenutil: ^5.9.3
   go_router: ^16.2.1
@@ -50,6 +50,9 @@ dependencies:
   shimmer: ^3.0.0
   cached_network_image: ^3.4.1
   flutter_svg: ^2.2.2
+  easy_localization: ^3.0.8
+  geolocator: ^14.0.2
+  google_maps_flutter: ^2.14.0
 
 dev_dependencies:
   flutter_test:
@@ -103,6 +106,8 @@ flutter:
   assets:
      - assets/images/
      - assets/images/Logo.png
+     - assets/langs/en.json
+     - assets/langs/fr.json
 
   # An images asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
