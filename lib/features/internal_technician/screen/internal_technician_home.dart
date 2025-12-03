@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/internal_technician/widget/compliteJob.dart';
+import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
+import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 
 /// ------------------------------------------------------
 ///  Models
@@ -758,7 +762,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(
-                Icons.emoji_events_outlined,
+                Icons.workspace_premium,
                 size: 26,
                 color: Color(0xFF7C3AED),
               ),
@@ -961,14 +965,24 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                   SizedBox(
                     height: 32,
                     child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          selectedJob = job;
-                        });
 
-                        // TODO: ekhane later InternalWorkflow screen/modal open korbo
+                      // Continue and View Details Button;
 
-                      },
+                        onPressed: () {
+                          if (isInProgress) {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (_) => Jobdetails(),
+                            );
+                          } else {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (_) => Viewjobdetails(),
+                            );
+                          }
+                        },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(

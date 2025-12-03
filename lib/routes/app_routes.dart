@@ -8,9 +8,17 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
+ 
 import 'package:workpleis/features/customer/screen/map.dart';
+
+import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
+import 'package:workpleis/features/freelancer_pages/screen/freelarcer_job_screen.dart';
+import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
+import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
+
 import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
+import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/profile/screen/customer_profile_screen.dart';
 
 import '../features/customer/screen/guest_profile_screen.dart';
@@ -97,6 +105,39 @@ class AppRouter {
         name: InternalJobs.routeName,
         builder: (context, state) => const InternalJobs(),
       ),
+
+      GoRoute(
+        path: InternalJobProfile.routeName,
+        name: InternalJobProfile.routeName,
+        builder: (context, state) => const InternalJobProfile(),
+      ),
+
+      GoRoute(
+        path: Earningsscreen.routeName,
+        name: Earningsscreen.routeName,
+        builder: (context, state) => const Earningsscreen(),
+      ),
+
+      GoRoute(
+        path: FreelancerBottomNavBar.routeName,
+        name: FreelancerBottomNavBar.routeName,
+        builder: (context, state) => const FreelancerBottomNavBar(),
+      ),
+
+      GoRoute(
+        path: FreelancerHomeScreen.routeName,
+        name: FreelancerHomeScreen.routeName,
+        builder: (context, state) => const FreelancerHomeScreen(),
+      ),
+
+
+      GoRoute(
+        path: FreelarcerJobScreen.routeName,
+        name: FreelarcerJobScreen.routeName,
+        builder: (context, state) => const FreelarcerJobScreen(),
+      ),
+
+
       GoRoute(
         path: RoleSelectionScreen.routeName,
         builder: (context, state) => RoleSelectionScreen(

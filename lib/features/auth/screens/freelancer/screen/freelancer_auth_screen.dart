@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/auth/model/auth_login_model.dart';
+
+import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
+
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -104,6 +109,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
       error: (err, _) {
         _showSnack(err.toString(), error: true);
       },
+
     );
   }
 

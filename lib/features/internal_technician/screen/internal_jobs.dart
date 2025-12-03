@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/internal_technician/widget/newJobAssigned.dart';
 
+import '../widget/jobDetails.dart';
 import '../widget/job_detail-overlay.dart';
+import '../widget/newJobAssignedPopup.dart';
 ///  Models
 
 enum JobStatus { incoming, pending, accepted, inProgress, completed, assigned }
@@ -767,9 +770,16 @@ class _InternalJobsState extends State<InternalJobs> {
                       ),
                     ),
                     onPressed: () {
-                      setState(() {
-                        _selectedJobForDetails = job;
-                      });
+                      // setState(() {
+                      //   _selectedJobForDetails = job;
+                      // });
+
+                      // showDialog(
+                      //   context: context,
+                      //   barrierDismissible: true,
+                      //   builder: (_) => JobDetailOverlay(),
+                      // );
+
                     },
                     child: Text(
                       'View Details',
@@ -1053,9 +1063,19 @@ class _InternalJobsState extends State<InternalJobs> {
                     ),
                   ),
                   onPressed: () {
-                    setState(() {
-                      _selectedJob = job;
-                    });
+                    //this is the pop up of Continue and start button
+                    showDialog(
+                      context: context,
+                      barrierDismissible: true,
+                      builder: (_) => Jobdetails() ,
+                    );
+
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => const NewJobAssignedPopup(),
+                    );
+
                   },
                   child: Text(
                     isInProgress ? 'Continue Job' : 'Start Job',

@@ -8,6 +8,7 @@ class Newjobassigned extends StatefulWidget {
   const Newjobassigned(
       this.job, {
         super.key,
+
         this.initialSeconds = 20,
         required this.onClose,
         required this.onAccept,
