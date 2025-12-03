@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../internal_technician/widget/jobDetails.dart';
 import '../../internal_technician/widget/job_detail-overlay.dart';
 import '../../internal_technician/widget/viewJobDetails.dart';
+import '../widgets/freelancerJobDetails.dart';
 
 ///  Colors
 const Color kJobsBg = Color(0xFFF4F4F4);
@@ -819,7 +820,10 @@ class _AvailableJobsList extends ConsumerWidget {
                           //     extra: job,
                           //   );
                           // },
-                          onPressed: (){},
+
+                            onPressed: () {
+
+                          },
                  style: OutlinedButton.styleFrom(
                             side: const BorderSide(
                                 color: Colors.grey, width: 1),
