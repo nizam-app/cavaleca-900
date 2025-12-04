@@ -12,8 +12,9 @@ enum AuthMode { welcome, login, loginOtp, signup, signupOtp, setPassword }
 class CustomerAuthScreen extends ConsumerStatefulWidget {
   const CustomerAuthScreen({super.key, this.onBack});
 
-  static final String routeName = '/customer_auth';
+  static const String routeName = '/customer_auth';
   final VoidCallback? onBack;
+
   @override
   ConsumerState<CustomerAuthScreen> createState() => _CustomerAuthScreenState();
 }
@@ -22,6 +23,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
   AuthMode _mode = AuthMode.welcome;
   bool _showPassword = false;
 
+  /// loading flags (আগে ছিল, এখন কাজ করবে)
   bool _isSendingLoginOtp = false;
   bool _isVerifyingLoginOtp = false;
 
@@ -55,6 +57,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
   void _handleGuestAccess() {
     _showToast('Welcome! Booking as guest');
 
+    /// Guest → শুধু state আপডেট, token লাগবে না
     ref
         .read(customerAppControllerProvider.notifier)
         .authComplete(isGuest: true, name: 'Guest User', phone: null);
@@ -68,15 +71,26 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
       return;
     }
 
+    if (_isSendingLoginOtp) return;
+
     try {
+      setState(() => _isSendingLoginOtp = true);
+
       final res = await CustomerAuthApi.sendLoginOtp(phone);
+
       // optional: debug dekhte chaile
       debugPrint('OTP code (test only): ${res.code}');
 
-      setState(() => _mode = AuthMode.loginOtp);
+      setState(() {
+        _mode = AuthMode.loginOtp;
+      });
       _showToast(res.message);
     } catch (e) {
       _showToast(e.toString(), success: false);
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingLoginOtp = false);
+      }
     }
   }
 
@@ -89,16 +103,26 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
       return;
     }
 
+    if (_isVerifyingLoginOtp) return;
+
     try {
+      setState(() => _isVerifyingLoginOtp = true);
+
+      /// এখানে ধরছি verifyLoginOtp ভিতরে token + user save করছে
       await CustomerAuthApi.verifyLoginOtp(phone: phone, code: code);
 
       _showToast('Login successful!');
 
+      /// এখন শুধু UI state আপডেট করছি
       ref
           .read(customerAppControllerProvider.notifier)
           .authComplete(isGuest: false, name: phone, phone: phone);
     } catch (e) {
       _showToast(e.toString(), success: false);
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifyingLoginOtp = false);
+      }
     }
   }
 
@@ -110,6 +134,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
     }
     setState(() => _mode = AuthMode.signupOtp);
     _showToast('OTP sent to your phone');
+    // চাইলে এখানেও real sendSignupOtp API কল করতে পারো
   }
 
   void _handleSignupOtpVerify() {
@@ -126,6 +151,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
       _showToast('Password must be at least 6 characters', success: false);
       return;
     }
+
+    /// এখানে চাইলে CustomerAuthApi.completeSignup(...) করে
+    /// password + phone + name পাঠাতে পারো
+
     _showToast('Account created successfully!');
 
     ref
@@ -214,9 +243,9 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.r)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x22000000),
+            color: const Color(0x22000000),
             blurRadius: 12.r,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -263,7 +292,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
       case AuthMode.signupOtp:
         return _buildSignupOtp();
       case AuthMode.setPassword:
-        return _buildSetPassword(); // 👈 screenshot-er screen
+        return _buildSetPassword();
     }
   }
 
@@ -285,11 +314,18 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.arrow_back, size: 18.sp, color: Color(0xFF374151)),
+              Icon(
+                Icons.arrow_back,
+                size: 18.sp,
+                color: const Color(0xFF374151),
+              ),
               SizedBox(width: 8.w),
               Text(
                 _mode == AuthMode.welcome ? 'Back to Role Selection' : 'Back',
-                style: TextStyle(fontSize: 14.sp, color: Color(0xFF374151)),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: const Color(0xFF374151),
+                ),
               ),
             ],
           ),
@@ -309,7 +345,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           'Welcome!',
           style: TextStyle(
             fontSize: 20.sp,
-            color: Color(0xFF111827),
+            color: const Color(0xFF111827),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -317,7 +353,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         Text(
           'Book services quickly and easily',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14.sp, color: Color(0xFF4B5563)),
+          style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
         ),
         const SizedBox(height: 24),
 
@@ -339,7 +375,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF111827),
+                color: const Color(0xFF111827),
               ),
             ),
           ),
@@ -382,7 +418,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFFC20001),
+                color: const Color(0xFFC20001),
               ),
             ),
           ),
@@ -418,7 +454,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         Text(
           'Guest bookings are limited. Create an account to track your service history.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 11.sp, color: Color(0xFF9CA3AF)),
+          style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF)),
         ),
       ],
     );
@@ -434,7 +470,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
             'Welcome Back',
             style: TextStyle(
               fontSize: 20.sp,
-              color: Color(0xFF111827),
+              color: const Color(0xFF111827),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -443,7 +479,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         Center(
           child: Text(
             'Enter your phone number to login',
-            style: TextStyle(fontSize: 14.sp, color: Color(0xFF4B5563)),
+            style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
           ),
         ),
         SizedBox(height: 24.h),
@@ -453,7 +489,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: const Color(0xFF374151),
           ),
         ),
         SizedBox(height: 6.h),
@@ -486,17 +522,29 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           width: double.infinity,
           height: 48.h,
           child: ElevatedButton(
-            onPressed: _handleLoginSubmit,
+            onPressed: _isSendingLoginOtp ? null : _handleLoginSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC20001),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.r),
               ),
             ),
-            child: Text(
-              'Send OTP',
-              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-            ),
+            child: _isSendingLoginOtp
+                ? SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    'Send OTP',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ),
 
@@ -522,7 +570,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
                 'Sign up',
                 style: TextStyle(
                   fontSize: 13.sp,
-                  color: Color(0xFFC20001),
+                  color: const Color(0xFFC20001),
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -541,7 +589,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           'Verify OTP',
           style: TextStyle(
             fontSize: 20.sp,
-            color: Color(0xFF111827),
+            color: const Color(0xFF111827),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -549,7 +597,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         Text(
           'Enter the 6-digit code sent to\n${_phoneController.text}',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14.sp, color: Color(0xFF4B5563)),
+          style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
         ),
         SizedBox(height: 24.h),
         Align(
@@ -596,7 +644,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           },
           child: Text(
             'Resend OTP',
-            style: TextStyle(fontSize: 13.sp, color: Color(0xFFC20001)),
+            style: TextStyle(fontSize: 13.sp, color: const Color(0xFFC20001)),
           ),
         ),
         SizedBox(height: 8.h),
@@ -604,17 +652,29 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           width: double.infinity,
           height: 48.h,
           child: ElevatedButton(
-            onPressed: _handleLoginOtpVerify,
+            onPressed: _isVerifyingLoginOtp ? null : _handleLoginOtpVerify,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC20001),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.r),
               ),
             ),
-            child: Text(
-              'Verify & Login',
-              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-            ),
+            child: _isVerifyingLoginOtp
+                ? SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    'Verify & Login',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -630,7 +690,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
             'Create Account',
             style: TextStyle(
               fontSize: 20.sp,
-              color: Color(0xFF111827),
+              color: const Color(0xFF111827),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -639,7 +699,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         Center(
           child: Text(
             'Step 1 of 3: Enter your details',
-            style: TextStyle(fontSize: 14.sp, color: Color(0xFF4B5563)),
+            style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
           ),
         ),
         SizedBox(height: 24.h),
@@ -649,7 +709,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: const Color(0xFF374151),
           ),
         ),
         SizedBox(height: 6.h),
@@ -682,7 +742,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: const Color(0xFF374151),
           ),
         ),
         SizedBox(height: 6.h),
@@ -751,7 +811,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
                 'Login',
                 style: TextStyle(
                   fontSize: 13.sp,
-                  color: Color(0xFFC20001),
+                  color: const Color(0xFFC20001),
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -770,7 +830,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           'Verify Phone',
           style: TextStyle(
             fontSize: 20.sp,
-            color: Color(0xFF111827),
+            color: const Color(0xFF111827),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -778,7 +838,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         Text(
           'Step 2 of 3: Enter the 6-digit code sent to\n${_phoneController.text}',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14.sp, color: Color(0xFF4B5563)),
+          style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
         ),
         SizedBox(height: 24.h),
         Align(
@@ -822,7 +882,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           onPressed: () => _showToast('OTP resent!'),
           child: Text(
             'Resend OTP',
-            style: TextStyle(fontSize: 13.sp, color: Color(0xFFC20001)),
+            style: TextStyle(fontSize: 13.sp, color: const Color(0xFFC20001)),
           ),
         ),
         SizedBox(height: 8.h),
@@ -847,7 +907,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
     );
   }
 
-  /// ----------------- SET PASSWORD (SCREENSHOT) -----------------
+  /// ----------------- SET PASSWORD -----------------
   Widget _buildSetPassword() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -857,7 +917,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
             'Set Password',
             style: TextStyle(
               fontSize: 20.sp,
-              color: Color(0xFF111827),
+              color: const Color(0xFF111827),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -867,7 +927,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           child: Text(
             'Step 3 of 3: Create a secure password',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14.sp, color: Color(0xFF4B5563)),
+            style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
           ),
         ),
         SizedBox(height: 24.h),
@@ -877,7 +937,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: const Color(0xFF374151),
           ),
         ),
         SizedBox(height: 6.h),
@@ -899,7 +959,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
                 _showPassword
                     ? Icons.visibility_off_outlined
                     : Icons.visibility_outlined,
-                color: Color(0xFF9CA3AF),
+                color: const Color(0xFF9CA3AF),
               ),
             ),
             contentPadding: EdgeInsets.symmetric(
@@ -920,7 +980,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         SizedBox(height: 6.h),
         Text(
           'Password must be at least 6 characters long',
-          style: TextStyle(fontSize: 11.sp, color: Color(0xFF9CA3AF)),
+          style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF)),
         ),
 
         SizedBox(height: 24.h),
