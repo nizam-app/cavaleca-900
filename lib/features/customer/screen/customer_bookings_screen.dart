@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
 
@@ -226,7 +226,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                       SizedBox(height: 16.h),
                       Text(
-                        'Guest Access Limited',
+                        'guest_access_limited'.tr(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16.sp,
@@ -236,7 +236,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        'Create an account to view and track your booking history',
+                        'create_account_to_view_history'.tr(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13.sp,
@@ -258,7 +258,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                             ),
                           ),
                           child: Text(
-                            'Create Account',
+                            'create_account'.tr(),
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -323,10 +323,10 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
                         ),
-                        tabs: const [
-                          Tab(text: 'Active'),
-                          Tab(text: 'Completed'),
-                          Tab(text: 'Cancelled'),
+                        tabs:  [
+                          Tab(text: 'active'.tr()),
+                          Tab(text: 'completed'.tr()),
+                          Tab(text: 'cancelled'.tr()),
                         ],
                       ),
                     ),
@@ -417,7 +417,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
     final Color chipText = isInProgress
         ? const Color(0xFF1D4ED8)
         : const Color(0xFF92400E);
-    final String chipLabel = isInProgress ? 'In Progress' : 'Scheduled';
+    final String chipLabel = isInProgress ? 'in_progress'.tr() : 'scheduled'.tr();
 
     return Container(
       decoration: _cardDecoration(),
@@ -543,7 +543,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                     ),
                     icon: Icon(Icons.phone, size: 16.sp),
-                    label: Text('Call', style: TextStyle(fontSize: 13.sp)),
+                    label: Text('call'.tr(), style: TextStyle(fontSize: 13.sp)),
                   ),
                 ),
                 SizedBox(width: 8.w),
@@ -559,7 +559,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                     ),
                     child: Text(
-                      'View Details',
+                      'view_details'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -693,7 +693,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                   ),
                 ),
                 child: Text(
-                  'Book Again',
+                  'book_again'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: const Color(0xFF4B5563),
@@ -791,7 +791,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                   ),
                 ),
                 child: Text(
-                  'Rebook Service',
+                  'rebook_service'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: const Color(0xFF4B5563),
@@ -842,7 +842,7 @@ class _BookingsHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'My Bookings',
+            'my_bookings'.tr(),
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w600,
@@ -851,7 +851,7 @@ class _BookingsHeader extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Track your service requests',
+            'track_service_requests'.tr(),
             style: TextStyle(fontSize: 13.sp, color: Colors.white70),
           ),
         ],
@@ -880,8 +880,8 @@ class _BookingDetailSheet extends StatelessWidget {
         ? const Color(0xFF1D4ED8)
         : const Color(0xFF92400E);
     final String chipLabel = isInProgress
-        ? 'In Progress'
-        : (isScheduled ? 'Scheduled' : '');
+        ? 'in_progress'.tr()
+        : (isScheduled ? 'scheduled'.tr() : '');
 
     String initials = '';
     if (booking.technician.isNotEmpty) {
@@ -911,7 +911,7 @@ class _BookingDetailSheet extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Booking Details',
+                  'booking_details'.tr(),
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
@@ -922,7 +922,7 @@ class _BookingDetailSheet extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'View your service booking information',
+                  'view_booking_info'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: const Color(0xFF6B7280),
@@ -994,7 +994,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       if (booking.category != null) ...[
                         SizedBox(height: 12.h),
                         Text(
-                          'Category',
+                          'category'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1009,7 +1009,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       if (booking.description != null) ...[
                         SizedBox(height: 12.h),
                         Text(
-                          'Description',
+                          'description'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1060,7 +1060,7 @@ class _BookingDetailSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Scheduled',
+                            'scheduled'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: const Color(0xFF9CA3AF),
@@ -1113,7 +1113,7 @@ class _BookingDetailSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Location',
+                              'location'.tr(),
                               style: TextStyle(
                                 fontSize: 11.sp,
                                 color: const Color(0xFF9CA3AF),
@@ -1149,7 +1149,7 @@ class _BookingDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Assigned Technician',
+                        'assigned_technician'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: const Color(0xFF9CA3AF),
@@ -1243,7 +1243,7 @@ class _BookingDetailSheet extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Close',
+                        'close'.tr(),
                         style: TextStyle(color: Colors.black),
                       ),
                     ),
@@ -1267,7 +1267,7 @@ class _BookingDetailSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(18.r),
                           ),
                         ),
-                        child: const Text('Reschedule'),
+                        child:  Text('reprogrammer'.tr()),
                       ),
                     ),
                   ],

@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
@@ -35,7 +37,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   String get _displayName => (widget.userName?.trim().isNotEmpty ?? false)
       ? widget.userName!.trim()
-      : (widget.isGuest ? 'Guest User' : 'John Doe');
+      : (widget.isGuest ? 'guest_user'.tr() : 'John Doe');
 
   String get _displayInitials {
     final name = _displayName;
@@ -144,9 +146,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           // Logo
           Center(child: Column(children: [])),
           const SizedBox(height: 4),
-          const Text(
-            'Profile',
-            style: TextStyle(
+          Text(
+            'profile'.tr(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -154,7 +156,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            isGuest ? 'Guest Account' : 'Manage your account information',
+            isGuest
+                ? 'guest_account'.tr()
+                : 'manage_account_info'.tr(),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
@@ -186,8 +190,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     gradient: isGuest
                         ? null
                         : const LinearGradient(
-                            colors: [Color(0xFFC20001), Color(0xFF9A0001)],
-                          ),
+                      colors: [Color(0xFFC20001), Color(0xFF9A0001)],
+                    ),
                     color: isGuest ? const Color(0xFF9CA3AF) : null,
                   ),
                   alignment: Alignment.center,
@@ -224,9 +228,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           ),
                         ),
                       if (isGuest)
-                        const Text(
-                          'Limited access',
-                          style: TextStyle(
+                        Text(
+                          'limited_access'.tr(),
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -281,11 +285,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     '24',
                     style: TextStyle(
                       fontSize: 16,
@@ -293,10 +297,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    'Total Bookings',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                    'total_bookings'.tr(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
               ),
@@ -310,11 +317,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     '\$2.4k',
                     style: TextStyle(
                       fontSize: 16,
@@ -322,10 +329,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    'Total Spent',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                    'total_spent'.tr(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
               ),
@@ -358,27 +368,27 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           children: [
             const Icon(Icons.person_outline, size: 40, color: Colors.white),
             const SizedBox(height: 10),
-            const Text(
-              'Create an Account',
-              style: TextStyle(
+            Text(
+              'create_account'.tr(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Sign up to save your bookings and manage your history easily.',
+            Text(
+              'create_account_to_view_history'.tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: TextButton(
                 onPressed:
-                    widget.onSignUp ??
-                    () => _showToast('Sign Up tapped (guest)'),
+                widget.onSignUp ??
+                        () => _showToast('Sign Up tapped (guest)'),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
@@ -386,9 +396,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text(
-                  'Sign Up Now',
-                  style: TextStyle(
+                child: Text(
+                  'sign_up_now'.tr(),
+                  style: const TextStyle(
                     color: Color(0xFF111827),
                     fontWeight: FontWeight.w600,
                   ),
@@ -411,18 +421,18 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         icon: Icons.notifications_outlined,
         iconBgColor: const Color(0xFFF5F3FF),
         iconColor: const Color(0xFFA855F7),
-        title: 'Notifications',
+        title: 'notifications'.tr(),
         subtitle: '3 new',
         onTap:
-            widget.onNavigateToNotifications ??
-            () => _showToast('Open notifications'),
+        widget.onNavigateToNotifications ??
+                () => _showToast('Open notifications'),
         showForGuest: false,
       ),
       _MenuItem(
         icon: Icons.language,
         iconBgColor: const Color(0xFFF0FDF4),
         iconColor: const Color(0xFF22C55E),
-        title: 'Language',
+        title: 'language'.tr(),
         subtitle: _currentLanguageNative,
         onTap: _openLanguageDialog,
         showForGuest: true,
@@ -510,11 +520,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'Support',
-            style: TextStyle(
+            'support'.tr(),
+            style: const TextStyle(
               fontSize: 15,
               color: Color(0xFF111827),
               fontWeight: FontWeight.w600,
@@ -552,20 +562,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Call Us',
-                          style: TextStyle(
+                          'call_us'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF111827),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           '+1 (800) 123-4567',
                           style: TextStyle(
                             fontSize: 11,
@@ -615,20 +625,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Email Support',
-                          style: TextStyle(
+                          'email_support'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF111827),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           'support@ibacos.com',
                           style: TextStyle(
                             fontSize: 11,
@@ -668,21 +678,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text(
-                  'Business Hours',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF111827),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                _BusinessHoursTitle(),
                 SizedBox(height: 10),
                 _BusinessHourRow(
-                  day: 'Monday - Friday',
-                  time: '8:00 AM - 8:00 PM',
+                  dayKey: 'monday_friday',
+                  timeKey: 'monday_friday_time',
                 ),
-                _BusinessHourRow(day: 'Saturday', time: '9:00 AM - 6:00 PM'),
-                _BusinessHourRow(day: 'Sunday', time: '10:00 AM - 4:00 PM'),
+                _BusinessHourRow(
+                  dayKey: 'saturday',
+                  timeKey: 'saturday_time',
+                ),
+                _BusinessHourRow(
+                  dayKey: 'sunday',
+                  timeKey: 'sunday_time',
+                ),
               ],
             ),
           ),
@@ -701,9 +710,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
-        onPressed:
-            widget.onLogout ??
-            () => _showToast(isGuest ? 'Exit guest mode' : 'Sign out'),
+        onPressed: widget.onLogout ??
+                () => _showToast(
+              isGuest ? 'Exit guest mode' : 'sign_out'.tr(),
+            ),
         style: TextButton.styleFrom(
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -714,7 +724,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
         icon: const Icon(Icons.logout, color: Color(0xFFC20001), size: 20),
         label: Text(
-          isGuest ? 'Exit Guest Mode' : 'Sign Out',
+          isGuest ? 'Exit Guest Mode' : 'sign_out'.tr(),
           style: const TextStyle(
             color: Color(0xFFC20001),
             fontSize: 14,
@@ -750,11 +760,30 @@ class _MenuItem {
   });
 }
 
-class _BusinessHourRow extends StatelessWidget {
-  const _BusinessHourRow({required this.day, required this.time});
+class _BusinessHoursTitle extends StatelessWidget {
+  const _BusinessHoursTitle();
 
-  final String day;
-  final String time;
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'business_hours'.tr(),
+      style: const TextStyle(
+        fontSize: 15,
+        color: Color(0xFF111827),
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class _BusinessHourRow extends StatelessWidget {
+  const _BusinessHourRow({
+    required this.dayKey,
+    required this.timeKey,
+  });
+
+  final String dayKey;
+  final String timeKey;
 
   @override
   Widget build(BuildContext context) {
@@ -764,11 +793,11 @@ class _BusinessHourRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            day,
+            dayKey.tr(),
             style: const TextStyle(fontSize: 13, color: Color(0xFF1F2933)),
           ),
           Text(
-            time,
+            timeKey.tr(),
             style: const TextStyle(fontSize: 13, color: Color(0xFF1F2933)),
           ),
         ],
@@ -796,7 +825,7 @@ class _LanguageDialog extends StatelessWidget {
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Select Language'),
+      title:  Text('select_language'.tr()),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
