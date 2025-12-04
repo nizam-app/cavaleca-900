@@ -22,6 +22,7 @@ import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/profile/screen/customer_profile_screen.dart';
+import 'package:workpleis/features/splashScreen/screen/splashScreen.dart';
 
 import '../features/customer/screen/guest_profile_screen.dart';
 import '../features/internal_technician/screen/internal_technician_home.dart';
@@ -29,7 +30,7 @@ import '../features/nav_bar/screen/internal_bottom_nav_bar.dart';
 import 'error_screen.dart';
 
 class AppRouter {
-  static final String initial = RoleSelectionScreen.routeName;
+  static final String initial = SplashScreen.routeName;
   static final GoRouter appRouter = GoRouter(
     initialLocation: initial,
     errorBuilder: (context, state) {
@@ -69,6 +70,12 @@ class AppRouter {
       //   name: CustomerCreateAccountScreen.routeName,
       //   builder: (context, state) => const CustomerCreateAccountScreen(),
       // ),
+
+      GoRoute(
+        path: SplashScreen.routeName,
+        name: SplashScreen.routeName,
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: GuestHomeScreen.routeName,
         name: GuestHomeScreen.routeName,
