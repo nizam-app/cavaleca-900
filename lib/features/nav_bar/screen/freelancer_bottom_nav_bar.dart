@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workpleis/features/freelancer_pages/screen/freelancer_earnings_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
-import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
+import 'package:workpleis/features/freelancer_pages/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
 
 import '../../freelancer_pages/screen/freelarcer_job_screen.dart';
 import '../logic/botton_nav_index_logic.dart';
@@ -22,7 +22,7 @@ class FreelancerBottomNavBar extends ConsumerWidget {
       backgroundColor: const Color(0xFFF2F2F2),
       body: IndexedStack(
         index: currentIndex,
-        children: [FreelancerHomeScreen(), FreelarcerJobScreen(), Earningsscreen(),  InternalJobProfile()],
+        children: [FreelancerHomeScreen(), FreelarcerJobScreen(), FreelancerEarningsScreen(),  FreelancerProfileScreen()],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(

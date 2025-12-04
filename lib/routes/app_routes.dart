@@ -10,8 +10,10 @@ import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
  
 import 'package:workpleis/features/customer/screen/map.dart';
+import 'package:workpleis/features/freelancer_pages/screen/freelancer_earnings_screen.dart';
 
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
+import 'package:workpleis/features/freelancer_pages/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelarcer_job_screen.dart';
 import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
@@ -136,6 +138,19 @@ class AppRouter {
         name: FreelarcerJobScreen.routeName,
         builder: (context, state) => const FreelarcerJobScreen(),
       ),
+
+      GoRoute(
+        path: FreelancerEarningsScreen.routeName,
+        name: FreelancerEarningsScreen.routeName,
+        builder: (context, state) => const FreelancerEarningsScreen(),
+      ),
+
+      GoRoute(
+        path: FreelancerProfileScreen.routeName,
+        name: FreelancerProfileScreen.routeName,
+        builder: (context, state) => const FreelancerProfileScreen(),
+      ),
+
 
 
       GoRoute(

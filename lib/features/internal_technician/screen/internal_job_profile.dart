@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:workpleis/core/widget/signOutButton.dart';
+
+import '../../auth/screens/role/screen/role_selection_screen.dart';
 
 /// ------------------ COLORS ------------------
 const kBG = Color(0xFFF4F4F4);
@@ -31,7 +34,15 @@ class InternalJobProfile extends StatelessWidget {
             SizedBox(height: 16.h),
             _settingsItems(),
             SizedBox(height: 40.h),
-            _signOutButton(),
+            Signoutbutton(
+              onTap: () {
+                // TODO: auth logout logic
+                context.push(RoleSelectionScreen.routeName);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Signed out')),
+                );
+              },
+            ),
             SizedBox(height: 30.h),
           ],
         ),
@@ -351,38 +362,6 @@ class InternalJobProfile extends StatelessWidget {
       ),
     );
   }
-
-  // ----------------------------------------------------
-  // Sign Out Button
-  // ----------------------------------------------------
-  Widget _signOutButton() {
-    return GestureDetector(
-      onTap: () {
-
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 18.w),
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.logout, color: Colors.red, size: 20.sp),
-            SizedBox(width: 6.w),
-            Text(
-              "Sign Out",
-              style: TextStyle(
-                  fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.red),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ----------------------------------------------------
   // Card Decoration
   // ----------------------------------------------------
