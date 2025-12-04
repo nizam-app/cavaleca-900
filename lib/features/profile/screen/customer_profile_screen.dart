@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:workpleis/features/profile/data/customer_profile_data.dart';
+import 'package:workpleis/features/profile/logic/logout_logic.dart';
+import 'package:workpleis/features/profile/model/Custom_profile_model.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
@@ -27,15 +30,58 @@ class CustomerProfileScreen extends StatefulWidget {
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   String _languageCode = 'en'; // en, fr, ar
 
+  CustomerProfile? _profile;
+  bool _loadingProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.isGuest) {
+      _loadProfile();
+    }
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() => _loadingProfile = true);
+    try {
+      final p = await CustomerProfileApi.getProfile();
+      setState(() {
+        _profile = p;
+        _loadingProfile = false;
+      });
+    } catch (e) {
+      setState(() => _loadingProfile = false);
+      _showToast('Failed to load profile: $e');
+    }
+  }
+
   void _showToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
-  String get _displayName => (widget.userName?.trim().isNotEmpty ?? false)
-      ? widget.userName!.trim()
-      : (widget.isGuest ? 'Guest User' : 'John Doe');
+  String get _displayName {
+    // 1st priority: API name
+    final apiName = _profile?.name;
+    if (apiName != null && apiName.trim().isNotEmpty) {
+      return apiName.trim();
+    }
+    // fallback: props / guest
+    if (widget.userName?.trim().isNotEmpty ?? false) {
+      return widget.userName!.trim();
+    }
+    return widget.isGuest ? 'Guest User' : 'John Doe';
+  }
+
+  String? get _displayPhone {
+    final apiPhone = _profile?.phone;
+    if (apiPhone != null && apiPhone.trim().isNotEmpty) return apiPhone.trim();
+    if (widget.userPhone?.trim().isNotEmpty ?? false) {
+      return widget.userPhone!.trim();
+    }
+    return null;
+  }
 
   String get _displayInitials {
     final name = _displayName;
@@ -83,29 +129,35 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         child: Column(
           children: [
             _buildHeader(isGuest: isGuest),
+            if (_loadingProfile && !isGuest)
+              const LinearProgressIndicator(minHeight: 2),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                child: Column(
-                  children: [
-                    _buildUserCard(isGuest: isGuest),
-                    const SizedBox(height: 16),
-                    if (!isGuest) _buildStatsRow(),
-                    if (isGuest) ...[
+              child: RefreshIndicator(
+                onRefresh: () => _loadProfile(),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildUserCard(isGuest: isGuest),
                       const SizedBox(height: 16),
-                      _buildGuestUpgradeCard(),
+                      if (!isGuest) _buildStatsRow(),
+                      if (isGuest) ...[
+                        const SizedBox(height: 16),
+                        _buildGuestUpgradeCard(),
+                      ],
+                      const SizedBox(height: 16),
+                      _buildMenuSection(isGuest: isGuest),
+                      const SizedBox(height: 24),
+                      _buildSupportSection(),
+                      const SizedBox(height: 16),
+                      _buildLogoutButton(),
+                      const SizedBox(height: 12),
                     ],
-                    const SizedBox(height: 16),
-                    _buildMenuSection(isGuest: isGuest),
-                    const SizedBox(height: 24),
-                    _buildSupportSection(),
-                    const SizedBox(height: 16),
-                    _buildLogoutButton(),
-                    const SizedBox(height: 12),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -141,8 +193,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Logo
-          Center(child: Column(children: [])),
+          Center(child: Column(children: const [])),
           const SizedBox(height: 4),
           const Text(
             'Profile',
@@ -215,9 +266,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      if (!isGuest && (widget.userPhone?.isNotEmpty ?? false))
+                      if (!isGuest && (_displayPhone?.isNotEmpty ?? false))
                         Text(
-                          widget.userPhone!,
+                          _displayPhone!,
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
@@ -243,6 +294,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 child: TextButton(
                   onPressed: () {
                     _showToast('Edit profile tapped');
+                    // future: edit profile screen e jabe
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFFE5E5),
@@ -273,6 +325,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   // ---------------------------------------------------------------------------
 
   Widget _buildStatsRow() {
+    final totalBookings = _profile?.totalBookings ?? 0;
+    final totalSpent = _profile?.totalSpent ?? 0;
+
     return Row(
       children: [
         Expanded(
@@ -281,20 +336,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
                   Text(
-                    '24',
-                    style: TextStyle(
+                    '$totalBookings',
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Color(0xFF111827),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     'Total Bookings',
                     style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                   ),
@@ -310,20 +365,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
                   Text(
-                    '\$2.4k',
-                    style: TextStyle(
+                    '$totalSpent',
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Color(0xFF111827),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     'Total Spent',
                     style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                   ),
@@ -412,7 +467,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         iconBgColor: const Color(0xFFF5F3FF),
         iconColor: const Color(0xFFA855F7),
         title: 'Notifications',
-        subtitle: '3 new',
+        subtitle: 'View all',
         onTap:
             widget.onNavigateToNotifications ??
             () => _showToast('Open notifications'),
@@ -503,10 +558,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Support
+  // Support + Business hours (from API)
   // ---------------------------------------------------------------------------
 
   Widget _buildSupportSection() {
+    final bh = _profile?.businessHours;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -649,7 +706,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        // Business hours card
+        // Business hours from API
         Card(
           elevation: 6,
           shape: RoundedRectangleBorder(
@@ -667,8 +724,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   'Business Hours',
                   style: TextStyle(
                     fontSize: 15,
@@ -676,13 +733,32 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 10),
-                _BusinessHourRow(
-                  day: 'Monday - Friday',
-                  time: '8:00 AM - 8:00 PM',
-                ),
-                _BusinessHourRow(day: 'Saturday', time: '9:00 AM - 6:00 PM'),
-                _BusinessHourRow(day: 'Sunday', time: '10:00 AM - 4:00 PM'),
+                const SizedBox(height: 10),
+                if (bh != null) ...[
+                  _BusinessHourRow(day: 'Monday', time: bh['monday'] ?? '-'),
+                  _BusinessHourRow(day: 'Tuesday', time: bh['tuesday'] ?? '-'),
+                  _BusinessHourRow(
+                    day: 'Wednesday',
+                    time: bh['wednesday'] ?? '-',
+                  ),
+                  _BusinessHourRow(
+                    day: 'Thursday',
+                    time: bh['thursday'] ?? '-',
+                  ),
+                  _BusinessHourRow(day: 'Friday', time: bh['friday'] ?? '-'),
+                  _BusinessHourRow(
+                    day: 'Saturday',
+                    time: bh['saturday'] ?? '-',
+                  ),
+                  _BusinessHourRow(day: 'Sunday', time: bh['sunday'] ?? '-'),
+                ] else ...const [
+                  _BusinessHourRow(
+                    day: 'Monday - Friday',
+                    time: '8:00 AM - 8:00 PM',
+                  ),
+                  _BusinessHourRow(day: 'Saturday', time: '9:00 AM - 6:00 PM'),
+                  _BusinessHourRow(day: 'Sunday', time: '10:00 AM - 4:00 PM'),
+                ],
               ],
             ),
           ),
@@ -692,7 +768,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Logout
+  // Logout (already done)
   // ---------------------------------------------------------------------------
 
   Widget _buildLogoutButton() {
@@ -701,9 +777,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
-        onPressed:
-            widget.onLogout ??
-            () => _showToast(isGuest ? 'Exit guest mode' : 'Sign out'),
+        onPressed: _confirmAndLogout, // popup + api
         style: TextButton.styleFrom(
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -723,6 +797,59 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmAndLogout() async {
+    final isGuest = widget.isGuest;
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Confirm'),
+          content: Text(
+            isGuest
+                ? 'Do you want to exit guest mode?'
+                : 'Are you sure you want to sign out?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Yes',
+                style: TextStyle(color: Color(0xFFC20001)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      if (!isGuest) {
+        await CustomerLogOut.logout();
+        _showToast('Logout successful');
+      } else {
+        _showToast('Exited guest mode');
+      }
+
+      if (widget.onLogout != null) {
+        widget.onLogout!();
+      } else {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      _showToast('Logout failed: $e');
+    }
   }
 }
 
@@ -778,7 +905,7 @@ class _BusinessHourRow extends StatelessWidget {
 }
 
 // ============================================================================
-// Language dialog
+// Language dialog (unchanged)
 // ============================================================================
 
 class _LanguageDialog extends StatelessWidget {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/auth/screens/customer/logic/customer_login_logic.dart';
 import 'package:workpleis/features/customer/logic/custom_logic.dart';
 
 /// ------------------------------------------------------
@@ -12,7 +13,6 @@ class CustomerAuthScreen extends ConsumerStatefulWidget {
   const CustomerAuthScreen({super.key, this.onBack});
 
   static final String routeName = '/customer_auth';
-
   final VoidCallback? onBack;
   @override
   ConsumerState<CustomerAuthScreen> createState() => _CustomerAuthScreenState();
@@ -21,6 +21,9 @@ class CustomerAuthScreen extends ConsumerStatefulWidget {
 class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
   AuthMode _mode = AuthMode.welcome;
   bool _showPassword = false;
+
+  bool _isSendingLoginOtp = false;
+  bool _isVerifyingLoginOtp = false;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -57,29 +60,46 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         .authComplete(isGuest: true, name: 'Guest User', phone: null);
   }
 
-  void _handleLoginSubmit() {
-    if (_phoneController.text.trim().isEmpty) {
+  Future<void> _handleLoginSubmit() async {
+    final phone = _phoneController.text.trim();
+
+    if (phone.isEmpty) {
       _showToast('Please enter your phone number', success: false);
       return;
     }
-    setState(() => _mode = AuthMode.loginOtp);
-    _showToast('OTP sent to your phone');
+
+    try {
+      final res = await CustomerAuthApi.sendLoginOtp(phone);
+      // optional: debug dekhte chaile
+      debugPrint('OTP code (test only): ${res.code}');
+
+      setState(() => _mode = AuthMode.loginOtp);
+      _showToast(res.message);
+    } catch (e) {
+      _showToast(e.toString(), success: false);
+    }
   }
 
-  void _handleLoginOtpVerify() {
-    if (_otpController.text.trim().length != 6) {
+  Future<void> _handleLoginOtpVerify() async {
+    final code = _otpController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (code.length != 6) {
       _showToast('Please enter a valid 6-digit OTP', success: false);
       return;
     }
-    _showToast('Login successful!');
 
-    ref
-        .read(customerAppControllerProvider.notifier)
-        .authComplete(
-          isGuest: false,
-          name: 'cavaleca', // TODO: backend theke real name
-          phone: _phoneController.text.trim(),
-        );
+    try {
+      await CustomerAuthApi.verifyLoginOtp(phone: phone, code: code);
+
+      _showToast('Login successful!');
+
+      ref
+          .read(customerAppControllerProvider.notifier)
+          .authComplete(isGuest: false, name: phone, phone: phone);
+    } catch (e) {
+      _showToast(e.toString(), success: false);
+    }
   }
 
   void _handleSignupSubmit() {
@@ -571,6 +591,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         SizedBox(height: 12.h),
         TextButton(
           onPressed: () {
+            _handleLoginSubmit();
             _showToast('OTP resent!');
           },
           child: Text(
