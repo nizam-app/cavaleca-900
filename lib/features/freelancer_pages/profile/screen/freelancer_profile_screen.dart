@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/signOutButton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
+import 'package:workpleis/features/freelancer_pages/profile/data/freelancer_profile_data.dart';
 
 /// ---------------------------------------------------------------------------
 /// Colors
@@ -20,7 +21,7 @@ const Color kProfileBorderLight = Color(0xFFE5E7EB);
 const Color kAccentRed = Color(0xFFC20001);
 
 /// ---------------------------------------------------------------------------
-/// Simple data model + provider (later তুমি API থেকে fill করবে)
+/// UI data model (repo এটা fill করবে)
 /// ---------------------------------------------------------------------------
 class FreelancerProfileData {
   final String initials;
@@ -41,18 +42,6 @@ class FreelancerProfileData {
     required this.bankLinked,
   });
 }
-
-final freelancerProfileProvider = Provider<FreelancerProfileData>((ref) {
-  return const FreelancerProfileData(
-    initials: 'JS',
-    fullName: 'John Smith',
-    title: 'Freelancer Technician',
-    memberSince: '2024',
-    skills: ['HVAC', 'Electrical', 'Plumbing', 'Maintenance'],
-    verifiedCerts: 5,
-    bankLinked: true,
-  );
-});
 
 /// ---------------------------------------------------------------------------
 /// Language enum + helper
@@ -84,12 +73,21 @@ extension AppLanguageLabel on AppLanguage {
 }
 
 /// ---------------------------------------------------------------------------
+/// Riverpod provider – API theke profile ene UI model banাবে
+/// ---------------------------------------------------------------------------
+final freelancerProfileProvider = FutureProvider<FreelancerProfileData>((
+  ref,
+) async {
+  final repo = FreelancerProfileRepository();
+  return repo.fetchProfileData();
+});
+
+/// ---------------------------------------------------------------------------
 /// Screen
 /// ---------------------------------------------------------------------------
 class FreelancerProfileScreen extends ConsumerStatefulWidget {
   const FreelancerProfileScreen({super.key});
 
-  // GoRouter name & path
   static const String routeName = 'freelancer-profile';
   static const String routePath = '/freelancer/profile';
 
@@ -105,46 +103,60 @@ class _FreelancerProfileScreenState
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(freelancerProfileProvider);
+    final profileAsync = ref.watch(freelancerProfileProvider);
 
     return Scaffold(
       backgroundColor: kProfileBg,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _Header(),
-              SizedBox(height: 16.h),
-              _ProfileInfoCard(data: profile),
-              SizedBox(height: 14.h),
-              _AvailabilityCard(
-                isAvailable: _isAvailable,
-                onChanged: (val) {
-                  setState(() => _isAvailable = val);
-                  // TODO: API hit / Riverpod notifier
-                },
+        child: profileAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Failed to load profile: $err',
+                textAlign: TextAlign.center,
               ),
-              SizedBox(height: 14.h),
-              _SkillsCard(skills: profile.skills),
-              SizedBox(height: 14.h),
-              _SettingsSection(
-                profile: profile,
-                language: _language,
-                onSelectLanguage: () => _showLanguageSheet(context),
-              ),
-              SizedBox(height: 24.h),
-              Signoutbutton(
-                onTap: () {
-                  // TODO: auth logout logic
-                  context.push(RoleSelectionScreen.routeName);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Signed out')),
-                  );
-                },
-              ),
-              SizedBox(height: 32.h),
-            ],
+            ),
           ),
+          data: (profile) {
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  _Header(),
+                  SizedBox(height: 16.h),
+                  _ProfileInfoCard(data: profile),
+                  SizedBox(height: 14.h),
+                  _AvailabilityCard(
+                    isAvailable: _isAvailable,
+                    onChanged: (val) {
+                      setState(() => _isAvailable = val);
+                      // এখানে চাইলে availability update API মারতে পারো
+                    },
+                  ),
+                  SizedBox(height: 14.h),
+                  _SkillsCard(skills: profile.skills),
+                  SizedBox(height: 14.h),
+                  _SettingsSection(
+                    profile: profile,
+                    language: _language,
+                    onSelectLanguage: () => _showLanguageSheet(context),
+                  ),
+                  SizedBox(height: 24.h),
+                  Signoutbutton(
+                    onTap: () {
+                      // TODO: auth logout logic (token clear, API/logout ইত্যাদি)
+                      context.push(RoleSelectionScreen.routeName);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Signed out')),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 32.h),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -184,26 +196,14 @@ class _FreelancerProfileScreenState
               SizedBox(height: 4.h),
               Text(
                 'Choose your preferred app language',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: kProfileTextMuted,
-                ),
+                style: TextStyle(fontSize: 12.sp, color: kProfileTextMuted),
               ),
               SizedBox(height: 16.h),
-              _LanguageTile(
-                language: AppLanguage.en,
-                current: _language,
-              ),
+              _LanguageTile(language: AppLanguage.en, current: _language),
               SizedBox(height: 8.h),
-              _LanguageTile(
-                language: AppLanguage.fr,
-                current: _language,
-              ),
+              _LanguageTile(language: AppLanguage.fr, current: _language),
               SizedBox(height: 8.h),
-              _LanguageTile(
-                language: AppLanguage.ar,
-                current: _language,
-              ),
+              _LanguageTile(language: AppLanguage.ar, current: _language),
               SizedBox(height: 16.h),
             ],
           ),
@@ -213,21 +213,25 @@ class _FreelancerProfileScreenState
 
     if (selected != null && selected != _language) {
       setState(() => _language = selected);
-      // TODO: localization change (EasyLocalization / Riverpod)
+      // এখানে localization update করবে (EasyLocalization / Riverpod)
     }
   }
 }
 
 /// ---------------------------------------------------------------------------
-/// Header (yellow gradient) – “Profile / Manage your account information”
+/// Header (yellow gradient)
 /// ---------------------------------------------------------------------------
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding:
-      EdgeInsets.only(left: 20.w, right: 20.w, top: 18.h, bottom: 32.h),
+      padding: EdgeInsets.only(
+        left: 20.w,
+        right: 20.w,
+        top: 18.h,
+        bottom: 32.h,
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [kProfileHeaderStart, kProfileHeaderEnd],
@@ -302,9 +306,9 @@ class _ProfileInfoCard extends StatelessWidget {
               Container(
                 width: 52.w,
                 height: 52.w,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: [kProfileHeaderStart, kProfileHeaderEnd],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -358,7 +362,7 @@ class _ProfileInfoCard extends StatelessWidget {
           SizedBox(height: 14.h),
           GestureDetector(
             onTap: () {
-              // TODO: go to edit profile route
+              // Edit profile screen navigate করো
             },
             child: Container(
               width: double.infinity,
@@ -389,10 +393,7 @@ class _ProfileInfoCard extends StatelessWidget {
 /// Availability status card (switch)
 /// ---------------------------------------------------------------------------
 class _AvailabilityCard extends StatelessWidget {
-  const _AvailabilityCard({
-    required this.isAvailable,
-    required this.onChanged,
-  });
+  const _AvailabilityCard({required this.isAvailable, required this.onChanged});
 
   final bool isAvailable;
   final ValueChanged<bool> onChanged;
@@ -443,10 +444,7 @@ class _AvailabilityCard extends StatelessWidget {
                 SizedBox(height: 2.h),
                 Text(
                   'Accept new jobs',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: kProfileTextMuted,
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: kProfileTextMuted),
                 ),
               ],
             ),
@@ -464,8 +462,9 @@ class _AvailabilityCard extends StatelessWidget {
     );
   }
 }
+
 /// ---------------------------------------------------------------------------
-/// Skills & Specializations card
+/// Skills & Specializations card (API theke skills আসবে)
 /// ---------------------------------------------------------------------------
 class _SkillsCard extends StatelessWidget {
   const _SkillsCard({required this.skills});
@@ -503,32 +502,31 @@ class _SkillsCard extends StatelessWidget {
           Wrap(
             spacing: 8.w,
             runSpacing: 8.h,
-            children: [
-              _SkillChip(
-                label: 'HVAC',
-                start: const Color(0xFFDBEAFE),
-                end: const Color(0xFFBFDBFE),
-                textColor: const Color(0xFF1D4ED8),
-              ),
-              _SkillChip(
-                label: 'Electrical',
-                start: const Color(0xFFFEF3C7),
-                end: const Color(0xFFFDE68A),
-                textColor: const Color(0xFFB45309),
-              ),
-              _SkillChip(
-                label: 'Plumbing',
-                start: const Color(0xFFD1FAE5),
-                end: const Color(0xFFA7F3D0),
-                textColor: const Color(0xFF047857),
-              ),
-              _SkillChip(
-                label: 'Maintenance',
-                start: const Color(0xFFEDE9FE),
-                end: const Color(0xFFD8B4FE),
-                textColor: const Color(0xFF6D28D9),
-              ),
-            ],
+            children: skills.map((s) {
+              switch (s.toLowerCase()) {
+                case 'electrical':
+                  return const _SkillChip(
+                    label: 'Electrical',
+                    start: Color(0xFFFEF3C7),
+                    end: Color(0xFFFDE68A),
+                    textColor: Color(0xFFB45309),
+                  );
+                case 'plumbing':
+                  return const _SkillChip(
+                    label: 'Plumbing',
+                    start: Color(0xFFD1FAE5),
+                    end: Color(0xFFA7F3D0),
+                    textColor: Color(0xFF047857),
+                  );
+                default:
+                  return _SkillChip(
+                    label: s,
+                    start: const Color(0xFFE5E7EB),
+                    end: const Color(0xFFD1D5DB),
+                    textColor: const Color(0xFF374151),
+                  );
+              }
+            }).toList(),
           ),
         ],
       ),
@@ -598,7 +596,7 @@ class _SettingsSection extends StatelessWidget {
           title: 'My Certifications',
           subtitle: '${profile.verifiedCerts} verified',
           onTap: () {
-            // TODO: GoRouter push to certifications screen
+            // certifications screen
           },
         ),
         SizedBox(height: 8.h),
@@ -609,7 +607,7 @@ class _SettingsSection extends StatelessWidget {
           title: 'Payment Settings',
           subtitle: profile.bankLinked ? 'Bank linked' : 'Add payout method',
           onTap: () {
-            // TODO: GoRouter push to payment settings
+            // payment settings
           },
         ),
         SizedBox(height: 8.h),
@@ -629,13 +627,14 @@ class _SettingsSection extends StatelessWidget {
           title: 'Support',
           subtitle: 'Get help & contact us',
           onTap: () {
-            // TODO: support route
+            // support route
           },
         ),
       ],
     );
   }
 }
+
 class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.iconBg,
@@ -728,10 +727,7 @@ class _SettingsTile extends StatelessWidget {
 /// Language option row used in bottom sheet
 /// ---------------------------------------------------------------------------
 class _LanguageTile extends StatelessWidget {
-  const _LanguageTile({
-    required this.language,
-    required this.current,
-  });
+  const _LanguageTile({required this.language, required this.current});
 
   final AppLanguage language;
   final AppLanguage current;
@@ -775,10 +771,7 @@ class _LanguageTile extends StatelessWidget {
                   SizedBox(height: 2.h),
                   Text(
                     language.secondary,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: kProfileTextMuted,
-                    ),
+                    style: TextStyle(fontSize: 11.sp, color: kProfileTextMuted),
                   ),
                 ],
               ),

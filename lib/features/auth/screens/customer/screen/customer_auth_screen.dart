@@ -929,7 +929,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:easy_localization/easy_localization.dart';
+
+import 'package:workpleis/features/auth/screens/customer/logic/customer_login_logic.dart';
+
 import 'package:workpleis/features/customer/logic/custom_logic.dart';
 
 /// ------------------------------------------------------
@@ -940,9 +944,9 @@ enum AuthMode { welcome, login, loginOtp, signup, signupOtp, setPassword }
 class CustomerAuthScreen extends ConsumerStatefulWidget {
   const CustomerAuthScreen({super.key, this.onBack});
 
-  static final String routeName = '/customer_auth';
-
+  static const String routeName = '/customer_auth';
   final VoidCallback? onBack;
+
   @override
   ConsumerState<CustomerAuthScreen> createState() => _CustomerAuthScreenState();
 }
@@ -950,6 +954,10 @@ class CustomerAuthScreen extends ConsumerStatefulWidget {
 class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
   AuthMode _mode = AuthMode.welcome;
   bool _showPassword = false;
+
+  /// loading flags (আগে ছিল, এখন কাজ করবে)
+  bool _isSendingLoginOtp = false;
+  bool _isVerifyingLoginOtp = false;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -981,33 +989,91 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
     // "Welcome! Booking as guest"
     _showToast('${'welcome'.tr()} ${'booking_as_guest'.tr()}');
 
+    /// Guest → শুধু state আপডেট, token লাগবে না
     ref
         .read(customerAppControllerProvider.notifier)
         .authComplete(isGuest: true, name: 'guest_user'.tr(), phone: null);
   }
 
-  void _handleLoginSubmit() {
-    if (_phoneController.text.trim().isEmpty) {
-      // ei jaygay hint er text use korlam
-      _showToast('enter_your_phone_number'.tr(), success: false);
+
+//   void _handleLoginSubmit() {
+//     if (_phoneController.text.trim().isEmpty) {
+//       // ei jaygay hint er text use korlam
+//       _showToast('enter_your_phone_number'.tr(), success: false);
+//       return;
+//     }
+//     setState(() => _mode = AuthMode.loginOtp);
+//     _showToast('otp_sent_to_your_phone'.tr());
+
+  Future<void> _handleLoginSubmit() async {
+    final phone = _phoneController.text.trim();
+
+    if (phone.isEmpty) {
+      _showToast('Please enter your phone number', success: false);
       return;
     }
-    setState(() => _mode = AuthMode.loginOtp);
-    _showToast('otp_sent_to_your_phone'.tr());
+
+    if (_isSendingLoginOtp) return;
+
+    try {
+      setState(() => _isSendingLoginOtp = true);
+
+      final res = await CustomerAuthApi.sendLoginOtp(phone);
+
+      // optional: debug dekhte chaile
+      debugPrint('OTP code (test only): ${res.code}');
+
+      setState(() {
+        _mode = AuthMode.loginOtp;
+      });
+      _showToast(res.message);
+    } catch (e) {
+      _showToast(e.toString(), success: false);
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingLoginOtp = false);
+      }
+    }
+
   }
 
-  void _handleLoginOtpVerify() {
-    if (_otpController.text.trim().length != 6) {
+  Future<void> _handleLoginOtpVerify() async {
+    final code = _otpController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (code.length != 6) {
       _showToast('Please enter a valid 6-digit OTP', success: false);
       return;
     }
-    _showToast('Login successful!');
 
-    ref.read(customerAppControllerProvider.notifier).authComplete(
-      isGuest: false,
-      name: 'cavaleca', // TODO: backend theke real name
-      phone: _phoneController.text.trim(),
-    );
+//     ref.read(customerAppControllerProvider.notifier).authComplete(
+//       isGuest: false,
+//       name: 'cavaleca', // TODO: backend theke real name
+//       phone: _phoneController.text.trim(),
+//     );
+
+    if (_isVerifyingLoginOtp) return;
+
+    try {
+      setState(() => _isVerifyingLoginOtp = true);
+
+      /// এখানে ধরছি verifyLoginOtp ভিতরে token + user save করছে
+      await CustomerAuthApi.verifyLoginOtp(phone: phone, code: code);
+
+      _showToast('Login successful!');
+
+      /// এখন শুধু UI state আপডেট করছি
+      ref
+          .read(customerAppControllerProvider.notifier)
+          .authComplete(isGuest: false, name: phone, phone: phone);
+    } catch (e) {
+      _showToast(e.toString(), success: false);
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifyingLoginOtp = false);
+      }
+    }
+
   }
 
   void _handleSignupSubmit() {
@@ -1017,7 +1083,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
       return;
     }
     setState(() => _mode = AuthMode.signupOtp);
+
     _showToast('otp_sent_to_your_phone'.tr());
+
+
   }
 
   void _handleSignupOtpVerify() {
@@ -1034,6 +1103,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
       _showToast('Password must be at least 6 characters', success: false);
       return;
     }
+
+    /// এখানে চাইলে CustomerAuthApi.completeSignup(...) করে
+    /// password + phone + name পাঠাতে পারো
+
     _showToast('Account created successfully!');
 
     ref.read(customerAppControllerProvider.notifier).authComplete(
@@ -1169,7 +1242,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
       case AuthMode.signupOtp:
         return _buildSignupOtp();
       case AuthMode.setPassword:
-        return _buildSetPassword(); // 👈 screenshot-er screen
+        return _buildSetPassword();
     }
   }
 
@@ -1191,6 +1264,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+
               Icon(Icons.arrow_back, size: 18.sp, color: const Color(0xFF374151)),
               SizedBox(width: 8.w),
               Text(
@@ -1198,6 +1272,20 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
                     ? 'back_to_role_selection'.tr()
                     : 'back'.tr(),
                 style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151)),
+
+              Icon(
+                Icons.arrow_back,
+                size: 18.sp,
+                color: const Color(0xFF374151),
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                _mode == AuthMode.welcome ? 'Back to Role Selection' : 'Back',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: const Color(0xFF374151),
+                ),
+
               ),
             ],
           ),
@@ -1351,7 +1439,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         SizedBox(height: 6.h),
         Center(
           child: Text(
+
             'enter_phone_to_login'.tr(),
+
+
             style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
           ),
         ),
@@ -1395,17 +1486,33 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           width: double.infinity,
           height: 48.h,
           child: ElevatedButton(
-            onPressed: _handleLoginSubmit,
+            onPressed: _isSendingLoginOtp ? null : _handleLoginSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC20001),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.r),
               ),
             ),
-            child: Text(
-              'send_otp'.tr(),
-              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-            ),
+
+     
+
+            child: _isSendingLoginOtp
+                ? SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                     'send_otp'.tr(),
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
           ),
         ),
 
@@ -1500,9 +1607,14 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         ),
         SizedBox(height: 12.h),
         TextButton(
-          onPressed: () => _showToast('otp_sent_to_your_phone'.tr()),
+
+          onPressed: () {
+            _handleLoginSubmit();
+            _showToast('OTP resent!');
+          },
           child: Text(
-            'resend_otp'.tr(),
+           'resend_otp'.tr(),
+
             style: TextStyle(fontSize: 13.sp, color: const Color(0xFFC20001)),
           ),
         ),
@@ -1511,17 +1623,31 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           width: double.infinity,
           height: 48.h,
           child: ElevatedButton(
-            onPressed: _handleLoginOtpVerify,
+            onPressed: _isVerifyingLoginOtp ? null : _handleLoginOtpVerify,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC20001),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.r),
               ),
             ),
-            child: Text(
-              'verify_and_login'.tr(),
-              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-            ),
+
+            child: _isVerifyingLoginOtp
+                ? SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                'verify_and_login'.tr(),
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
           ),
         ),
       ],
@@ -1658,8 +1784,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
               child: const Text(
                 'Login',
                 style: TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFFC20001),
+
+                  fontSize: 13.sp,
+                  color: const Color(0xFFC20001),
+
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -1677,8 +1805,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         const Text(
           'Verify Phone',
           style: TextStyle(
-            fontSize: 20,
-            color: Color(0xFF111827),
+
+            fontSize: 20.sp,
+            color: const Color(0xFF111827),
+
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -1729,7 +1859,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         TextButton(
           onPressed: () => _showToast('otp_sent_to_your_phone'.tr()),
           child: Text(
+
             'resend_otp'.tr(),
+
+
             style: TextStyle(fontSize: 13.sp, color: const Color(0xFFC20001)),
           ),
         ),
@@ -1755,7 +1888,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
     );
   }
 
-  /// ----------------- SET PASSWORD (SCREENSHOT) -----------------
+  /// ----------------- SET PASSWORD -----------------
   Widget _buildSetPassword() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1764,8 +1897,10 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           child: Text(
             'Set Password',
             style: TextStyle(
-              fontSize: 20,
-              color: Color(0xFF111827),
+
+              fontSize: 20.sp,
+              color: const Color(0xFF111827),
+
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1775,7 +1910,9 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           child: Text(
             'Step 3 of 3: Create a secure password',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
+
+            style: TextStyle(fontSize: 14.sp, color: const Color(0xFF4B5563)),
+
           ),
         ),
         SizedBox(height: 24.h),
@@ -1828,7 +1965,9 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         SizedBox(height: 6.h),
         const Text(
           'Password must be at least 6 characters long',
-          style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+
+          style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF)),
+
         ),
 
         SizedBox(height: 24.h),

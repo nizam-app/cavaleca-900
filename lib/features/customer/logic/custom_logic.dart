@@ -1,36 +1,15 @@
-import 'package:flutter/foundation.dart';
+// lib/features/customer/logic/custom_logic.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
+import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 
-/// -----------------------------------------
-///  User + App State
-/// -----------------------------------------
-@immutable
-class CustomerUserData {
-  final bool isGuest;
-  final String? name;
-  final String? phone;
+final _log = Logger();
 
-  const CustomerUserData({required this.isGuest, this.name, this.phone});
-
-  const CustomerUserData.guest()
-    : isGuest = true,
-      name = 'Guest User',
-      phone = null;
-
-  CustomerUserData copyWith({bool? isGuest, String? name, String? phone}) {
-    return CustomerUserData(
-      isGuest: isGuest ?? this.isGuest,
-      name: name ?? this.name,
-      phone: phone ?? this.phone,
-    );
-  }
-}
-
-@immutable
 class CustomerAppState {
   final bool isAuthenticated;
   final CustomerUserData userData;
-  final int activeIndex; // 0 = home, 1 = bookings, 2 = profile
+  final int activeIndex;
 
   const CustomerAppState({
     required this.isAuthenticated,
@@ -38,10 +17,11 @@ class CustomerAppState {
     required this.activeIndex,
   });
 
-  const CustomerAppState.initial()
-    : isAuthenticated = false,
-      userData = const CustomerUserData(isGuest: false),
-      activeIndex = 0;
+  factory CustomerAppState.initial() => CustomerAppState(
+    isAuthenticated: false,
+    userData: const CustomerUserData(isGuest: true),
+    activeIndex: 0,
+  );
 
   CustomerAppState copyWith({
     bool? isAuthenticated,
@@ -56,29 +36,41 @@ class CustomerAppState {
   }
 }
 
-/// -----------------------------------------
-///  Controller
-/// -----------------------------------------
+/// -------------------- Controller --------------------
+
 class CustomerAppController extends StateNotifier<CustomerAppState> {
-  CustomerAppController() : super(const CustomerAppState.initial());
-
-  /// Auth / guest complete hole call
+  CustomerAppController() : super(CustomerAppState.initial()) {
+    _initFromLocal();
+  }
   void authComplete({required bool isGuest, String? name, String? phone}) {
-    final user = CustomerUserData(isGuest: isGuest, name: name, phone: phone);
-
     state = state.copyWith(
       isAuthenticated: true,
-      userData: user,
+      userData: CustomerUserData(isGuest: isGuest, name: name, phone: phone),
       activeIndex: 0,
     );
-
-    // TODO: ekhane SharedPreferences e save korte paro
   }
 
-  /// Logout
-  void logout() {
-    state = const CustomerAppState.initial();
-    // TODO: SharedPreferences clear
+  /// Splash/first load এ লোকাল থেকে user hydrate করার কাজ
+  Future<void> _initFromLocal() async {
+    final token = await AuthLocalStorage.getToken();
+    final user = await AuthLocalStorage.getUserJson();
+
+    if (token != null && user != null) {
+      final roleRaw = (user['role']).toString().toUpperCase();
+      _log.i('CustomerAppController _initFromLocal role: $roleRaw');
+
+      // শুধু CUSTOMER রোল হলে এখানে hydrate করবে
+      if (roleRaw == 'CUSTOMER') {
+        state = state.copyWith(
+          isAuthenticated: true,
+          userData: CustomerUserData(
+            isGuest: false,
+            name: user['name']?.toString(),
+            phone: user['phone']?.toString(),
+          ),
+        );
+      }
+    }
   }
 
   /// Bottom nav change
@@ -86,18 +78,43 @@ class CustomerAppController extends StateNotifier<CustomerAppState> {
     state = state.copyWith(activeIndex: index);
   }
 
-  /// Dashboard theke "View All" -> bookings
+  /// Home screen থেকে "View all" → Bookings ট্যাবে
   void goToBookings() {
-    selectTab(1);
+    state = state.copyWith(activeIndex: 1);
   }
 
-  /// Guest -> Sign up e jete chaile
+  /// Guest থেকে Sign Up flow শুরু করতে চাইলে
   void resetForSignUpFromGuest() {
-    state = const CustomerAppState.initial();
+    state = CustomerAppState.initial();
+  }
+
+  /// Login সফল হলে call করো
+  Future<void> onLoginSuccess({
+    required String token,
+    required Map<String, dynamic> user,
+  }) async {
+    await AuthLocalStorage.saveLoginData(token: token, userJson: user);
+
+    state = state.copyWith(
+      isAuthenticated: true,
+      userData: CustomerUserData(
+        isGuest: false,
+        name: user['name']?.toString(),
+        phone: user['phone']?.toString(),
+      ),
+      activeIndex: 0,
+    );
+  }
+
+  /// Logout
+  Future<void> logout() async {
+    await AuthLocalStorage.clearLoginData;
+    state = CustomerAppState.initial();
   }
 }
 
-/// Provider
+/// -------------------- Provider --------------------
+
 final customerAppControllerProvider =
     StateNotifierProvider<CustomerAppController, CustomerAppState>((ref) {
       return CustomerAppController();

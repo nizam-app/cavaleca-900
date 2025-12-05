@@ -1,3 +1,4 @@
+// lib/features/customer/screen/customer_app_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -42,37 +43,35 @@ class CustomerAppScreen extends ConsumerWidget {
     final state = ref.watch(customerAppControllerProvider);
     final controller = ref.read(customerAppControllerProvider.notifier);
 
-    // 1) Auth hoy nai -> auth screen dekhabo
+    // 1) Auth হয় নাই → auth screen
     if (!state.isAuthenticated) {
       return CustomerAuthScreen(
-        // back dile role selection e jabe
         onBack: () => context.go(RoleSelectionScreen.routeName),
       );
     }
 
     final bool isGuest = state.userData.isGuest;
 
-    // 2) Auth hoye gele bottom-nav shell
+    // 2) Auth হয়ে গেলে bottom-nav shell
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       body: SafeArea(child: _buildPage(context, state, controller)),
       bottomNavigationBar: _CustomerBottomNavBar(
         activeIndex: state.activeIndex,
         isGuest: isGuest,
-        unreadNotifications: 3, // TODO: backend theke ashbe
+        unreadNotifications: 3, // TODO: backend
         onTap: controller.selectTab,
       ),
     );
   }
 
   Widget _buildPage(
-      BuildContext context,
-      CustomerAppState state,
-      CustomerAppController controller,
-      ) {
+    BuildContext context,
+    CustomerAppState state,
+    CustomerAppController controller,
+  ) {
     final bool isGuest = state.userData.isGuest;
 
-    /// Guest & Logged-in er jonno alada mapping
     if (isGuest) {
       // Guest -> 3 tab: 0=Home, 1=Bookings, 2=Profile
       switch (state.activeIndex) {
@@ -93,12 +92,14 @@ class CustomerAppScreen extends ConsumerWidget {
             isGuest: true,
             userName: state.userData.name,
             userPhone: state.userData.phone,
-            onLogout: () {
-              controller.logout();
+            onLogout: () async {
+              await controller.logout();
+              // logout করলে role selection এ পাঠাই
+              // ignore: use_build_context_synchronously
               context.go(RoleSelectionScreen.routeName);
             },
             onNavigateToNotifications: () {
-              // guest er jonno notifications nai -> kichu korbo na / toast dite paro
+              // guest er jonno notifications nai
             },
             onSignUp: controller.resetForSignUpFromGuest,
           );
@@ -128,12 +129,12 @@ class CustomerAppScreen extends ConsumerWidget {
             isGuest: false,
             userName: state.userData.name,
             userPhone: state.userData.phone,
-            onLogout: () {
-              controller.logout();
+            onLogout: () async {
+              await controller.logout();
+              // ignore: use_build_context_synchronously
               context.go(RoleSelectionScreen.routeName);
             },
             onNavigateToNotifications: () {
-              // Profile theke "Notifications" btn -> Alerts tab e jao
               controller.selectTab(2);
             },
             onSignUp: controller.resetForSignUpFromGuest,
@@ -191,7 +192,6 @@ class _CustomerBottomNavBar extends StatelessWidget {
                 onTap: () => onTap(1),
               ),
 
-              /// Guest hole Alerts tab hide
               if (!isGuest)
                 _NavItem(
                   label: 'alerts'.tr(),
@@ -201,7 +201,6 @@ class _CustomerBottomNavBar extends StatelessWidget {
                   badgeCount: unreadNotifications,
                 ),
 
-              // Profile index: guest -> 2, logged-in -> 3
               _NavItem(
                 label: 'profile'.tr(),
                 icon: Icons.person_outline,
