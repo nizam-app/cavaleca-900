@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 
 /// ------------------------------------------------------
 ///  Colors (same style as Job Details popup)
@@ -14,11 +15,13 @@ const Color kPrimaryGreen = Color(0xFF00B357);
 const Color kBorderLight = Color(0xFFE5E5E5);
 
 class Complitejob extends StatelessWidget {
+  final int woId;
   final double jobPayment;
-  final double bonusRate; // 0.05 = 5%
+  final double bonusRate;
 
   const Complitejob({
     super.key,
+    required this.woId,
     this.jobPayment = 150,
     this.bonusRate = 0.05,
   });
@@ -46,9 +49,32 @@ class Complitejob extends StatelessWidget {
                 children: [
                   _buildHeader(context),
                   SizedBox(height: 18.h),
-                  _buildWorkPhotosCard(onTap: () {
-                    // TODO: open image picker
-                  }),
+                  _buildWorkPhotosCard(
+                    onTap: () async {
+                      try {
+                        await TechnicianJobsApi.completeWorkOrder(
+                          woId: woId,
+                          completionNotes:
+                              '', // আপাতত ফাঁকা, চাইলে TextField থেকে নেবে
+                          materialsUsedJson:
+                              '[]', // পরে materials list থেকে বানাবে
+                        );
+
+                        Navigator.of(context).pop(); // close Complete dialog
+                        Navigator.of(context).pop(); // close Jobdetails dialog
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Job completed successfully'),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to complete job: $e')),
+                        );
+                      }
+                    },
+                  ),
                   SizedBox(height: 14.h),
                   _buildNotesField(),
                   SizedBox(height: 14.h),
@@ -129,10 +155,7 @@ class Complitejob extends StatelessWidget {
             decoration: BoxDecoration(
               color: kCardBg,
               borderRadius: BorderRadius.circular(18.r),
-              border: Border.all(
-                color: kBorderLight,
-                width: 1,
-              ),
+              border: Border.all(color: kBorderLight, width: 1),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -191,50 +214,45 @@ class Complitejob extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
 
-             Container(
-                 decoration: BoxDecoration(
-                   color: const Color(0xFFF4F4F4),
-                   borderRadius: BorderRadius.circular(20.r),
-                 //border: Border.all(color: kTextMuted, width: 0.5.w),
-                  ),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F4F4),
+            borderRadius: BorderRadius.circular(20.r),
+            //border: Border.all(color: kTextMuted, width: 0.5.w),
+          ),
 
-                   child: TextField(
-                  maxLines: 4,
-                 style: TextStyle(
-                 fontSize: 12.sp,
+          child: TextField(
+            maxLines: 4,
+            style: TextStyle(
+              fontSize: 12.sp,
               // color: kTextMain,
-                ),
-                decoration: InputDecoration(
-                    hintText: 'Add any notes about the work completed',
-                  hintStyle: TextStyle(
-                  fontSize: 12.sp,
-                  color: kTextMuted,
-                 ),
-                  // border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-               focusedBorder: InputBorder.none,
-             ),
             ),
-          )
-
-
-        ],
-     );
+            decoration: InputDecoration(
+              hintText: 'Add any notes about the work completed',
+              hintStyle: TextStyle(fontSize: 12.sp, color: kTextMuted),
+              // border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   /// -------------------  BONUS CARD  -------------------
   Widget _buildBonusCard(
-      double jobPayment, double bonusRate, double bonusValue) {
+    double jobPayment,
+    double bonusRate,
+    double bonusValue,
+  ) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFFE7FAF0),
-            Color(0xFFF4FFF9),
-          ],
+          colors: [Color(0xFFE7FAF0), Color(0xFFF4FFF9)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -309,11 +327,7 @@ class Complitejob extends StatelessWidget {
             ],
           ),
           SizedBox(height: 10.h),
-          Divider(
-            color: const Color(0xFFD6F2E2),
-            height: 1.h,
-            thickness: 1,
-          ),
+          Divider(color: const Color(0xFFD6F2E2), height: 1.h, thickness: 1),
           SizedBox(height: 10.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -357,31 +371,31 @@ class Complitejob extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child:GestureDetector(
-            onTap: (){
+          child: GestureDetector(
+            onTap: () {
               context.pop();
             },
             child: Container(
               height: 46.h,
               width: double.infinity,
               decoration: BoxDecoration(
-                color:kCardBg,
+                color: kCardBg,
                 borderRadius: BorderRadius.circular(18.r),
               ),
               child: Center(
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                    ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
                   ),
+                ),
               ),
+            ),
           ),
-          ),
-        SizedBox(width: 10.w,),
+        ),
+        SizedBox(width: 10.w),
         Expanded(
           child: GestureDetector(
             onTap: () {
@@ -416,7 +430,6 @@ class Complitejob extends StatelessWidget {
               ),
             ),
           ),
-
         ),
       ],
     );

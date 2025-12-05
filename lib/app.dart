@@ -43,6 +43,7 @@ class App extends StatelessWidget {
       locale: context.locale,
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
+
       theme: ThemeData(
         brightness: Brightness.light,
         primaryColor: AllColor.black,

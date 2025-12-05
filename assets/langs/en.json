@@ -312,5 +312,24 @@
   "this_month_breakdown": "This Month Breakdown",
   "jobs_completed_amount": "Jobs Completed",
   "commission_earnings_rate": "Commission",
-  "recent_transactions": "Recent Transactions"
+  "recent_transactions": "Recent Transactions",
+
+  
+  "hello_guest": "Hello, Guest",
+  "booking_as_guest": "Booking as guest",
+  "book_new_service": "Book New Service",
+  "service_categories": "Service Categories",
+  "guest_info": "You're browsing as a guest. Create an account to view booking history and track your requests.",
+
+  "general_title": "General",
+  "general_subtitle": "Regular maintenance and repairs",
+  "general_services_count": "9 services",
+
+  "hvac_title": "HVAC Services",
+  "hvac_subtitle": "Heating, cooling, and ventilation",
+  "hvac_services_count": "8 services",
+
+  "cleaning_title": "Cleaning",
+  "cleaning_subtitle": "Professional home and office cleaning",
+  "cleaning_services_count": "8 services"
 }

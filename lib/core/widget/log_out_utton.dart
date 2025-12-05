@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import '../../features/freelancer_pages/profile/screen/freelancer_profile_screen.dart';
+import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
 
 class Signoutbutton extends StatelessWidget {
   const Signoutbutton({required this.onTap});
@@ -33,11 +32,7 @@ class Signoutbutton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.logout_rounded,
-                  size: 20.sp,
-                  color: kAccentRed,
-                ),
+                Icon(Icons.logout_rounded, size: 20.sp, color: kAccentRed),
                 SizedBox(width: 6.w),
                 Text(
                   'Sign Out',

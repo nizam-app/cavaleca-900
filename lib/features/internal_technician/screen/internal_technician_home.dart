@@ -1,94 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:workpleis/features/internal_technician/widget/compliteJob.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
+import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 
-/// ------------------------------------------------------
-///  Models
-/// ------------------------------------------------------
-
-enum JobStatus { assigned, accepted, inProgress, completed }
-
-enum JobPriority { low, medium, high }
-
-class Job {
-  final int id;
-  final String title;
-  final String customer;
-  final String customerPhone;
-  final String location;
-  final String address;
-  final String date;
-  final String time;
-  final String payment; // example: "$150"
-  final String bonus;   // example: "$25" (optional, now unused in calc)
-  final String description;
-  final String category;
-  final JobStatus status;
-  final JobPriority? priority;
-
-  const Job({
-    required this.id,
-    required this.title,
-    required this.customer,
-    required this.customerPhone,
-    required this.location,
-    required this.address,
-    required this.date,
-    required this.time,
-    required this.payment,
-    required this.bonus,
-    required this.description,
-    required this.category,
-    required this.status,
-    this.priority,
-  });
-
-  Job copyWith({
-    int? id,
-    String? title,
-    String? customer,
-    String? customerPhone,
-    String? location,
-    String? address,
-    String? date,
-    String? time,
-    String? payment,
-    String? bonus,
-    String? description,
-    String? category,
-    JobStatus? status,
-    JobPriority? priority,
-  }) {
-    return Job(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      customer: customer ?? this.customer,
-      customerPhone: customerPhone ?? this.customerPhone,
-      location: location ?? this.location,
-      address: address ?? this.address,
-      date: date ?? this.date,
-      time: time ?? this.time,
-      payment: payment ?? this.payment,
-      bonus: bonus ?? this.bonus,
-      description: description ?? this.description,
-      category: category ?? this.category,
-      status: status ?? this.status,
-      priority: priority ?? this.priority,
-    );
-  }
-}
-
-/// ------------------------------------------------------
-///  Screen
-/// ------------------------------------------------------
-
 class InternalDashboardV2Screen extends StatefulWidget {
-  const InternalDashboardV2Screen({
-    super.key,
-    this.userName = 'Sarah',
-  });
+  const InternalDashboardV2Screen({super.key, this.userName = 'Sarah'});
 
   static const String routeName = '/internal-dashboard';
 
@@ -102,12 +19,12 @@ class InternalDashboardV2Screen extends StatefulWidget {
 class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   static const int bonusPercentage = 5; // 5% bonus on verified jobs
 
-  // active + in-progress jobs (mock data)
-  late List<Job> jobs;
-  // completed jobs (mock data)
-  late List<Job> completedJobs;
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  Job? selectedJob;
+  /// API theke ashbe
+  List<InternalJob> _activeJobs = []; // assigned + in_progress
+  List<InternalJob> _completedJobs = []; // completed
 
   /// 0 = Active, 1 = Completed
   int activeTabIndex = 0;
@@ -115,111 +32,33 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   @override
   void initState() {
     super.initState();
+    _loadJobs();
+  }
 
-    // ------------------------------
-    // Mock data (same as TSX)
-    // ------------------------------
-    jobs = [
-      Job(
-        id: 1,
-        title: 'HVAC Emergency Repair',
-        customer: 'Michael Johnson',
-        customerPhone: '+1 234 567 8900',
-        location: '2.3 km away',
-        address: '123 Main St, Apt 4B',
-        date: 'Today',
-        time: '2:00 PM',
-        payment: '\$150',
-        bonus: '\$25',
-        description: 'Emergency AC unit repair - system not cooling',
-        category: 'HVAC Services',
-        status: JobStatus.inProgress,
-        priority: JobPriority.high,
-      ),
-      Job(
-        id: 2,
-        title: 'Electrical Installation',
-        customer: 'Sarah Williams',
-        customerPhone: '+1 234 567 8901',
-        location: '1.8 km away',
-        address: '456 Oak Ave, Suite 12',
-        date: 'Today',
-        time: '4:00 PM',
-        payment: '\$120',
-        bonus: '\$15',
-        description: 'Install new electrical outlets in office space',
-        category: 'Electrical Services',
-        status: JobStatus.accepted,
-        priority: JobPriority.medium,
-      ),
-      Job(
-        id: 3,
-        title: 'Plumbing Maintenance',
-        customer: 'David Brown',
-        customerPhone: '+1 234 567 8902',
-        location: '3.5 km away',
-        address: '789 Pine Street',
-        date: 'Tomorrow',
-        time: '10:00 AM',
-        payment: '\$95',
-        bonus: '\$10',
-        description: 'Routine plumbing inspection and maintenance',
-        category: 'Plumbing Services',
-        status: JobStatus.accepted,
-        priority: JobPriority.low,
-      ),
-    ];
+  Future<void> _loadJobs() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    completedJobs = [
-      Job(
-        id: 4,
-        title: 'HVAC Installation',
-        customer: 'Emily Davis',
-        customerPhone: '+1 234 567 8903',
-        location: 'Downtown',
-        address: '321 Elm Road',
-        date: 'Nov 3, 2025',
-        time: '9:00 AM',
-        payment: '\$300',
-        bonus: '\$40',
-        description: 'New AC unit installation',
-        category: 'HVAC Services',
-        status: JobStatus.completed,
-        priority: JobPriority.high,
-      ),
-      Job(
-        id: 5,
-        title: 'Electrical Inspection',
-        customer: 'Robert Miller',
-        customerPhone: '+1 234 567 8904',
-        location: 'Northside',
-        address: '654 Maple Drive',
-        date: 'Nov 2, 2025',
-        time: '1:00 PM',
-        payment: '\$130',
-        bonus: '\$15',
-        description: 'Safety inspection of electrical panel',
-        category: 'Electrical Services',
-        status: JobStatus.completed,
-        priority: JobPriority.medium,
-      ),
-      Job(
-        id: 6,
-        title: 'Plumbing Repair',
-        customer: 'Jennifer Wilson',
-        customerPhone: '+1 234 567 8905',
-        location: 'Westside',
-        address: '987 Cedar Lane',
-        date: 'Nov 1, 2025',
-        time: '11:00 AM',
-        payment: '\$110',
-        bonus: '\$12',
-        description: 'Water heater repair',
-        category: 'Plumbing Services',
-        status: JobStatus.completed,
-        priority: JobPriority.high,
-      ),
-    ];
+    try {
+      // আগের মতোই same API usage
+      final active = await TechnicianJobsApi.fetchJobs('active');
+      final done = await TechnicianJobsApi.fetchJobs('done');
+
+      setState(() {
+        _activeJobs = active;
+        _completedJobs = done;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   // ------------------------------------------------------
@@ -232,30 +71,39 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     return (paymentAmount * bonusPercentage) / 100;
   }
 
-  int get _openJobs =>
-      jobs.where((j) => j.status == JobStatus.accepted).length;
+  /// Assigned / Ready jobs = active but not inProgress / completed
+  int get _openJobs => _activeJobs
+      .where(
+        (j) =>
+            j.status != JobStatus.inProgress && j.status != JobStatus.completed,
+      )
+      .length;
 
   int get _inProgressJobs =>
-      jobs.where((j) => j.status == JobStatus.inProgress).length;
+      _activeJobs.where((j) => j.status == JobStatus.inProgress).length;
 
-  int get _completedCount => completedJobs.length;
+  int get _completedCount => _completedJobs.length;
 
-  double get _totalBonus => completedJobs.fold(
-    0,
-        (sum, job) => sum + _calculateBonus(job.payment),
-  );
+  double get _totalBonus =>
+      _completedJobs.fold(0, (sum, job) => sum + _calculateBonus(job.payment));
 
-  double get _weeklyBonus => jobs
+  double get _weeklyBonus => _activeJobs
       .where(
-        (j) => j.status == JobStatus.inProgress || j.status == JobStatus.accepted,
-  )
+        (j) =>
+            j.status == JobStatus.inProgress || j.status != JobStatus.completed,
+      )
       .fold(0, (sum, job) => sum + _calculateBonus(job.payment));
 
-  void _handleJobUpdate(Job updatedJob) {
+  void _handleJobUpdate(InternalJob updatedJob) {
     setState(() {
-      jobs = jobs
+      _activeJobs = _activeJobs
           .map((job) => job.id == updatedJob.id ? updatedJob : job)
           .toList();
+
+      if (updatedJob.status == JobStatus.completed) {
+        _completedJobs = [..._completedJobs, updatedJob];
+        _activeJobs = _activeJobs.where((j) => j.id != updatedJob.id).toList();
+      }
     });
   }
 
@@ -309,37 +157,48 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
           children: [
             // ---------------- Header ----------------
             _buildHeader(theme),
+
             // --------------- Content ----------------
             Expanded(
-              child: SingleChildScrollView(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Stats grid
-                    _buildStatsGrid(stats),
-                    const SizedBox(height: 16),
-                    // Tabs (Active / Completed)
-                    _buildTabs(),
-                    const SizedBox(height: 16),
-                    // Tab content
-                    if (activeTabIndex == 0)
-                      _buildActiveJobsSection()
-                    else
-                      _buildCompletedJobsSection(),
-                    const SizedBox(height: 16),
-                    // Performance card
-                    _buildPerformanceCard(),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Stats grid
+                          _buildStatsGrid(stats),
+                          const SizedBox(height: 16),
+                          // Tabs (Active / Completed)
+                          _buildTabs(),
+                          const SizedBox(height: 16),
+                          // Tab content
+                          if (activeTabIndex == 0)
+                            _buildActiveJobsSection()
+                          else
+                            _buildCompletedJobsSection(),
+                          const SizedBox(height: 16),
+                          // Performance card
+                          _buildPerformanceCard(),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
             ),
-            // ---------------- TODO: Workflow modal / screen ----------------
-            // React code e InternalWorkflow overlay chilo.
-            // Pore tumi alada TSX diye dile ami seta alada screen/Modal hishebe
-            // convert kore dibo, ebong ekhane use korbo.
           ],
         ),
       ),
@@ -350,23 +209,13 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFFC20001),
-            Color(0xFF9A0001),
-          ],
+          colors: [Color(0xFFC20001), Color(0xFF9A0001)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: 16,
-      ),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 16),
       child: Column(
         children: [
           const SizedBox(height: 16),
@@ -409,9 +258,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 ),
                 child: Center(
                   child: Image.asset(
-
                     'assets/images/logoicon.png',
-                    // width: 36,
                     height: 36,
                     fit: BoxFit.contain,
                   ),
@@ -425,8 +272,10 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
             children: [
               Expanded(
                 child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(18),
@@ -456,8 +305,10 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(18),
@@ -538,8 +389,10 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 setState(() => activeTabIndex = 0);
               },
               child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: activeTabIndex == 0
                       ? const Color(0xFFC20001)
@@ -567,8 +420,10 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 setState(() => activeTabIndex = 1);
               },
               child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: activeTabIndex == 1
                       ? const Color(0xFFC20001)
@@ -594,36 +449,30 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     );
   }
 
+  // ------------------------------------------------------
+  //  Active tab: In Progress + Assigned lists
+  // ------------------------------------------------------
+
   Widget _buildActiveJobsSection() {
-    if (jobs.isEmpty) {
+    if (_activeJobs.isEmpty) {
       return Card(
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(
-                Icons.work_outline,
-                size: 40,
-                color: Color(0xFFD1D5DB),
-              ),
+            children: [
+              Icon(Icons.work_outline, size: 40, color: Color(0xFFD1D5DB)),
               SizedBox(height: 8),
               Text(
                 'No active jobs assigned',
-                style: TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
               ),
               SizedBox(height: 4),
               Text(
                 "You'll be notified when new jobs are assigned",
-                style: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -632,17 +481,24 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       );
     }
 
-    final inProgressJobs =
-    jobs.where((j) => j.status == JobStatus.inProgress).toList();
-    final acceptedJobs =
-    jobs.where((j) => j.status == JobStatus.accepted).toList();
+    final inProgressJobs = _activeJobs
+        .where((j) => j.status == JobStatus.inProgress)
+        .toList();
+
+    final assignedJobs = _activeJobs
+        .where(
+          (j) =>
+              j.status != JobStatus.inProgress &&
+              j.status != JobStatus.completed,
+        )
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (inProgressJobs.isNotEmpty) ...[
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.access_time, size: 16, color: Color(0xFF4B5563)),
               SizedBox(width: 6),
               Text(
@@ -663,9 +519,9 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
           ),
           const SizedBox(height: 16),
         ],
-        if (acceptedJobs.isNotEmpty) ...[
-          Row(
-            children: const [
+        if (assignedJobs.isNotEmpty) ...[
+          const Row(
+            children: [
               Icon(Icons.work_outline, size: 16, color: Color(0xFF4B5563)),
               SizedBox(width: 6),
               Text(
@@ -680,24 +536,29 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
           ),
           const SizedBox(height: 8),
           Column(
-            children:
-            acceptedJobs.map((job) => _buildJobCard(job: job)).toList(),
+            children: assignedJobs
+                .map((job) => _buildJobCard(job: job))
+                .toList(),
           ),
         ],
       ],
     );
   }
 
+  // ------------------------------------------------------
+  //  Completed tab
+  // ------------------------------------------------------
+
   Widget _buildCompletedJobsSection() {
-    if (completedJobs.isEmpty) {
+    if (_completedJobs.isEmpty) {
       return Card(
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Icon(
                 Icons.check_circle_outline,
                 size: 40,
@@ -706,18 +567,12 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
               SizedBox(height: 8),
               Text(
                 'No completed jobs yet',
-                style: TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
               ),
               SizedBox(height: 4),
               Text(
                 'Your completed work will appear here',
-                style: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -727,10 +582,8 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     }
 
     return Column(
-      children: completedJobs
-          .map(
-            (job) => _buildCompletedJobCard(job: job),
-      )
+      children: _completedJobs
+          .map((job) => _buildCompletedJobCard(job: job))
           .toList(),
     );
   }
@@ -742,10 +595,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFFF5F3FF),
-              Color(0xFFFDF2F8),
-            ],
+            colors: [Color(0xFFF5F3FF), Color(0xFFFDF2F8)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -791,11 +641,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 ],
               ),
             ),
-            const Icon(
-              Icons.trending_up,
-              size: 26,
-              color: Color(0xFF7C3AED),
-            ),
+            const Icon(Icons.trending_up, size: 26, color: Color(0xFF7C3AED)),
           ],
         ),
       ),
@@ -806,29 +652,23 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   //  Card builders
   // ------------------------------------------------------
 
-  Widget _buildJobCard({required Job job}) {
+  Widget _buildJobCard({required InternalJob job}) {
     final isInProgress = job.status == JobStatus.inProgress;
 
     final gradientDecoration = isInProgress
         ? BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [
-          Color(0xFFEFF6FF),
-          Color(0xFFDBEAFE),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(
-        color: const Color(0xFFBFDBFE),
-        width: 1.4,
-      ),
-    )
+            gradient: const LinearGradient(
+              colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFBFDBFE), width: 1.4),
+          )
         : BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-    );
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          );
 
     final bool isHighPriority = job.priority == JobPriority.high;
 
@@ -848,12 +688,12 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
         decoration: gradientDecoration.copyWith(
           boxShadow: isHighPriority
               ? [
-            BoxShadow(
-              color: const Color(0xFEEBEB).withOpacity(0.8),
-              blurRadius: 6,
-              spreadRadius: 1,
-            ),
-          ]
+                  BoxShadow(
+                    color: const Color(0xFFFEE2E2).withOpacity(0.8),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  ),
+                ]
               : gradientDecoration.boxShadow,
         ),
         child: Padding(
@@ -890,7 +730,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          job.category,
+                          job.category ?? '',
                           style: const TextStyle(
                             color: Color(0xFF6B7280),
                             fontSize: 12,
@@ -902,6 +742,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 ],
               ),
               const SizedBox(height: 10),
+
               // address & date
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -916,7 +757,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          job.address,
+                          job.address ?? job.location,
                           style: const TextStyle(
                             color: Color(0xFF4B5563),
                             fontSize: 12,
@@ -935,7 +776,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${job.date} at ${job.time}',
+                        '${job.date}${job.time != null ? ' at ${job.time}' : ''}',
                         style: const TextStyle(
                           color: Color(0xFF4B5563),
                           fontSize: 12,
@@ -948,6 +789,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
               const SizedBox(height: 10),
               const Divider(height: 1),
               const SizedBox(height: 8),
+
               // status badge + bonus + button
               Row(
                 children: [
@@ -965,24 +807,22 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                   SizedBox(
                     height: 32,
                     child: ElevatedButton(
-
                       // Continue and View Details Button;
-
-                        onPressed: () {
-                          if (isInProgress) {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (_) => Jobdetails(),
-                            );
-                          } else {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (_) => Viewjobdetails(),
-                            );
-                          }
-                        },
+                      onPressed: () {
+                        if (isInProgress) {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (_) => Jobdetails(job: job),
+                          );
+                        } else {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (_) => Viewjobdetails(),
+                          );
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
@@ -1011,7 +851,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     );
   }
 
-  Widget _buildCompletedJobCard({required Job job}) {
+  Widget _buildCompletedJobCard({required InternalJob job}) {
     final bonus = _calculateBonus(job.payment);
 
     return Container(
@@ -1095,7 +935,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    job.address,
+                    job.address ?? job.location,
                     style: const TextStyle(
                       color: Color(0xFF4B5563),
                       fontSize: 12,
@@ -1134,7 +974,9 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                 if (job.priority == JobPriority.high)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE0F2FE),
                       borderRadius: BorderRadius.circular(999),
@@ -1201,19 +1043,12 @@ class _StatCard extends StatelessWidget {
                 color: stat.iconBg,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                stat.icon,
-                size: 20,
-                color: stat.iconColor,
-              ),
+              child: Icon(stat.icon, size: 20, color: stat.iconColor),
             ),
             const SizedBox(height: 10),
             Text(
               stat.label,
-              style: const TextStyle(
-                color: Color(0xFF6B7280),
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
             ),
             const SizedBox(height: 4),
             Text(
@@ -1227,10 +1062,7 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               stat.subtext,
-              style: const TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
             ),
           ],
         ),
@@ -1309,7 +1141,7 @@ class _StatusBadge extends StatelessWidget {
     String label;
 
     switch (status) {
-      case JobStatus.accepted:
+      case JobStatus.assigned:
         bg = const Color(0xFFFEF3C7);
         text = const Color(0xFF92400E);
         label = 'Ready';
@@ -1319,8 +1151,12 @@ class _StatusBadge extends StatelessWidget {
         text = const Color(0xFF1D4ED8);
         label = 'In Progress';
         break;
+      case JobStatus.completed:
+        bg = const Color(0xFFD1FAE5);
+        text = const Color(0xFF047857);
+        label = 'Completed';
+        break;
       default:
-      // other statuses not shown on active list
         bg = const Color(0xFFE5E7EB);
         text = const Color(0xFF4B5563);
         label = 'Status';

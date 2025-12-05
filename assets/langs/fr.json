@@ -312,5 +312,22 @@
   "this_month_breakdown": "Répartition de ce mois",
   "jobs_completed_amount": "Jobs terminés",
   "commission_earnings_rate": "Commission",
-  "recent_transactions": "Transactions récentes"
+  "recent_transactions": "Transactions récentes",
+  "hello_guest": "Bonjour, invité",
+  "booking_as_guest": "Réservation en tant qu’invité",
+  "book_new_service": "Réserver un nouveau service",
+  "service_categories": "Catégories de services",
+  "guest_info": "Vous naviguez en tant qu’invité. Créez un compte pour voir l’historique des réservations et suivre vos demandes.",
+
+  "general_title": "Général",
+  "general_subtitle": "Entretien régulier et réparations",
+  "general_services_count": "9 services",
+
+  "hvac_title": "Services CVC",
+  "hvac_subtitle": "Chauffage, climatisation et ventilation",
+  "hvac_services_count": "8 services",
+
+  "cleaning_title": "Nettoyage",
+  "cleaning_subtitle": "Nettoyage professionnel de maison et de bureau",
+  "cleaning_services_count": "8 services"
 }

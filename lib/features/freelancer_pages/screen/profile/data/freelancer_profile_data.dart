@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
-import 'package:workpleis/features/freelancer_pages/profile/screen/freelancer_profile_screen.dart';
+import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
 
 class FreelancerProfileRepository {
   final http.Client _client;

@@ -1,12 +1,14 @@
 // lib/features/freelancer/screens/freelancer_profile_screen.dart
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:workpleis/core/widget/signOutButton.dart';
+import 'package:workpleis/core/widget/log_out_utton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
-import 'package:workpleis/features/freelancer_pages/profile/data/freelancer_profile_data.dart';
+import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
+import 'package:workpleis/features/freelancer_pages/screen/profile/data/freelancer_profile_data.dart';
 
 /// ---------------------------------------------------------------------------
 /// Colors
@@ -46,7 +48,7 @@ class FreelancerProfileData {
 /// ---------------------------------------------------------------------------
 /// Language enum + helper
 /// ---------------------------------------------------------------------------
-enum AppLanguage { en, fr, ar }
+enum AppLanguage { en, fr }
 
 extension AppLanguageLabel on AppLanguage {
   String get display {
@@ -55,8 +57,6 @@ extension AppLanguageLabel on AppLanguage {
         return 'English';
       case AppLanguage.fr:
         return 'Français';
-      case AppLanguage.ar:
-        return 'العربية';
     }
   }
 
@@ -66,14 +66,32 @@ extension AppLanguageLabel on AppLanguage {
         return 'English';
       case AppLanguage.fr:
         return 'French';
-      case AppLanguage.ar:
-        return 'Arabic';
+    }
+  }
+
+  AppLanguage _mapLocaleToLanguage(Locale locale) {
+    switch (locale.languageCode) {
+      case 'fr':
+        return AppLanguage.fr;
+      case 'en':
+      default:
+        return AppLanguage.en;
+    }
+  }
+
+  Locale _mapLanguageToLocale(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.fr:
+        return const Locale('fr');
+      case AppLanguage.en:
+      default:
+        return const Locale('en');
     }
   }
 }
 
 /// ---------------------------------------------------------------------------
-/// Riverpod provider – API theke profile ene UI model banাবে
+/// Riverpod provider – API theke profile ene UI model বানাবে
 /// ---------------------------------------------------------------------------
 final freelancerProfileProvider = FutureProvider<FreelancerProfileData>((
   ref,
@@ -100,6 +118,12 @@ class _FreelancerProfileScreenState
     extends ConsumerState<FreelancerProfileScreen> {
   bool _isAvailable = true;
   AppLanguage _language = AppLanguage.en;
+
+  void _showToast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +155,7 @@ class _FreelancerProfileScreenState
                     isAvailable: _isAvailable,
                     onChanged: (val) {
                       setState(() => _isAvailable = val);
-                      // এখানে চাইলে availability update API মারতে পারো
+                      // TODO: availability update API
                     },
                   ),
                   SizedBox(height: 14.h),
@@ -143,15 +167,10 @@ class _FreelancerProfileScreenState
                     onSelectLanguage: () => _showLanguageSheet(context),
                   ),
                   SizedBox(height: 24.h),
-                  Signoutbutton(
-                    onTap: () {
-                      // TODO: auth logout logic (token clear, API/logout ইত্যাদি)
-                      context.push(RoleSelectionScreen.routeName);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Signed out')),
-                      );
-                    },
-                  ),
+
+                  /// ---------- LOGOUT BUTTON ----------
+                  Signoutbutton(onTap: _confirmAndLogout),
+
                   SizedBox(height: 32.h),
                 ],
               ),
@@ -186,7 +205,7 @@ class _FreelancerProfileScreenState
               ),
               SizedBox(height: 12.h),
               Text(
-                'Select Language',
+                'Select Language', // chai le pore .tr() korbe
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -202,8 +221,6 @@ class _FreelancerProfileScreenState
               _LanguageTile(language: AppLanguage.en, current: _language),
               SizedBox(height: 8.h),
               _LanguageTile(language: AppLanguage.fr, current: _language),
-              SizedBox(height: 8.h),
-              _LanguageTile(language: AppLanguage.ar, current: _language),
               SizedBox(height: 16.h),
             ],
           ),
@@ -212,8 +229,79 @@ class _FreelancerProfileScreenState
     );
 
     if (selected != null && selected != _language) {
+      // 🔥 1) EasyLocalization er locale change
+      final newLocale = _mapLanguageToLocale(selected);
+      await context.setLocale(newLocale);
+
+      // 🔥 2) local state update (subtitle update etc.)
       setState(() => _language = selected);
-      // এখানে localization update করবে (EasyLocalization / Riverpod)
+
+      // 🔥 3) optional toast
+      _showToast('Language updated to ${selected.display}');
+    }
+  }
+
+  AppLanguage _mapLocaleToLanguage(Locale locale) {
+    switch (locale.languageCode) {
+      case 'fr':
+        return AppLanguage.fr;
+      case 'en':
+      default:
+        return AppLanguage.en;
+    }
+  }
+
+  Locale _mapLanguageToLocale(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.fr:
+        return const Locale('fr');
+      case AppLanguage.en:
+      default:
+        return const Locale('en');
+    }
+  }
+
+  /// -------------------------------------------------------------------------
+  /// Logout confirm + API call
+  /// -------------------------------------------------------------------------
+  Future<void> _confirmAndLogout() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Confirm'),
+          content: const Text('Are you sure you want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Yes',
+                style: TextStyle(color: Color(0xFFC20001)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await CustomerLogOut.logout();
+      _showToast('Logout successful');
+
+      // token clear হয়ে গেছে – এখন role selection এ পাঠিয়ে দাও
+      // যদি router এ name ব্যবহার করো তবে: context.goNamed(RoleSelectionScreen.routeName);
+      context.go(RoleSelectionScreen.routeName);
+    } catch (e) {
+      _showToast('Logout failed: $e');
     }
   }
 }
@@ -464,7 +552,7 @@ class _AvailabilityCard extends StatelessWidget {
 }
 
 /// ---------------------------------------------------------------------------
-/// Skills & Specializations card (API theke skills আসবে)
+/// Skills & Specializations card
 /// ---------------------------------------------------------------------------
 class _SkillsCard extends StatelessWidget {
   const _SkillsCard({required this.skills});
@@ -572,7 +660,7 @@ class _SkillChip extends StatelessWidget {
 }
 
 /// ---------------------------------------------------------------------------
-/// Settings menu (certifications, payment settings, language, support)
+/// Settings section
 /// ---------------------------------------------------------------------------
 class _SettingsSection extends StatelessWidget {
   const _SettingsSection({
@@ -596,7 +684,7 @@ class _SettingsSection extends StatelessWidget {
           title: 'My Certifications',
           subtitle: '${profile.verifiedCerts} verified',
           onTap: () {
-            // certifications screen
+            onSelectLanguage;
           },
         ),
         SizedBox(height: 8.h),
@@ -606,9 +694,7 @@ class _SettingsSection extends StatelessWidget {
           iconColor: const Color(0xFF16A34A),
           title: 'Payment Settings',
           subtitle: profile.bankLinked ? 'Bank linked' : 'Add payout method',
-          onTap: () {
-            // payment settings
-          },
+          onTap: onSelectLanguage,
         ),
         SizedBox(height: 8.h),
         _SettingsTile(

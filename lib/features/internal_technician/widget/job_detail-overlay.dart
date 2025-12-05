@@ -1,8 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../screen/internal_jobs.dart';
+import '../screen/job/model/internal_job_model.dart';
 
 class JobDetailOverlay extends StatefulWidget {
   const JobDetailOverlay({
@@ -14,7 +15,7 @@ class JobDetailOverlay extends StatefulWidget {
     required this.onDecline,
   });
 
-  final Job job;
+  final InternalJob job;
   final int responseTimeLimitSeconds;
   final VoidCallback onClose;
   final VoidCallback onAccept;
@@ -80,9 +81,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
         alignment: Alignment.bottomCenter,
         child: Container(
           width: double.infinity,
-          constraints: BoxConstraints(
-            maxHeight: 0.9.sh,
-          ),
+          constraints: BoxConstraints(maxHeight: 0.9.sh),
           decoration: BoxDecoration(
             color: const Color(0xFFF4F4F6),
             borderRadius: BorderRadius.only(
@@ -114,18 +113,26 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
               // ---------------- TOP DARK CARD (exactly like screenshot) ----------------
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 12.w),
-                padding: EdgeInsets.only(top:  14.h , bottom: 14.h, left: 16.w, right: 16.w ),
+                padding: EdgeInsets.only(
+                  top: 14.h,
+                  bottom: 14.h,
+                  left: 16.w,
+                  right: 16.w,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [
-                     // Colors.red,
+                      // Colors.red,
                       Color(0xFF020617), // very dark navy
                       Color(0xFF0F172A),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.only(topRight: Radius.circular(22.r) ,topLeft: Radius.circular(22.r)),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(22.r),
+                    topLeft: Radius.circular(22.r),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,10 +312,12 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
               ),
 
               // ---------------- BODY (same as age) ----------------
-
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 20.w),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 30.w,
+                    vertical: 20.w,
+                  ),
                   child: Column(
                     children: [
                       // customer card
@@ -367,7 +376,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                   Row(
                                     children: List.generate(
                                       5,
-                                          (index) => Icon(
+                                      (index) => Icon(
                                         Icons.star,
                                         size: 14.sp,
                                         color: const Color(0xFFFBBF24),
@@ -471,7 +480,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                               icon: Icons.access_time,
                               label: 'Schedule',
                               value:
-                              '${job.date}${job.time != null ? ' at ${job.time}' : ''}',
+                                  '${job.date}${job.time != null ? ' at ${job.time}' : ''}',
                             ),
                             SizedBox(height: 8.h),
 
@@ -487,7 +496,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Payment',
@@ -505,18 +514,16 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                               style: TextStyle(
                                                 fontSize: 13.sp,
                                                 fontWeight: FontWeight.w600,
-                                                color:
-                                                const Color(0xFF111827),
+                                                color: const Color(0xFF111827),
                                               ),
                                             ),
                                             TextSpan(
                                               text:
-                                              '   Bonus: ${job.bonus.isNotEmpty ? job.bonus : '\$0.00'}',
+                                                  '   Bonus: ${job.bonus.isNotEmpty ? job.bonus : '\$0.00'}',
                                               style: TextStyle(
                                                 fontSize: 13.sp,
                                                 fontWeight: FontWeight.w600,
-                                                color:
-                                                const Color(0xFF2563EB),
+                                                color: const Color(0xFF2563EB),
                                               ),
                                             ),
                                           ],
@@ -532,8 +539,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                               width: double.infinity,
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor:
-                                  const Color(0xFFF3F4F6),
+                                  backgroundColor: const Color(0xFFF3F4F6),
                                   side: const BorderSide(
                                     color: Color(0xFFE5E7EB),
                                   ),
@@ -545,9 +551,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                   // TODO: open in maps
                                 },
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: 4.h,
-                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 4.h),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -582,8 +586,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
               // ---------------- Bottom buttons ----------------
               Container(
                 color: const Color(0xFFF4F4F6),
-                padding:
-                EdgeInsets.symmetric(vertical: 20.w, horizontal: 30.w),
+                padding: EdgeInsets.symmetric(vertical: 20.w, horizontal: 30.w),
                 child: Row(
                   children: [
                     Expanded(
@@ -659,14 +662,11 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-      multiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: multiline
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
-        Icon(
-          icon,
-          size: 16.sp,
-          color: const Color(0xFF6B7280),
-        ),
+        Icon(icon, size: 16.sp, color: const Color(0xFF6B7280)),
         SizedBox(width: 8.w),
         Expanded(
           child: Column(

@@ -1,5 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:workpleis/features/profile/logic/logout_logic.dart';
+import 'package:workpleis/core/widget/global_language_dialog.dart';
+import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
@@ -26,7 +28,12 @@ class CustomerProfileScreen extends StatefulWidget {
 }
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
-  String _languageCode = 'en'; // en, fr, ar
+  late String _languageCode;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _languageCode = context.locale.languageCode; // ← EasyLocalization theke
+  }
 
   void _showToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -60,16 +67,22 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     }
   }
 
-  void _openLanguageDialog() async {
+  Future<void> _openLanguageDialog() async {
     final selected = await showDialog<String>(
       context: context,
       builder: (context) {
-        return _LanguageDialog(currentCode: _languageCode);
+        return LanguageDialog(currentCode: _languageCode);
       },
     );
 
     if (selected != null && selected != _languageCode) {
+      // 1) EasyLocalization er locale change
+      await context.setLocale(Locale(selected));
+
+      // 2) local state update
       setState(() => _languageCode = selected);
+
+      // 3) toast
       _showToast('Language updated to $_currentLanguageNative');
     }
   }
@@ -835,106 +848,3 @@ class _BusinessHourRow extends StatelessWidget {
 // ============================================================================
 // Language dialog
 // ============================================================================
-
-class _LanguageDialog extends StatelessWidget {
-  const _LanguageDialog({required this.currentCode});
-
-  final String currentCode;
-
-  @override
-  Widget build(BuildContext context) {
-    final languages = [
-      ('en', 'English', 'English'),
-      ('fr', 'French', 'Français'),
-      ('ar', 'Arabic', 'العربية'),
-    ];
-
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Select Language'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Choose your preferred language for the app interface',
-            style: TextStyle(fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          for (final item in languages) ...[
-            _LanguageTile(
-              code: item.$1,
-              nativeName: item.$3,
-              name: item.$2,
-              isSelected: currentCode == item.$1,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _LanguageTile extends StatelessWidget {
-  const _LanguageTile({
-    required this.code,
-    required this.nativeName,
-    required this.name,
-    required this.isSelected,
-  });
-
-  final String code;
-  final String nativeName;
-  final String name;
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).pop(code),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFFC20001)
-                : const Color(0xFFE5E7EB),
-            width: 2,
-          ),
-          color: isSelected ? const Color(0xFFFFE5E5) : Colors.white,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    nativeName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF111827),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              const Icon(Icons.check, color: Color(0xFFC20001), size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 
 import 'compliteJob.dart';
 
@@ -17,7 +18,9 @@ const Color kAccentBlue = Color(0xFF1E88E5);
 const Color kBorderLight = Color(0xFFE5E5E5);
 
 class Jobdetails extends StatelessWidget {
-  const Jobdetails({super.key});
+  final InternalJob job;
+
+  const Jobdetails({super.key, required this.job});
 
   @override
   Widget build(BuildContext context) {
@@ -209,11 +212,7 @@ class Jobdetails extends StatelessWidget {
               color: kPrimaryRed,
               borderRadius: BorderRadius.circular(999.r),
             ),
-            child: Icon(
-              Icons.phone,
-              size: 20.sp,
-              color: Colors.white,
-            ),
+            child: Icon(Icons.phone, size: 20.sp, color: Colors.white),
           ),
         ],
       ),
@@ -308,10 +307,7 @@ class Jobdetails extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18.r),
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFFE7FAF0),
-            Color(0xFFF4FFF9),
-          ],
+          colors: [Color(0xFFE7FAF0), Color(0xFFF4FFF9)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -364,6 +360,11 @@ class Jobdetails extends StatelessWidget {
 
   /// -------------------  BUTTONS  ----------------------
   Widget _buildCompleteButton(BuildContext context) {
+    // payment string থেকে amount বের করি
+    final paymentAmount =
+        double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ??
+        0;
+
     return SizedBox(
       width: double.infinity,
       height: 48.h,
@@ -379,12 +380,12 @@ class Jobdetails extends StatelessWidget {
           showDialog(
             context: context,
             barrierDismissible: true,
-            builder: (_) => const Complitejob(
-              jobPayment: 150,
+            builder: (_) => Complitejob(
+              woId: job.id, // <-- main thing
+              jobPayment: paymentAmount,
               bonusRate: 0.05,
             ),
           );
-
         },
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -477,8 +478,7 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20.r),
@@ -515,11 +515,7 @@ class _CircleIcon extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(999.r),
       ),
-      child: Icon(
-        icon,
-        size: 20.sp,
-        color: iconColor,
-      ),
+      child: Icon(icon, size: 20.sp, color: iconColor),
     );
   }
 }
