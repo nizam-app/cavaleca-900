@@ -1,6 +1,7 @@
 // lib/features/customer/screen/customer_app_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/auth/screens/customer/screen/customer_auth_screen.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
@@ -179,13 +180,13 @@ class _CustomerBottomNavBar extends StatelessWidget {
           child: Row(
             children: [
               _NavItem(
-                label: 'Home',
+                label: 'home'.tr(),
                 icon: Icons.home_outlined,
                 isActive: activeIndex == 0,
                 onTap: () => onTap(0),
               ),
               _NavItem(
-                label: 'Bookings',
+                label: 'bookings'.tr(),
                 icon: Icons.assignment_outlined,
                 isActive: activeIndex == 1,
                 onTap: () => onTap(1),
@@ -193,7 +194,7 @@ class _CustomerBottomNavBar extends StatelessWidget {
 
               if (!isGuest)
                 _NavItem(
-                  label: 'Alerts',
+                  label: 'alerts'.tr(),
                   icon: Icons.notifications_none_rounded,
                   isActive: activeIndex == 2,
                   onTap: () => onTap(2),
@@ -201,7 +202,7 @@ class _CustomerBottomNavBar extends StatelessWidget {
                 ),
 
               _NavItem(
-                label: 'Profile',
+                label: 'profile'.tr(),
                 icon: Icons.person_outline,
                 isActive: activeIndex == (isGuest ? 2 : 3),
                 onTap: () => onTap(isGuest ? 2 : 3),

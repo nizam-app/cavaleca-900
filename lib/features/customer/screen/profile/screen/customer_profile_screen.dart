@@ -43,7 +43,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   String get _displayName => (widget.userName?.trim().isNotEmpty ?? false)
       ? widget.userName!.trim()
-      : (widget.isGuest ? 'Guest User' : 'John Doe');
+      : (widget.isGuest ? 'guest_user'.tr() : 'John Doe');
 
   String get _displayInitials {
     final name = _displayName;
@@ -158,9 +158,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           // Logo
           Center(child: Column(children: [])),
           const SizedBox(height: 4),
-          const Text(
-            'Profile',
-            style: TextStyle(
+          Text(
+            'profile'.tr(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -168,7 +168,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            isGuest ? 'Guest Account' : 'Manage your account information',
+            isGuest ? 'guest_account'.tr() : 'manage_account_info'.tr(),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
@@ -238,9 +238,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           ),
                         ),
                       if (isGuest)
-                        const Text(
-                          'Limited access',
-                          style: TextStyle(
+                        Text(
+                          'limited_access'.tr(),
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -295,11 +295,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     '24',
                     style: TextStyle(
                       fontSize: 16,
@@ -307,10 +307,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    'Total Bookings',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                    'total_bookings'.tr(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
               ),
@@ -324,11 +327,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     '\$2.4k',
                     style: TextStyle(
                       fontSize: 16,
@@ -338,8 +341,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Total Spent',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                    'total_spent'.tr(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
               ),
@@ -372,19 +378,19 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           children: [
             const Icon(Icons.person_outline, size: 40, color: Colors.white),
             const SizedBox(height: 10),
-            const Text(
-              'Create an Account',
-              style: TextStyle(
+            Text(
+              'create_account'.tr(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Sign up to save your bookings and manage your history easily.',
+            Text(
+              'create_account_to_view_history'.tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -400,9 +406,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text(
-                  'Sign Up Now',
-                  style: TextStyle(
+                child: Text(
+                  'sign_up_now'.tr(),
+                  style: const TextStyle(
                     color: Color(0xFF111827),
                     fontWeight: FontWeight.w600,
                   ),
@@ -425,7 +431,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         icon: Icons.notifications_outlined,
         iconBgColor: const Color(0xFFF5F3FF),
         iconColor: const Color(0xFFA855F7),
-        title: 'Notifications',
+        title: 'notifications'.tr(),
         subtitle: '3 new',
         onTap:
             widget.onNavigateToNotifications ??
@@ -436,7 +442,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         icon: Icons.language,
         iconBgColor: const Color(0xFFF0FDF4),
         iconColor: const Color(0xFF22C55E),
-        title: 'Language',
+        title: 'language'.tr(),
         subtitle: _currentLanguageNative,
         onTap: _openLanguageDialog,
         showForGuest: true,
@@ -566,20 +572,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Call Us',
-                          style: TextStyle(
+                          'call_us'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF111827),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           '+1 (800) 123-4567',
                           style: TextStyle(
                             fontSize: 11,
@@ -629,20 +635,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Email Support',
-                          style: TextStyle(
+                          'email_support'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF111827),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           'support@ibacos.com',
                           style: TextStyle(
                             fontSize: 11,
