@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 import '../model/map_local_data_map.dart';
 
 class MapAddressPickerScreen extends StatefulWidget {
@@ -462,8 +462,8 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          child: const Text(
-            'CONFIRM',
+          child:  Text(
+            'confirm'.tr(),
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           ),
         ),

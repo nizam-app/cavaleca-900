@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/auth/model/auth_login_model.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
+
 
 
 const Color kPrimaryRed = Color(0xFFC20001);
@@ -273,7 +274,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                         color: Color(0xFF111827),
                       ),
                       label: Text(
-                        isWelcome ? 'Back to Role Selection' : 'Back',
+                        isWelcome ? 'back_to_role_selection'.tr() : 'back'.tr(),
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF111827),
@@ -314,8 +315,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 4),
-        const Text(
-          'Welcome Freelancer!',
+         Text(
+          'welcome_freelancer'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 20,
@@ -324,8 +325,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Start earning on your schedule',
+         Text(
+          'start_earning_on_your_schedule'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         ),
@@ -352,8 +353,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                 borderRadius: BorderRadius.circular(20), // rounded-2xl
               ),
             ),
-            child: const Text(
-              'Login to Your Account',
+            child: Text(
+              'login_to_your_account'.tr(),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
           ),
@@ -378,15 +379,15 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text(
-              'Create New Account',
+            child:Text(
+              'create_new_account'.tr(),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Join our network of skilled technicians and earn commission on every job.',
+         Text(
+          'join_our_network_of_skilled'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), height: 1.4),
         ),
@@ -429,8 +430,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Welcome Back',
+           Text(
+            'welcome_back'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
@@ -439,15 +440,15 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Login to your account',
+           Text(
+            'login_to_your_account'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 24),
 
-          const Text(
-            'Phone Number (User ID)',
+           Text(
+            'phone_number_user_id'.tr(),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
@@ -455,14 +456,14 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             decoration: _inputDecoration(
-              hintText: 'Enter your phone number',
+              hintText: 'enter_your_phone_number'.tr(),
               icon: Icons.phone,
             ),
           ),
           const SizedBox(height: 16),
 
-          const Text(
-            'Password',
+           Text(
+            'password'.tr(),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
@@ -470,7 +471,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             controller: _passwordController,
             obscureText: !_showPassword,
             decoration: _inputDecoration(
-              hintText: 'Enter your password',
+              hintText: 'enter_password'.tr(),
               icon: Icons.lock_outline,
               suffix: IconButton(
                 onPressed: () {
@@ -500,8 +501,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
               ),
               child: loginState.isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'Login',
+                  :  Text(
+                      'log_in'.tr(),
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -513,8 +514,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                "Don't have an account? ",
+               Text(
+                "dont_have_account".tr(),
                 style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               ),
               GestureDetector(
@@ -524,8 +525,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                     _mode = AuthMode.signup;
                   });
                 },
-                child: const Text(
-                  'Sign up',
+                child:  Text(
+                  'sign_up'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     color: kPrimaryRed,
@@ -549,8 +550,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Join as Freelancer',
+           Text(
+            'join_as_freelancer'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
@@ -559,15 +560,15 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Step 1 of 3: Enter your details',
+           Text(
+            'step_1_of_3'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 24),
 
-          const Text(
-            'Full Name',
+           Text(
+            'full_name'.tr(),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
@@ -580,8 +581,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           ),
           const SizedBox(height: 16),
 
-          const Text(
-            'Phone Number',
+           Text(
+            'phone_number'.tr(),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
@@ -589,7 +590,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             decoration: _inputDecoration(
-              hintText: 'Enter your phone number',
+              hintText: 'enter_your_phone_number'.tr(),
               icon: Icons.phone,
             ),
           ),
@@ -605,8 +606,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text(
-                'Continue',
+              child:  Text(
+                'continue'.tr(),
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
             ),
@@ -615,8 +616,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Already have an account? ',
+               Text(
+                'already_have_an_account .tr()',
                 style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               ),
               GestureDetector(
@@ -626,8 +627,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                     _mode = AuthMode.login;
                   });
                 },
-                child: const Text(
-                  'Login',
+                child:  Text(
+                  'log_in'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     color: kPrimaryRed,
@@ -649,8 +650,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          'Verify Phone',
+         Text(
+          'verify_phone'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 20,
@@ -658,16 +659,16 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             color: Color(0xFF111827),
           ),
         ),
-        const SizedBox(height: 4),
+         SizedBox(height: 4),
         Text(
-          'Step 2 of 3: Enter the 6-digit code sent to\n${_phoneController.text}',
+          'step_2_of_3.tr(),  \n${_phoneController.text}',
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
         ),
         const SizedBox(height: 24),
 
-        const Text(
-          'OTP Code',
+         Text(
+          'otp_code'.tr(),
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
@@ -677,7 +678,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           textAlign: TextAlign.center,
           keyboardType: TextInputType.number,
           decoration: _inputDecoration(
-            hintText: '000000',
+            hintText: 'otp_placeholder'.tr(),
             icon: Icons.confirmation_number_outlined,
           ).copyWith(counterText: ''),
         ),
@@ -688,8 +689,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             onPressed: () {
               _showSnack('OTP resent!');
             },
-            child: const Text(
-              'Resend OTP',
+            child:  Text(
+              'otp_code'.tr(),
               style: TextStyle(fontSize: 13, color: kPrimaryRed),
             ),
           ),
@@ -706,8 +707,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text(
-              'Verify & Continue',
+            child: Text(
+              'verify_continue'.tr(),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ),
@@ -722,8 +723,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          'Set Password',
+         Text(
+          'set_password'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 20,
@@ -732,15 +733,15 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Step 3 of 3: Create a secure password',
+         Text(
+          'step_3_of_3'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         ),
         const SizedBox(height: 24),
 
-        const Text(
-          'Password',
+         Text(
+          'password'.tr(),
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
@@ -765,7 +766,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+         Text(
           'Password must be at least 6 characters long',
           style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
         ),
@@ -781,8 +782,8 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text(
-              'Create Account',
+            child:  Text(
+              'create_account'.tr(),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ),
@@ -824,8 +825,8 @@ class _FreelancerHeader extends StatelessWidget {
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Freelancer Portal',
+           Text(
+            'freelancer_portal'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
           ),

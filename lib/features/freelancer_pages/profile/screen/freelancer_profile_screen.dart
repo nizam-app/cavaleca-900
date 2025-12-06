@@ -8,6 +8,7 @@ import 'package:workpleis/core/widget/signOutButton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/freelancer_pages/profile/data/freelancer_profile_data.dart';
 
+import 'package:easy_localization/easy_localization.dart';
 /// ---------------------------------------------------------------------------
 /// Colors
 /// ---------------------------------------------------------------------------
@@ -219,19 +220,15 @@ class _FreelancerProfileScreenState
 }
 
 /// ---------------------------------------------------------------------------
-/// Header (yellow gradient)
+/// Header (yellow gradient) – “Profile / Manage your account information”
 /// ---------------------------------------------------------------------------
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 18.h,
-        bottom: 32.h,
-      ),
+      padding:
+      EdgeInsets.only(left: 20.w, right: 20.w, top: 18.h, bottom: 32.h),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [kProfileHeaderStart, kProfileHeaderEnd],
@@ -254,7 +251,7 @@ class _Header extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Profile',
+            'profile'.tr(),
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w700,
@@ -263,7 +260,7 @@ class _Header extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Manage your account information',
+            'manage_account_info'.tr(),
             style: TextStyle(
               fontSize: 13.sp,
               color: Colors.white.withOpacity(0.9),
@@ -443,8 +440,11 @@ class _AvailabilityCard extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  'Accept new jobs',
-                  style: TextStyle(fontSize: 12.sp, color: kProfileTextMuted),
+                  'accept_new_jobs'.tr(),
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: kProfileTextMuted,
+                  ),
                 ),
               ],
             ),
@@ -491,7 +491,7 @@ class _SkillsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Skills & Specializations',
+            'skills_specializations'.tr(),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
@@ -593,7 +593,7 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFFFF7D6),
           icon: Icons.workspace_premium,
           iconColor: const Color(0xFFE5A100),
-          title: 'My Certifications',
+          title: 'my_certifications'.tr(),
           subtitle: '${profile.verifiedCerts} verified',
           onTap: () {
             // certifications screen
@@ -604,7 +604,7 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFE7FEF2),
           icon: Icons.attach_money_rounded,
           iconColor: const Color(0xFF16A34A),
-          title: 'Payment Settings',
+          title: 'payment_settings'.tr(),
           subtitle: profile.bankLinked ? 'Bank linked' : 'Add payout method',
           onTap: () {
             // payment settings
@@ -615,7 +615,7 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFE0F2FE),
           icon: Icons.language_outlined,
           iconColor: const Color(0xFF2563EB),
-          title: 'Language',
+          title: 'language'.tr(),
           subtitle: language.display,
           onTap: onSelectLanguage,
         ),
@@ -624,8 +624,8 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFFFF4E5),
           icon: Icons.help_outline_rounded,
           iconColor: const Color(0xFFF97316),
-          title: 'Support',
-          subtitle: 'Get help & contact us',
+          title: 'support'.tr(),
+          subtitle: 'get_help_contact_us'.tr(),
           onTap: () {
             // support route
           },

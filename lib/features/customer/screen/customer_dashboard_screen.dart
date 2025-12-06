@@ -5,6 +5,7 @@ import 'package:workpleis/features/customer/widget/custom_booking_details.dart';
 import 'package:workpleis/features/customer/widget/genarel_maintenance.dart';
 import 'package:workpleis/features/customer/widget/repairs_&_fixes.dart';
 import 'package:workpleis/features/customer/widget/service_details.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -175,7 +176,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, $_displayName',
+                      'hello_guest,.tr() $_displayName',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -224,42 +225,42 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   onServiceSelected: (service) {
                     showServiceTypeDialog(
                       context,
-                      title: 'General Maintenance',
-                      stepText: 'Step 2 of 3 - Select service type',
+                      title: 'general_maintenance'.tr(),
+                      stepText: 'step_2_select_service_type'.tr(),
                       options: [
                         ServiceTypeOption(
-                          title: 'Repairs & Fixes',
+                          title: 'repairs_and_fixes'.tr(),
                           subtitle: '4 services available',
                         ),
                         ServiceTypeOption(
-                          title: 'Installation',
+                          title: 'installation'.tr(),
                           subtitle: '3 services available',
                         ),
                         ServiceTypeOption(
-                          title: 'Inspection',
+                          title: 'inspection'.tr(),
                           subtitle: '2 services available',
                         ),
                       ],
                       onSelect: (option) {
                         showSpecificServiceDialog(
                           context,
-                          title: 'Repairs & Fixes',
-                          stepText: 'Step 3 of 3 - Select specific service',
+                          title:'repairs_and_fixes'.tr(),
+                          stepText: 'step_3_select_specific_service',
                           options: [
                             SpecificServiceOption(
-                              title: 'Door Repair',
+                              title: 'door_repair'.tr(),
                               priceRange: 'Est. \$50–80',
                             ),
                             SpecificServiceOption(
-                              title: 'Window Repair',
+                              title: 'window_repair'.tr(),
                               priceRange: 'Est. \$40–70',
                             ),
                             SpecificServiceOption(
-                              title: 'Wall Patching',
+                              title: 'wall_patching'.tr(),
                               priceRange: 'Est. \$60–100',
                             ),
                             SpecificServiceOption(
-                              title: 'Floor Repair',
+                              title: 'floor_repair'.tr(),
                               priceRange: 'Est. \$80–150',
                             ),
                           ],
@@ -268,9 +269,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                             // context.goNamed('bookingSummary', extra: opt.title);
                             showServiceDetailsDialog(
                               context,
-                              selectedService: 'Window Repair',
+                              selectedService: 'window_repair'.tr(),
                               categoryPath:
-                                  'General Maintenance → Repairs & fixes',
+                                  'general_maintenance_repairs_fixes'.tr(),
                             );
                           },
                         );
@@ -289,13 +290,13 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   borderRadius: BorderRadius.circular(18.r),
                 ),
               ),
-              child: const Row(
+              child:  Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add, size: 20),
                   SizedBox(width: 8),
                   Text(
-                    'Book New Service',
+                    'book_new_service'.tr(),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -317,9 +318,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           child: Row(
             children: [
-              const Expanded(
+               Expanded(
                 child: Text(
-                  'Service Categories',
+                  'service_categories'.tr(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -386,9 +387,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         children: [
           Row(
             children: [
-              const Expanded(
+               Expanded(
                 child: Text(
-                  'Active Requests',
+                  'active_requests'.tr(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -398,8 +399,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
               ),
               GestureDetector(
                 onTap: widget.onViewAllPressed,
-                child: const Text(
-                  'View All',
+                child:  Text(
+                  'view_all'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     color: kPrimaryRed,
@@ -433,8 +434,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent Services',
+           Text(
+            'recent_services'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -470,8 +471,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         ),
         child: Padding(
           padding: EdgeInsets.all(16.r),
-          child: const Text(
-            "You're browsing as a guest. Create an account to view booking history and track your requests.",
+          child:  Text(
+            "guest_browsing_notice".tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Color(0xFF374151)),
           ),
@@ -690,7 +691,7 @@ class _ActiveRequestCard extends StatelessWidget {
                       context,
                       details: BookingDetails(
                         status: BookingStatus.inProgress,
-                        serviceName: 'HVAC Maintenance',
+                        serviceName: 'hvac_maintenance_label'.tr(),
                         category: 'HVAC Services',
                         description:
                             'Regular maintenance check for air conditioning unit including filter replacement and coolant level check.',
@@ -701,9 +702,9 @@ class _ActiveRequestCard extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text(
-                    'View Details',
-                    style: TextStyle(fontSize: 11),
+                  child:  Text(
+                    'view_details'.tr(),
+                    style: TextStyle(fontSize: 11.sp),
                   ),
                 ),
               ],
@@ -816,25 +817,25 @@ class _StatusStyle {
 _StatusStyle _statusStyle(_JobStatus status) {
   switch (status) {
     case _JobStatus.inProgress:
-      return const _StatusStyle(
+      return  _StatusStyle(
         bg: Color(0xFFE0F2FE),
         text: Color(0xFF1D4ED8),
         icon: Icons.autorenew_rounded,
-        label: 'In Progress',
+        label: 'in_progress'.tr(),
       );
     case _JobStatus.scheduled:
-      return const _StatusStyle(
+      return  _StatusStyle(
         bg: Color(0xFFFEF3C7),
         text: Color(0xFF92400E),
         icon: Icons.schedule_rounded,
-        label: 'Scheduled',
+        label: 'scheduled'.tr(),
       );
     case _JobStatus.completed:
-      return const _StatusStyle(
+      return  _StatusStyle(
         bg: Color(0xFFD1FAE5),
         text: Color(0xFF047857),
         icon: Icons.check_circle,
-        label: 'Completed',
+        label: 'completed'.tr(),
       );
   }
 }

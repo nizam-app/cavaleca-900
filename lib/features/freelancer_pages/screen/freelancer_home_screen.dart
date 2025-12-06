@@ -1,4 +1,4 @@
-// freelancer_home_screen.dart
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../internal_technician/widget/jobDetails.dart';
 import '../../internal_technician/widget/viewJobDetails.dart';
+
+import 'package:easy_localization/easy_localization.dart';
 
 /// ------------------------------------------------------
 ///  Colors
@@ -221,7 +223,7 @@ class FreelancerHomeScreen extends ConsumerWidget {
               _HeaderSection(
                 monthlyCommission: 5066,
                 completedJobsThisMonth: completedCount,
-                userName: 'Freelancer Tech',
+                userName: 'freelancer_tech'.tr(),
               ),
               SizedBox(height: 12.h),
               _StatsRow(
@@ -300,7 +302,7 @@ class _HeaderSection extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Ready to earn today?',
+                      'ready_earn_today'.tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: Colors.black.withOpacity(0.9),
@@ -624,7 +626,7 @@ class _ActiveJobsSection extends StatelessWidget {
     if (inProgressJobs.isEmpty && acceptedJobs.isEmpty) {
       return Center(
         child: Text(
-          'No active jobs right now',
+          'no_completed_jobs_yet'.tr(),
           style: TextStyle(fontSize: 13.sp, color: kTextMuted),
         ),
       );
@@ -636,7 +638,7 @@ class _ActiveJobsSection extends StatelessWidget {
         if (inProgressJobs.isNotEmpty) ...[
           _SectionTitle(
             icon: Icons.access_time,
-            label: 'In Progress',
+            label: 'in_progress'.tr(),
           ),
           SizedBox(height: 6.h),
           for (final job in inProgressJobs)
@@ -646,7 +648,7 @@ class _ActiveJobsSection extends StatelessWidget {
         if (acceptedJobs.isNotEmpty) ...[
           _SectionTitle(
             icon: Icons.work_outline,
-            label: 'Ready to Start',
+            label: 'ready_start'.tr(),
           ),
           SizedBox(height: 6.h),
           for (final job in acceptedJobs)
@@ -911,7 +913,7 @@ class _CompletedJobsSection extends StatelessWidget {
     if (completedJobs.isEmpty) {
       return Center(
         child: Text(
-          'No completed jobs yet',
+          'no_completed_jobs_yet'.tr(),
           style: TextStyle(fontSize: 14.sp, color: kTextMuted),
         ),
       );
@@ -994,7 +996,7 @@ class _CompletedJobsSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Commission Earned (15%)',
+                          'commission_earned'.tr(),
                           style: TextStyle(
                               fontSize: 11.sp, color: kTextMuted),
                         ),
@@ -1079,7 +1081,7 @@ class _TopPerformerCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Top Performer',
+                    'top_performer'.tr(),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -1088,7 +1090,7 @@ class _TopPerformerCard extends StatelessWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    'Keep up the great work!',
+                    'keep_up_great_work'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: kTextMuted,

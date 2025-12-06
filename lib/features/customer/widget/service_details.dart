@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/customer/model/map_local_data_map.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 const _kPrimaryRed = Color(0xFFC20001);
 const _kPrimaryRedDark = Color(0xFF9A0001);
 const _kDialogShadow = BoxShadow(
@@ -25,7 +25,7 @@ Future<void> showServiceDetailsDialog(
   return showGeneralDialog(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Service details',
+    barrierLabel: 'service_details'.tr(),
     barrierColor: Colors.black.withOpacity(0.5),
     pageBuilder: (_, __, ___) {
       return _ServiceDetailsDialog(
@@ -159,15 +159,15 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
                             _buildSelectedServiceCard(),
                             const SizedBox(height: 18),
                             _buildTextField(
-                              label: 'Full Name *',
-                              hint: 'Enter your name',
+                              label: 'full_name'.tr(),
+                              hint: 'enter_name'.tr(),
                               controller: _nameCtrl,
                               textInputType: TextInputType.name,
                             ),
                             const SizedBox(height: 12),
                             _buildTextField(
-                              label: 'Phone Number *',
-                              hint: 'Enter your phone number',
+                              label: 'phone_number'.tr(),
+                              hint: 'enter_your_phone_number'.tr(),
                               controller: _phoneCtrl,
                               textInputType: TextInputType.phone,
                             ),
@@ -214,9 +214,9 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children:  [
                 Text(
-                  'Service Details',
+                  'service_details'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -226,7 +226,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Fill in your details to complete booking',
+                  'fill_details_to_complete_booking'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 ),
@@ -272,8 +272,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Selected Service',
+                 Text(
+                  'selected_service'.tr(),
                   style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
@@ -356,8 +356,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Service Address*',
+         Text(
+          'service_address'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -368,7 +368,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
         TextField(
           controller: _addressCtrl,
           decoration: InputDecoration(
-            hintText: 'Tap to select location from map',
+            hintText: 'tap_to_select_location'.tr(),
             prefixIcon: const Icon(Icons.home_outlined, size: 20),
             suffixIcon: Container(
               margin: const EdgeInsets.only(right: 6),
@@ -417,8 +417,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Description (Optional)',
+         Text(
+          'description_optional'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -430,7 +430,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
           controller: _descCtrl,
           maxLines: 3,
           decoration: InputDecoration(
-            hintText: 'Describe any specific requirements or issues',
+            hintText: 'describe_requirements'.tr(),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
@@ -461,8 +461,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Preferred Appointment Date & Time (Optional)',
+         Text(
+          'preferred_appointment_date_time'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -475,7 +475,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
             Expanded(
               child: _DateTimeChip(
                 icon: Icons.calendar_today_outlined,
-                label: _dateText ?? 'Date',
+                label: _dateText ?? 'date'.tr(),
                 onTap: _pickDate,
               ),
             ),
@@ -490,7 +490,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+         Text(
           'We’ll try our best to schedule your service at this time',
           style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
         ),
@@ -504,8 +504,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Payment Method *',
+         Text(
+          'payment_method'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -514,15 +514,15 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
         ),
         const SizedBox(height: 10),
         _PaymentOptionCard(
-          title: 'Cash Payment',
-          subtitle: 'Pay with cash after service',
+          title: 'cash_payment'.tr(),
+          subtitle: 'pay_with_cash'.tr(),
           selected: _cashSelected,
           onTap: () => setState(() => _cashSelected = true),
         ),
-        const SizedBox(height: 8),
+         SizedBox(height: 8),
         _PaymentOptionCard(
-          title: 'Mobile Money',
-          subtitle: 'Pay via mobile money',
+          title: 'mobile_money'.tr(),
+          subtitle: 'pay_via_mobile_money'.tr(),
           selected: !_cashSelected,
           onTap: () => setState(() => _cashSelected = false),
         ),
@@ -546,8 +546,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               backgroundColor: const Color(0xFFF9FAFB),
             ),
-            child: const Text(
-              'Cancel',
+            child:  Text(
+              'cancel'.tr(),
               style: TextStyle(color: Color(0xFF111827), fontSize: 14),
             ),
           ),
@@ -563,8 +563,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            child: const Text(
-              'Submit Request',
+            child:  Text(
+              'submit_request'.tr(),
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),

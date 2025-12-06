@@ -8,6 +8,8 @@ import '../../internal_technician/widget/job_detail-overlay.dart';
 import '../../internal_technician/widget/viewJobDetails.dart';
 import '../widgets/freelancerJobDetails.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 ///  Colors
 const Color kJobsBg = Color(0xFFF4F4F4);
 const Color kJobsCard = Colors.white;
@@ -316,7 +318,7 @@ class _JobsHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'My Jobs',
+            'my_jobs'.tr(),
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
@@ -325,7 +327,7 @@ class _JobsHeader extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Manage your assignments',
+            'manage_assignments'.tr(),
             style: TextStyle(
               fontSize: 13.sp,
               color: Colors.black.withOpacity(0.92),
@@ -370,21 +372,21 @@ class _JobsTabs extends StatelessWidget {
           children: [
             Expanded(
               child: _TabChip(
-                label: 'Active',
+                label: 'active'.tr(),
                 selected: currentTab == FreelancerJobsTab.active,
                 onTap: () => onTabChanged(FreelancerJobsTab.active),
               ),
             ),
             Expanded(
               child: _TabChip(
-                label: 'Available',
+                label: 'available'.tr(),
                 selected: currentTab == FreelancerJobsTab.available,
                 onTap: () => onTabChanged(FreelancerJobsTab.available),
               ),
             ),
             Expanded(
               child: _TabChip(
-                label: 'Completed',
+                label: 'completed'.tr(),
                 selected: currentTab == FreelancerJobsTab.completed,
                 onTap: () => onTabChanged(FreelancerJobsTab.completed),
               ),
@@ -447,7 +449,7 @@ class _ActiveJobsList extends StatelessWidget {
         padding: EdgeInsets.only(top: 24.h),
         child: Center(
           child: Text(
-            'No active jobs right now',
+            'no_active_jobs_right_now'.tr(),
             style: TextStyle(fontSize: 13.sp, color: kJobsTextMuted),
           ),
         ),
@@ -577,7 +579,7 @@ class _ActiveJobCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Total Payment',
+                      'total_payment'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: kJobsTextMuted,
@@ -599,7 +601,7 @@ class _ActiveJobCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Your Earning',
+                      'your_earning'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: kJobsTextMuted,
@@ -690,7 +692,7 @@ class _AvailableJobsList extends ConsumerWidget {
         padding: EdgeInsets.only(top: 24.h),
         child: Center(
           child: Text(
-            'No available jobs',
+            'no_available_jobs'.tr(),
             style: TextStyle(fontSize: 13.sp, color: kJobsTextMuted),
           ),
         ),
@@ -832,7 +834,7 @@ class _AvailableJobsList extends ConsumerWidget {
                             ),
                           ),
                           child: Text(
-                            'Details',
+                            'details'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w500,
@@ -894,7 +896,7 @@ class _AvailableJobsList extends ConsumerWidget {
                             ),
                           ),
                           child: Text(
-                            'Accept Job',
+                            'accept_job'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -931,7 +933,7 @@ class _CompletedJobsList extends StatelessWidget {
         padding: EdgeInsets.only(top: 24.h),
         child: Center(
           child: Text(
-            'No completed jobs yet',
+            'no_completed_jobs_yet'.tr(),
             style: TextStyle(fontSize: 13.sp, color: kJobsTextMuted),
           ),
         ),
@@ -1016,7 +1018,7 @@ class _CompletedJobsList extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'Earned',
+                            'earned'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: kJobsTextMuted,
