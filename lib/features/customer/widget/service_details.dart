@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/customer/model/map_local_data_map.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
 
+import '../screen/service/data/service_data.dart';
+import '../screen/service/model/create_sr_model.dart';
+
 const _kPrimaryRed = Color(0xFFC20001);
 const _kPrimaryRedDark = Color(0xFF9A0001);
 const _kDialogShadow = BoxShadow(
@@ -21,6 +24,9 @@ Future<void> showServiceDetailsDialog(
   BuildContext context, {
   required String selectedService,
   required String categoryPath,
+  required int categoryId, // NEW
+  required int serviceId, // NEW
+  required int subserviceId, // NEW
 }) {
   return showGeneralDialog(
     context: context,
@@ -31,6 +37,9 @@ Future<void> showServiceDetailsDialog(
       return _ServiceDetailsDialog(
         selectedService: selectedService,
         categoryPath: categoryPath,
+        categoryId: categoryId,
+        serviceId: serviceId,
+        subserviceId: subserviceId,
       );
     },
     transitionBuilder: (_, animation, __, child) {
@@ -56,10 +65,16 @@ class _ServiceDetailsDialog extends StatefulWidget {
   const _ServiceDetailsDialog({
     required this.selectedService,
     required this.categoryPath,
+    required this.categoryId,
+    required this.serviceId,
+    required this.subserviceId,
   });
 
   final String selectedService;
   final String categoryPath;
+  final int categoryId;
+  final int serviceId;
+  final int subserviceId;
 
   @override
   State<_ServiceDetailsDialog> createState() => _ServiceDetailsDialogState();
@@ -73,6 +88,9 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
   String? _dateText;
   String? _timeText;
   bool _cashSelected = true;
+  bool _isSubmitting = false;
+
+  LocationData? _selectedLocation; // map থেকে latitude/longitude
 
   @override
   void dispose() {
@@ -114,15 +132,57 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     }
   }
 
-  void _submit() {
-    // TODO: here you can validate and send to backend
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Service request submitted'),
-        behavior: SnackBarBehavior.floating,
-      ),
+  Future<void> _submit() async {
+    if (_nameCtrl.text.trim().isEmpty ||
+        _phoneCtrl.text.trim().isEmpty ||
+        _addressCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name, phone & address are required')),
+      );
+      return;
+    }
+
+    final payload = ServiceRequestPayload(
+      name: _nameCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim(),
+      address: _addressCtrl.text.trim(),
+      categoryId: widget.categoryId,
+      serviceId: widget.serviceId,
+      subserviceId: widget.subserviceId,
+      description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+      paymentType: _cashSelected ? 'CASH' : 'MOBILE_MONEY',
+      priority: 'MEDIUM', // চাইলে UI থেকে নাও
+      latitude: _selectedLocation?.latitude,
+      longitude: _selectedLocation?.longitude,
     );
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await FsmCustomerApi.createServiceRequest(payload);
+
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // dialog close
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Service request submitted successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit request: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -381,6 +441,18 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
                   final result = await context.push<LocationData>(
                     MapAddressPickerScreen.routeName,
                   );
+
+                  if (result != null) {
+                    setState(() {
+                      // place name + address
+                      final name = result.placeName?.trim();
+                      if (name != null && name.isNotEmpty) {
+                        _addressCtrl.text = '$name, ${result.address}';
+                      } else {
+                        _addressCtrl.text = result.address;
+                      }
+                    });
+                  }
                 },
                 child: const Icon(
                   Icons.location_on_outlined,
@@ -563,10 +635,19 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            child: const Text(
-              'Submit Request',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
+            child: _isSubmitting
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Submit Request',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
           ),
         ),
       ],

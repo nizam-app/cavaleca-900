@@ -13,4 +13,6 @@ class AuthAPIController {
   static String wosStart(woId) => "${_base_api}/wos/$woId/start";
   static String wosComplete(woId) => "${_base_api}/wos/$woId/complete";
   static String time_remaining(woId) => "${_base_api}/wos/$woId/time-remaining";
+  static String technician_earnings = "${_base_api}/technician/earnings";
+  static String set_password = "${_base_api}/auth/set-password";
 }

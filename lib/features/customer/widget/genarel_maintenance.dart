@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/customer/screen/service/model/create_sr_model.dart';
 
 const _kDialogShadow = BoxShadow(
   color: Color(0x22000000),
@@ -9,10 +10,17 @@ const _kDialogShadow = BoxShadow(
 );
 
 class ServiceTypeOption {
+  final int id;
   final String title;
   final String subtitle;
+  final FsmService service; // NEW
 
-  ServiceTypeOption({required this.title, required this.subtitle});
+  ServiceTypeOption({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.service,
+  });
 }
 
 /// Example call:
