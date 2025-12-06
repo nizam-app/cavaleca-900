@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+
+
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
 
@@ -360,7 +362,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
 
   Widget _buildActiveList() {
     if (_activeBookings.isEmpty) {
-      return const Center(child: Text('No active bookings'));
+      return  Center(child: Text('No active    '));
     }
 
     return ListView.separated(
@@ -976,7 +978,7 @@ class _BookingDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Service',
+                        'service'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: const Color(0xFF9CA3AF),

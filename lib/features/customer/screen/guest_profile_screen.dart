@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class GuestProfileScreen extends StatelessWidget {
   const GuestProfileScreen({super.key});
@@ -32,11 +33,11 @@ class GuestProfileScreen extends StatelessWidget {
                     bottomRight: Radius.circular(0),
                   ),
                 ),
-                child: const Column(
+                child:  Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Profile',
+                      'profile'.tr(),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -45,7 +46,7 @@ class GuestProfileScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Guest Account',
+                      'guest_account'.tr(),
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
@@ -92,11 +93,11 @@ class GuestProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
+                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Guest User',
+                            'guest_user'.tr(),
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -105,7 +106,7 @@ class GuestProfileScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Limited access',
+                            'limited_access'.tr(),
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF9E9E9E),
@@ -156,8 +157,8 @@ class GuestProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      const Text(
-                        'Create Account',
+                       Text(
+                        'create_account'.tr(),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -165,8 +166,8 @@ class GuestProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Sign up to unlock all features',
+                       Text(
+                        'sign_up_to_unlock_features'.tr(),
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 12, color: Colors.white70),
                       ),
@@ -185,8 +186,8 @@ class GuestProfileScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(24),
                             ),
                           ),
-                          child: const Text(
-                            'Sign Up Now',
+                          child:  Text(
+                            'sign_up_now'.tr(),
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -208,7 +209,7 @@ class GuestProfileScreen extends StatelessWidget {
                 child: _SettingTile(
                   icon: Icons.language,
                   iconBg: const Color(0xFFF5F5F5),
-                  title: 'Language',
+                  title: 'language'.tr(),
                   subtitle: 'English',
                   onTap: () {
                     // TODO: language selection
@@ -219,10 +220,10 @@ class GuestProfileScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // ---------- SUPPORT TITLE ----------
-              const Padding(
+               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
-                  'Support',
+                  'support'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -239,7 +240,7 @@ class GuestProfileScreen extends StatelessWidget {
                 child: _SettingTile(
                   icon: Icons.phone_in_talk_outlined,
                   iconBg: const Color(0xFFF5F5F5),
-                  title: 'Call Us',
+                  title: 'call_us'.tr(),
                   subtitle: '+1 (800) 123-4567',
                   onTap: () {
                     // TODO: call
@@ -255,7 +256,7 @@ class GuestProfileScreen extends StatelessWidget {
                 child: _SettingTile(
                   icon: Icons.email_outlined,
                   iconBg: const Color(0xFFF5F5F5),
-                  title: 'Email Support',
+                  title: 'email_support'.tr(),
                   subtitle: 'support@ibacos.com',
                   onTap: () {
                     // TODO: email
@@ -284,11 +285,11 @@ class GuestProfileScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Column(
+                  child:  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Business Hours',
+                        'business_hours'.tr(),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -297,13 +298,13 @@ class GuestProfileScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 10),
                       _HoursRow(
-                        day: 'Monday - Friday',
+                        day: 'monday_friday'.tr(),
                         time: '8:00 AM - 8:00 PM',
                       ),
                       SizedBox(height: 4),
-                      _HoursRow(day: 'Saturday', time: '9:00 AM - 6:00 PM'),
+                      _HoursRow(day: 'saturday'.tr(), time: '9:00 AM - 6:00 PM'),
                       SizedBox(height: 4),
-                      _HoursRow(day: 'Sunday', time: '10:00 AM - 4:00 PM'),
+                      _HoursRow(day: 'sunday'.tr(), time: '10:00 AM - 4:00 PM'),
                     ],
                   ),
                 ),
@@ -325,9 +326,9 @@ class GuestProfileScreen extends StatelessWidget {
                       horizontal: 8,
                     ),
                   ),
-                  icon: const Icon(Icons.logout, size: 18),
-                  label: const Text(
-                    'Exit Guest Mode',
+                  icon:  Icon(Icons.logout, size: 18),
+                  label:  Text(
+                    'exit_guest_mode'.tr(),
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),

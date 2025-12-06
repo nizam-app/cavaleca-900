@@ -30,7 +30,7 @@ class RoleSelectionCard extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            const Text(
+             Text(
               'Field Service Management Platform',
               textAlign: TextAlign.center,
               style: TextStyle(
