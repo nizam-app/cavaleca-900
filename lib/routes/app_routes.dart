@@ -8,16 +8,13 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
- 
 import 'package:workpleis/features/customer/screen/map.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_earnings_screen.dart';
-
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
-import 'package:workpleis/features/freelancer_pages/screen/freelancer_profile_screen.dart';
+import 'package:workpleis/features/freelancer_pages/profile/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelarcer_job_screen.dart';
 import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
-
 import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
@@ -70,7 +67,6 @@ class AppRouter {
       //   name: CustomerCreateAccountScreen.routeName,
       //   builder: (context, state) => const CustomerCreateAccountScreen(),
       // ),
-
       GoRoute(
         path: SplashScreen.routeName,
         name: SplashScreen.routeName,
@@ -139,7 +135,6 @@ class AppRouter {
         builder: (context, state) => const FreelancerHomeScreen(),
       ),
 
-
       GoRoute(
         path: FreelarcerJobScreen.routeName,
         name: FreelarcerJobScreen.routeName,
@@ -157,8 +152,6 @@ class AppRouter {
         name: FreelancerProfileScreen.routeName,
         builder: (context, state) => const FreelancerProfileScreen(),
       ),
-
-
 
       GoRoute(
         path: RoleSelectionScreen.routeName,

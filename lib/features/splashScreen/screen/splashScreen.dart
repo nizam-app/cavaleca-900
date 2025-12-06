@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../auth/screens/role/screen/role_selection_screen.dart';
-
+import 'package:logger/logger.dart';
+import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
+import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
+import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
+import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,15 +17,14 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final _log = Logger();
+
   @override
   void initState() {
     super.initState();
-    // 3 seconds por RoleSelectionScreen e navigate
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      context.push(RoleSelectionScreen.routeName);
-    });
+    _checkAuthAndRedirect();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,12 +41,39 @@ class _SplashScreenState extends State<SplashScreen> {
                 fit: BoxFit.cover,
               ),
               SizedBox(height: 10.h),
-              const CircularProgressIndicator(color: Colors.orange,),
+              const CircularProgressIndicator(color: Colors.orange),
               const Spacer(),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _checkAuthAndRedirect() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    final token = await AuthLocalStorage.getToken();
+    final user = await AuthLocalStorage.getUserJson();
+
+    if (!mounted) return;
+
+    if (token == null || user == null) {
+      context.go(RoleSelectionScreen.routeName);
+      return;
+    }
+
+    final roleRaw = (user['role']).toString().toUpperCase();
+    _log.i('Splash role: $roleRaw');
+
+    if (roleRaw == 'CUSTOMER') {
+      context.go(CustomerAppScreen.routeName);
+    } else if (roleRaw == 'TECH_INTERNAL') {
+      context.go(InternalBottomNavBar.routeName);
+    } else if (roleRaw == 'TECH_FREELANCER') {
+      context.go(FreelancerBottomNavBar.routeName);
+    } else {
+      context.go(RoleSelectionScreen.routeName);
+    }
   }
 }

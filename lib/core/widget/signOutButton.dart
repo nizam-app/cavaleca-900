@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../features/freelancer_pages/screen/freelancer_profile_screen.dart';
+import '../../features/freelancer_pages/profile/screen/freelancer_profile_screen.dart';
 
 class Signoutbutton extends StatelessWidget {
   const Signoutbutton({required this.onTap});
