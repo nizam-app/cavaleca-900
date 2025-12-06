@@ -1,4 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:workpleis/core/widget/global_language_dialog.dart';
+import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
@@ -25,7 +28,12 @@ class CustomerProfileScreen extends StatefulWidget {
 }
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
-  String _languageCode = 'en'; // en, fr, ar
+  late String _languageCode;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _languageCode = context.locale.languageCode; // ← EasyLocalization theke
+  }
 
   void _showToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +43,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   String get _displayName => (widget.userName?.trim().isNotEmpty ?? false)
       ? widget.userName!.trim()
-      : (widget.isGuest ? 'Guest User' : 'John Doe');
+      : (widget.isGuest ? 'guest_user'.tr() : 'John Doe');
 
   String get _displayInitials {
     final name = _displayName;
@@ -59,16 +67,22 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     }
   }
 
-  void _openLanguageDialog() async {
+  Future<void> _openLanguageDialog() async {
     final selected = await showDialog<String>(
       context: context,
       builder: (context) {
-        return _LanguageDialog(currentCode: _languageCode);
+        return LanguageDialog(currentCode: _languageCode);
       },
     );
 
     if (selected != null && selected != _languageCode) {
+      // 1) EasyLocalization er locale change
+      await context.setLocale(Locale(selected));
+
+      // 2) local state update
       setState(() => _languageCode = selected);
+
+      // 3) toast
       _showToast('Language updated to $_currentLanguageNative');
     }
   }
@@ -144,9 +158,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           // Logo
           Center(child: Column(children: [])),
           const SizedBox(height: 4),
-          const Text(
-            'Profile',
-            style: TextStyle(
+          Text(
+            'profile'.tr(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -154,7 +168,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            isGuest ? 'Guest Account' : 'Manage your account information',
+            isGuest ? 'guest_account'.tr() : 'manage_account_info'.tr(),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
@@ -224,9 +238,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           ),
                         ),
                       if (isGuest)
-                        const Text(
-                          'Limited access',
-                          style: TextStyle(
+                        Text(
+                          'limited_access'.tr(),
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -281,11 +295,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     '24',
                     style: TextStyle(
                       fontSize: 16,
@@ -293,10 +307,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    'Total Bookings',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                    'total_bookings'.tr(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
               ),
@@ -310,11 +327,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     '\$2.4k',
                     style: TextStyle(
                       fontSize: 16,
@@ -324,8 +341,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Total Spent',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                    'total_spent'.tr(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ],
               ),
@@ -358,19 +378,19 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           children: [
             const Icon(Icons.person_outline, size: 40, color: Colors.white),
             const SizedBox(height: 10),
-            const Text(
-              'Create an Account',
-              style: TextStyle(
+            Text(
+              'create_account'.tr(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Sign up to save your bookings and manage your history easily.',
+            Text(
+              'create_account_to_view_history'.tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -386,9 +406,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text(
-                  'Sign Up Now',
-                  style: TextStyle(
+                child: Text(
+                  'sign_up_now'.tr(),
+                  style: const TextStyle(
                     color: Color(0xFF111827),
                     fontWeight: FontWeight.w600,
                   ),
@@ -411,7 +431,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         icon: Icons.notifications_outlined,
         iconBgColor: const Color(0xFFF5F3FF),
         iconColor: const Color(0xFFA855F7),
-        title: 'Notifications',
+        title: 'notifications'.tr(),
         subtitle: '3 new',
         onTap:
             widget.onNavigateToNotifications ??
@@ -422,7 +442,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         icon: Icons.language,
         iconBgColor: const Color(0xFFF0FDF4),
         iconColor: const Color(0xFF22C55E),
-        title: 'Language',
+        title: 'language'.tr(),
         subtitle: _currentLanguageNative,
         onTap: _openLanguageDialog,
         showForGuest: true,
@@ -552,20 +572,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Call Us',
-                          style: TextStyle(
+                          'call_us'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF111827),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           '+1 (800) 123-4567',
                           style: TextStyle(
                             fontSize: 11,
@@ -615,20 +635,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Email Support',
-                          style: TextStyle(
+                          'email_support'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF111827),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           'support@ibacos.com',
                           style: TextStyle(
                             fontSize: 11,
@@ -701,9 +721,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
-        onPressed:
-            widget.onLogout ??
-            () => _showToast(isGuest ? 'Exit guest mode' : 'Sign out'),
+        onPressed: _confirmAndLogout, // 👈 popup + api
         style: TextButton.styleFrom(
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -723,6 +741,62 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmAndLogout() async {
+    final isGuest = widget.isGuest;
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Confirm'),
+          content: Text(
+            isGuest
+                ? 'Do you want to exit guest mode?'
+                : 'Are you sure you want to sign out?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Yes',
+                style: TextStyle(color: Color(0xFFC20001)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      if (!isGuest) {
+        // real user logout
+        await CustomerLogOut.logout();
+        _showToast('Logout successful');
+      } else {
+        _showToast('Exited guest mode');
+      }
+
+      // local state / navigation parent ke handle korte dao
+      if (widget.onLogout != null) {
+        widget.onLogout!();
+      } else {
+        // fallback: go back to role selection / auth screen
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      _showToast('Logout failed: $e');
+    }
   }
 }
 
@@ -780,106 +854,3 @@ class _BusinessHourRow extends StatelessWidget {
 // ============================================================================
 // Language dialog
 // ============================================================================
-
-class _LanguageDialog extends StatelessWidget {
-  const _LanguageDialog({required this.currentCode});
-
-  final String currentCode;
-
-  @override
-  Widget build(BuildContext context) {
-    final languages = [
-      ('en', 'English', 'English'),
-      ('fr', 'French', 'Français'),
-      ('ar', 'Arabic', 'العربية'),
-    ];
-
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Select Language'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Choose your preferred language for the app interface',
-            style: TextStyle(fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          for (final item in languages) ...[
-            _LanguageTile(
-              code: item.$1,
-              nativeName: item.$3,
-              name: item.$2,
-              isSelected: currentCode == item.$1,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _LanguageTile extends StatelessWidget {
-  const _LanguageTile({
-    required this.code,
-    required this.nativeName,
-    required this.name,
-    required this.isSelected,
-  });
-
-  final String code;
-  final String nativeName;
-  final String name;
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).pop(code),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFFC20001)
-                : const Color(0xFFE5E7EB),
-            width: 2,
-          ),
-          color: isSelected ? const Color(0xFFFFE5E5) : Colors.white,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    nativeName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF111827),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              const Icon(Icons.check, color: Color(0xFFC20001), size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}

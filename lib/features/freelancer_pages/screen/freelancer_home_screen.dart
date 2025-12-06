@@ -1,12 +1,12 @@
 // freelancer_home_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../internal_technician/widget/jobDetails.dart';
-import '../../internal_technician/widget/viewJobDetails.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
+import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
+import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
+import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 
 /// ------------------------------------------------------
 ///  Colors
@@ -21,229 +21,146 @@ const Color kPrimaryBlue = Color(0xFF2563EB);
 const Color kInProgressBg = Color(0xFFE3F0FF);
 
 /// ------------------------------------------------------
-///  Job Models
+///  Tabs – active / completed
 /// ------------------------------------------------------
-enum JobStatus { incoming, accepted, inProgress, completed }
-
-class Job {
-  final int id;
-  final String title;
-  final String customer;
-  final String customerPhone;
-  final String address;
-  final String dateLabel; // "Today", "Tomorrow", "Nov 2, 2025"
-  final String timeLabel; // "2:00 PM"
-  final double payment;
-  final double commission; // numeric – we’ll format as $
-  final String description;
-  final String category;
-  final JobStatus status;
-
-  const Job({
-    required this.id,
-    required this.title,
-    required this.customer,
-    required this.customerPhone,
-    required this.address,
-    required this.dateLabel,
-    required this.timeLabel,
-    required this.payment,
-    required this.commission,
-    required this.description,
-    required this.category,
-    required this.status,
-  });
-
-  Job copyWith({
-    JobStatus? status,
-  }) {
-    return Job(
-      id: id,
-      title: title,
-      customer: customer,
-      customerPhone: customerPhone,
-      address: address,
-      dateLabel: dateLabel,
-      timeLabel: timeLabel,
-      payment: payment,
-      commission: commission,
-      description: description,
-      category: category,
-      status: status ?? this.status,
-    );
-  }
-}
-
-/// ------------------------------------------------------
-///  Riverpod – Jobs State
-/// ------------------------------------------------------
-class JobsNotifier extends StateNotifier<List<Job>> {
-  JobsNotifier()
-      : super(const [
-    Job(
-      id: 1,
-      title: 'HVAC Maintenance',
-      customer: 'Michael Johnson',
-      customerPhone: '+1 234 567 8900',
-      address: '123 Main St, Apt 4B',
-      dateLabel: 'Today',
-      timeLabel: '2:00 PM',
-      payment: 120,
-      commission: 18,
-      description:
-      'Regular maintenance check for air conditioning unit',
-      category: 'HVAC Services',
-      status: JobStatus.inProgress,
-    ),
-    Job(
-      id: 2,
-      title: 'Electrical Repair',
-      customer: 'Sarah Williams',
-      customerPhone: '+1 234 567 8901',
-      address: '456 Oak Ave, Suite 12',
-      dateLabel: 'Today',
-      timeLabel: '4:00 PM',
-      payment: 85,
-      commission: 12.75,
-      description: 'Circuit breaker replacement needed',
-      category: 'Electrical Services',
-      status: JobStatus.accepted,
-    ),
-    Job(
-      id: 3,
-      title: 'Plumbing Fix',
-      customer: 'David Brown',
-      customerPhone: '+1 234 567 8902',
-      address: '789 Pine Street',
-      dateLabel: 'Tomorrow',
-      timeLabel: '10:00 AM',
-      payment: 75,
-      commission: 11.25,
-      description: 'Leaky faucet repair in kitchen',
-      category: 'Plumbing Services',
-      status: JobStatus.accepted,
-    ),
-  ]);
-
-  void updateJob(Job updated) {
-    state = [
-      for (final job in state) if (job.id == updated.id) updated else job,
-    ];
-  }
-}
-
-// completed jobs আলাদা লিস্ট
-final completedJobsProvider = Provider<List<Job>>((ref) {
-  return const [
-    Job(
-      id: 4,
-      title: 'HVAC Installation',
-      customer: 'Emily Davis',
-      customerPhone: '+1 234 567 8903',
-      address: '321 Elm Road',
-      dateLabel: 'Nov 3, 2025',
-      timeLabel: '9:00 AM',
-      payment: 250,
-      commission: 37.50,
-      description: 'New AC unit installation',
-      category: 'HVAC Services',
-      status: JobStatus.completed,
-    ),
-    Job(
-      id: 5,
-      title: 'Electrical Inspection',
-      customer: 'Robert Miller',
-      customerPhone: '+1 234 567 8904',
-      address: '654 Maple Drive',
-      dateLabel: 'Nov 2, 2025',
-      timeLabel: '1:00 PM',
-      payment: 100,
-      commission: 15,
-      description: 'Safety inspection of electrical panel',
-      category: 'Electrical Services',
-      status: JobStatus.completed,
-    ),
-    Job(
-      id: 6,
-      title: 'Plumbing Maintenance',
-      customer: 'Jennifer Wilson',
-      customerPhone: '+1 234 567 8905',
-      address: '987 Cedar Lane',
-      dateLabel: 'Nov 1, 2025',
-      timeLabel: '11:00 AM',
-      payment: 90,
-      commission: 13.50,
-      description: 'Drain cleaning and inspection',
-      category: 'Plumbing Services',
-      status: JobStatus.completed,
-    ),
-  ];
-});
-
-final jobsProvider =
-StateNotifierProvider<JobsNotifier, List<Job>>((ref) => JobsNotifier());
-
-// tab – active / completed
 enum JobsTab { active, completed }
 
 final jobsTabProvider = StateProvider<JobsTab>((ref) => JobsTab.active);
 
 /// ------------------------------------------------------
-///  Freelancers Home Screen (ConsumerWidget)
+///  Freelancers Home Screen
 /// ------------------------------------------------------
-class FreelancerHomeScreen extends ConsumerWidget {
+class FreelancerHomeScreen extends ConsumerStatefulWidget {
   const FreelancerHomeScreen({super.key});
 
   static const routeName = '/freelancer-home';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final jobs = ref.watch(jobsProvider);
-    final completedJobs = ref.watch(completedJobsProvider);
+  ConsumerState<FreelancerHomeScreen> createState() =>
+      _FreelancerHomeScreenState();
+}
+
+class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<InternalJob> _activeJobs = [];
+  List<InternalJob> _completedJobs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJobs();
+  }
+
+  Future<void> _loadJobs() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // same backend function
+      final active = await TechnicianJobsApi.fetchJobs('active');
+      final done = await TechnicianJobsApi.fetchJobs('done');
+
+      setState(() {
+        _activeJobs = active;
+        _completedJobs = done;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  double _parseMoney(String money) {
+    final cleaned = money.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(cleaned) ?? 0;
+  }
+
+  double get _monthlyCommission =>
+      _completedJobs.fold(0.0, (sum, j) => sum + _parseMoney(j.bonus));
+
+  @override
+  Widget build(BuildContext context) {
     final tab = ref.watch(jobsTabProvider);
 
-    final inProgressJobs =
-    jobs.where((j) => j.status == JobStatus.inProgress).toList();
-    final acceptedJobs =
-    jobs.where((j) => j.status == JobStatus.accepted).toList();
+    final inProgressJobs = _activeJobs
+        .where((j) => j.status == JobStatus.inProgress)
+        .toList();
+    final acceptedJobs = _activeJobs
+        .where((j) => j.status == JobStatus.assigned)
+        .toList();
 
-    final completedCount = 28; // as per design text
+    final completedCount = _completedJobs.length;
     final activeCount = inProgressJobs.length + acceptedJobs.length;
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: kBg,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: kBg,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Text(_errorMessage!, textAlign: TextAlign.center),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: kBg,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: 24.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _HeaderSection(
-                monthlyCommission: 5066,
-                completedJobsThisMonth: completedCount,
-                userName: 'Freelancer Tech',
-              ),
-              SizedBox(height: 12.h),
-              _StatsRow(
-                active: acceptedJobs.length,
-                inProgress: inProgressJobs.length,
-                completedThisMonth: completedCount,
-              ),
-              SizedBox(height: 16.h),
-              _TabSwitcher(activeCount: activeCount, completedCount: completedCount),
-              SizedBox(height: 12.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: tab == JobsTab.active
-                    ? _ActiveJobsSection(
-                  inProgressJobs: inProgressJobs,
-                  acceptedJobs: acceptedJobs,
-                )
-                    : _CompletedJobsSection(completedJobs: completedJobs),
-              ),
-              SizedBox(height: 16.h),
-              const _TopPerformerCard(),
-            ],
+        child: RefreshIndicator(
+          onRefresh: _loadJobs,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(bottom: 24.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _HeaderSection(
+                  monthlyCommission: _monthlyCommission,
+                  completedJobsThisMonth: completedCount,
+                  userName: 'Freelancer Tech',
+                ),
+                SizedBox(height: 12.h),
+                _StatsRow(
+                  active: activeCount,
+                  inProgress: inProgressJobs.length,
+                  completedThisMonth: completedCount,
+                ),
+                SizedBox(height: 16.h),
+                _TabSwitcher(
+                  activeCount: activeCount,
+                  completedCount: completedCount,
+                ),
+                SizedBox(height: 12.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: tab == JobsTab.active
+                      ? _ActiveJobsSection(
+                          inProgressJobs: inProgressJobs,
+                          acceptedJobs: acceptedJobs,
+                        )
+                      : _CompletedJobsSection(completedJobs: _completedJobs),
+                ),
+                SizedBox(height: 16.h),
+                const _TopPerformerCard(),
+              ],
+            ),
           ),
         ),
       ),
@@ -269,8 +186,12 @@ class _HeaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding:
-      EdgeInsets.only(left: 16.w, right: 16.w, top: 18.h, bottom: 18.h),
+      padding: EdgeInsets.only(
+        left: 16.w,
+        right: 16.w,
+        top: 18.h,
+        bottom: 18.h,
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [kPrimaryYellow, kPrimaryYellowDark],
@@ -326,7 +247,6 @@ class _HeaderSection extends StatelessWidget {
                 child: Center(
                   child: Image.asset(
                     'assets/images/logoicon.png',
-                    // width: 36,
                     height: 36,
                     fit: BoxFit.contain,
                   ),
@@ -390,7 +310,7 @@ class _HeaderSection extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -480,7 +400,7 @@ class _StatCard extends StatelessWidget {
             color: Colors.black.withOpacity(0.04),
             blurRadius: 8,
             offset: const Offset(0, 3),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -522,10 +442,7 @@ class _TabSwitcher extends ConsumerWidget {
   final int activeCount;
   final int completedCount;
 
-  const _TabSwitcher({
-    required this.activeCount,
-    required this.completedCount,
-  });
+  const _TabSwitcher({required this.activeCount, required this.completedCount});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -543,7 +460,7 @@ class _TabSwitcher extends ConsumerWidget {
               color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -552,8 +469,8 @@ class _TabSwitcher extends ConsumerWidget {
               child: _TabChip(
                 label: 'Active ($activeCount)',
                 selected: tab == JobsTab.active,
-                onTap: () => ref.read(jobsTabProvider.notifier).state =
-                    JobsTab.active,
+                onTap: () =>
+                    ref.read(jobsTabProvider.notifier).state = JobsTab.active,
               ),
             ),
             Expanded(
@@ -611,8 +528,8 @@ class _TabChip extends StatelessWidget {
 ///  Active Jobs Section
 /// ------------------------------------------------------
 class _ActiveJobsSection extends StatelessWidget {
-  final List<Job> inProgressJobs;
-  final List<Job> acceptedJobs;
+  final List<InternalJob> inProgressJobs;
+  final List<InternalJob> acceptedJobs;
 
   const _ActiveJobsSection({
     required this.inProgressJobs,
@@ -634,17 +551,14 @@ class _ActiveJobsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (inProgressJobs.isNotEmpty) ...[
-          _SectionTitle(
-            icon: Icons.access_time,
-            label: 'In Progress',
-          ),
+          const _SectionTitle(icon: Icons.access_time, label: 'In Progress'),
           SizedBox(height: 6.h),
           for (final job in inProgressJobs)
             _JobCard(job: job, isInProgressCard: true),
           SizedBox(height: 16.h),
         ],
         if (acceptedJobs.isNotEmpty) ...[
-          _SectionTitle(
+          const _SectionTitle(
             icon: Icons.work_outline,
             label: 'Ready to Start',
           ),
@@ -661,10 +575,7 @@ class _SectionTitle extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _SectionTitle({
-    required this.icon,
-    required this.label,
-  });
+  const _SectionTitle({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -686,23 +597,24 @@ class _SectionTitle extends StatelessWidget {
 }
 
 /// ------------------------------------------------------
-///  Single Job Card
+///  Single Job Card (InternalJob based)
 /// ------------------------------------------------------
 class _JobCard extends ConsumerWidget {
-  final Job job;
+  final InternalJob job;
   final bool isInProgressCard;
 
-  const _JobCard({
-    required this.job,
-    required this.isInProgressCard,
-  });
+  const _JobCard({required this.job, required this.isInProgressCard});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bgColor = isInProgressCard ? kInProgressBg : kCard;
-    final borderColor =
-    isInProgressCard ? kPrimaryBlue.withOpacity(0.3) : Colors.transparent;
+    final borderColor = isInProgressCard
+        ? kPrimaryBlue.withOpacity(0.3)
+        : Colors.transparent;
     final isInProgress = job.status == JobStatus.inProgress;
+
+    final address = job.address ?? job.location;
+    final dateLabel = '${job.date}${job.time != null ? ' at ${job.time}' : ''}';
 
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
@@ -710,13 +622,16 @@ class _JobCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: borderColor, width: isInProgressCard ? 1.5 : 0),
+        border: Border.all(
+          color: borderColor,
+          width: isInProgressCard ? 1.5 : 0,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -739,7 +654,7 @@ class _JobCard extends ConsumerWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      job.category,
+                      job.category ?? '',
                       style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                     ),
                   ],
@@ -749,7 +664,7 @@ class _JobCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '\$${job.payment.toStringAsFixed(0)}',
+                    job.payment,
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -758,7 +673,7 @@ class _JobCard extends ConsumerWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    'Earn \$${job.commission.toStringAsFixed(2)}',
+                    'Earn ${job.bonus}',
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w500,
@@ -774,12 +689,11 @@ class _JobCard extends ConsumerWidget {
           // address & time
           Row(
             children: [
-              Icon(Icons.location_on_outlined,
-                  size: 14.sp, color: kTextMuted),
+              Icon(Icons.location_on_outlined, size: 14.sp, color: kTextMuted),
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  job.address,
+                  address,
                   style: TextStyle(fontSize: 12.sp, color: kTextMain),
                 ),
               ),
@@ -788,11 +702,14 @@ class _JobCard extends ConsumerWidget {
           SizedBox(height: 4.h),
           Row(
             children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 14.sp, color: kTextMuted),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 14.sp,
+                color: kTextMuted,
+              ),
               SizedBox(width: 4.w),
               Text(
-                '${job.dateLabel} at ${job.timeLabel}',
+                dateLabel,
                 style: TextStyle(fontSize: 12.sp, color: kTextMain),
               ),
             ],
@@ -815,8 +732,8 @@ class _JobCard extends ConsumerWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: isInProgressCard
-                        ? const Color(0xFF2563EB) // 🔵 In Progress solid bg
-                        : kPrimaryYellow,          // 🟡 Ready to Start solid bg
+                        ? const Color(0xFF2563EB)
+                        : kPrimaryYellow,
                     borderRadius: BorderRadius.circular(18.r),
                   ),
                   child: ElevatedButton(
@@ -825,7 +742,7 @@ class _JobCard extends ConsumerWidget {
                         showDialog(
                           context: context,
                           barrierDismissible: true,
-                          builder: (_) => Jobdetails(),
+                          builder: (_) => Jobdetails(job: job),
                         );
                       } else {
                         showDialog(
@@ -835,10 +752,7 @@ class _JobCard extends ConsumerWidget {
                         );
                       }
                     },
-
-
                     style: ElevatedButton.styleFrom(
-                      // button ke transparent rakhlam, background niche DecoratedBox theke asche
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       padding: EdgeInsets.symmetric(horizontal: 18.w),
@@ -859,8 +773,7 @@ class _JobCard extends ConsumerWidget {
                 ),
               ),
             ],
-          )
-
+          ),
         ],
       ),
     );
@@ -902,7 +815,7 @@ class _StatusBadge extends StatelessWidget {
 ///  Completed Jobs Section
 /// ------------------------------------------------------
 class _CompletedJobsSection extends StatelessWidget {
-  final List<Job> completedJobs;
+  final List<InternalJob> completedJobs;
 
   const _CompletedJobsSection({required this.completedJobs});
 
@@ -931,7 +844,7 @@ class _CompletedJobsSection extends StatelessWidget {
                   color: Colors.black.withOpacity(0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -949,8 +862,7 @@ class _CompletedJobsSection extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(Icons.check_circle,
-                        color: Color(0xFF16A34A)),
+                    const Icon(Icons.check_circle, color: Color(0xFF16A34A)),
                   ],
                 ),
                 SizedBox(height: 4.h),
@@ -961,11 +873,14 @@ class _CompletedJobsSection extends StatelessWidget {
                 SizedBox(height: 6.h),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today_outlined,
-                        size: 14.sp, color: kTextMuted),
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 14.sp,
+                      color: kTextMuted,
+                    ),
                     SizedBox(width: 4.w),
                     Text(
-                      job.dateLabel,
+                      job.date,
                       style: TextStyle(fontSize: 12.sp, color: kTextMain),
                     ),
                   ],
@@ -973,45 +888,49 @@ class _CompletedJobsSection extends StatelessWidget {
                 SizedBox(height: 4.h),
                 Row(
                   children: [
-                    Icon(Icons.location_on_outlined,
-                        size: 14.sp, color: kTextMuted),
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 14.sp,
+                      color: kTextMuted,
+                    ),
                     SizedBox(width: 4.w),
                     Expanded(
                       child: Text(
-                        job.address,
-                        style:
-                        TextStyle(fontSize: 12.sp, color: kTextMain),
+                        job.address ?? job.location,
+                        style: TextStyle(fontSize: 12.sp, color: kTextMain),
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: 8.h),
-                Divider(color:kTextMuted,height: 1.h,),
-                SizedBox(height: 8.h,),
+                Divider(color: kTextMuted, height: 1.h),
+                SizedBox(height: 8.h),
                 Row(
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Commission Earned (15%)',
-                          style: TextStyle(
-                              fontSize: 11.sp, color: kTextMuted),
+                          'Commission Earned',
+                          style: TextStyle(fontSize: 11.sp, color: kTextMuted),
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          '\$${job.commission.toStringAsFixed(2)}',
+                          job.bonus,
                           style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF16A34A)),
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF16A34A),
+                          ),
                         ),
                       ],
                     ),
                     const Spacer(),
                     Container(
                       padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 4.h),
+                        horizontal: 10.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE7F9ED),
                         borderRadius: BorderRadius.circular(16.r),
@@ -1019,16 +938,17 @@ class _CompletedJobsSection extends StatelessWidget {
                       child: Text(
                         'Paid',
                         style: TextStyle(
-                            fontSize: 11.sp,
-                            color: const Color(0xFF16A34A),
-                            fontWeight: FontWeight.w500),
+                          fontSize: 11.sp,
+                          color: const Color(0xFF16A34A),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ],
             ),
-          )
+          ),
       ],
     );
   }
@@ -1058,7 +978,7 @@ class _TopPerformerCard extends StatelessWidget {
               color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
               offset: const Offset(0, 3),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -1070,8 +990,10 @@ class _TopPerformerCard extends StatelessWidget {
                 color: const Color(0xFFE9D5FF),
                 borderRadius: BorderRadius.circular(14.r),
               ),
-              child: const Icon(Icons.workspace_premium,
-                  color: Color(0xFF7C3AED)),
+              child: const Icon(
+                Icons.workspace_premium,
+                color: Color(0xFF7C3AED),
+              ),
             ),
             SizedBox(width: 10.w),
             Expanded(
@@ -1089,10 +1011,7 @@ class _TopPerformerCard extends StatelessWidget {
                   SizedBox(height: 2.h),
                   Text(
                     'Keep up the great work!',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: kTextMuted,
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                   ),
                 ],
               ),

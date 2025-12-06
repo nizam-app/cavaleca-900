@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
+import 'package:workpleis/features/internal_technician/screen/job/screen/internal_jobs.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_technician_home.dart';
+import 'package:workpleis/features/internal_technician/screen/profile/screen/internal_job_profile.dart';
 
 import '../logic/botton_nav_index_logic.dart';
 
@@ -21,7 +21,12 @@ class InternalBottomNavBar extends ConsumerWidget {
       backgroundColor: const Color(0xFFF2F2F2),
       body: IndexedStack(
         index: currentIndex,
-        children: [InternalDashboardV2Screen(), InternalJobs(), Earningsscreen(),  InternalJobProfile()],
+        children: [
+          InternalDashboardV2Screen(),
+          InternalJobs(),
+          Earningsscreen(),
+          InternalJobProfile(),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -37,7 +42,7 @@ class InternalBottomNavBar extends ConsumerWidget {
         child: BottomNavigationBar(
           currentIndex: currentIndex,
           onTap: (index) =>
-          ref.read(bottomNavIndexProvider.notifier).state = index,
+              ref.read(bottomNavIndexProvider.notifier).state = index,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           backgroundColor: Colors.white,

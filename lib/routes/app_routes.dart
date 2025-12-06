@@ -8,28 +8,25 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
- 
 import 'package:workpleis/features/customer/screen/map.dart';
+import 'package:workpleis/features/customer/screen/profile/screen/customer_profile_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_earnings_screen.dart';
-
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
-import 'package:workpleis/features/freelancer_pages/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelarcer_job_screen.dart';
+import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
-
-import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
+import 'package:workpleis/features/internal_technician/screen/job/screen/internal_jobs.dart';
+import 'package:workpleis/features/internal_technician/screen/profile/screen/internal_job_profile.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
-import 'package:workpleis/features/profile/screen/customer_profile_screen.dart';
+import 'package:workpleis/features/splashScreen/screen/splashScreen.dart';
 
-import '../features/customer/screen/guest_profile_screen.dart';
 import '../features/internal_technician/screen/internal_technician_home.dart';
 import '../features/nav_bar/screen/internal_bottom_nav_bar.dart';
 import 'error_screen.dart';
 
 class AppRouter {
-  static final String initial = RoleSelectionScreen.routeName;
+  static final String initial = SplashScreen.routeName;
   static final GoRouter appRouter = GoRouter(
     initialLocation: initial,
     errorBuilder: (context, state) {
@@ -70,6 +67,11 @@ class AppRouter {
       //   builder: (context, state) => const CustomerCreateAccountScreen(),
       // ),
       GoRoute(
+        path: SplashScreen.routeName,
+        name: SplashScreen.routeName,
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
         path: GuestHomeScreen.routeName,
         name: GuestHomeScreen.routeName,
         builder: (context, state) => const GuestHomeScreen(),
@@ -84,11 +86,11 @@ class AppRouter {
       //   name: CustomerMainShell.routeName,
       //   builder: (context, state) => const CustomerMainShell(),
       // ),
-      GoRoute(
-        path: GuestProfileScreen.routeName,
-        name: GuestProfileScreen.routeName,
-        builder: (context, state) => const GuestProfileScreen(),
-      ),
+      // GoRoute(
+      //   path: GuestProfileScreen.routeName,
+      //   name: GuestProfileScreen.routeName,
+      //   builder: (context, state) => const GuestProfileScreen(),
+      // ),
       //Internal Technician flow;
       GoRoute(
         path: InternalDashboardV2Screen.routeName,
@@ -132,7 +134,6 @@ class AppRouter {
         builder: (context, state) => const FreelancerHomeScreen(),
       ),
 
-
       GoRoute(
         path: FreelarcerJobScreen.routeName,
         name: FreelarcerJobScreen.routeName,
@@ -150,8 +151,6 @@ class AppRouter {
         name: FreelancerProfileScreen.routeName,
         builder: (context, state) => const FreelancerProfileScreen(),
       ),
-
-
 
       GoRoute(
         path: RoleSelectionScreen.routeName,

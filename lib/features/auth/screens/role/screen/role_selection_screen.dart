@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -6,7 +7,7 @@ enum UserRole { customer, freelancer, internal }
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key, required this.onRoleSelect});
-  static final String routeName = '/';
+  static const String routeName = '/';
 
   final ValueChanged<UserRole> onRoleSelect;
 
@@ -28,7 +29,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _Header(),
+                        const _Header(),
                         SizedBox(height: 16.h),
                         // Role cards
                         Expanded(
@@ -41,21 +42,19 @@ class RoleSelectionScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  // LKeys.hello.tr(),
-                                  // "hello".tr(),
-                                  'Select Your Role',
-                                  style: TextStyle(
-                                    fontSize:
-                                        16, // This can remain as is, or use .sp
+                                  'select_your_role'.tr(),
+                                  style: const TextStyle(
+                                    fontSize: 16, // or 16.sp
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF111827),
                                   ),
                                 ),
                                 SizedBox(height: 16.h),
+                                // CUSTOMER
                                 _RoleCard(
-                                  title: 'Customer',
+                                  title: 'customer'.tr(),
                                   description:
-                                      'Book and manage service requests',
+                                  'book_and_manage_service_requests'.tr(),
                                   gradientColors: const [
                                     Color(0xFFC20001),
                                     Color(0xFF9A0001),
@@ -63,13 +62,15 @@ class RoleSelectionScreen extends StatelessWidget {
                                   icon: Icons.group,
                                   onTap: () => onRoleSelect(
                                     UserRole.customer,
-                                  ), // customer
+                                  ),
                                 ),
                                 SizedBox(height: 12.h),
+
+                                // FREELANCER TECHNICIAN
                                 _RoleCard(
-                                  title: 'Freelancer Technician',
+                                  title: 'freelancer_technician'.tr(),
                                   description:
-                                      'Accept jobs and earn commissions',
+                                  'accept_jobs_and_earn_commissions'.tr(),
                                   gradientColors: const [
                                     Color(0xFFFFB111),
                                     Color(0xFFE69F0F),
@@ -79,10 +80,14 @@ class RoleSelectionScreen extends StatelessWidget {
                                       onRoleSelect(UserRole.freelancer),
                                 ),
                                 SizedBox(height: 12.h),
+
+                                // INTERNAL TECHNICIAN
                                 _RoleCard(
-                                  title: 'Internal Technician',
+                                  title: 'internal_technician'.tr(),
+                                  // ei key ta na thakle, chaile
+                                  // 'manage_assignments_performance'.tr() use korte paro
                                   description:
-                                      'Manage assigned jobs and schedule',
+                                  'manage_assignments_performance'.tr(),
                                   gradientColors: const [
                                     Color(0xFF374151),
                                     Color(0xFF111827),
@@ -94,36 +99,7 @@ class RoleSelectionScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Footer
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            24, // Keep this for wider screens
-                            8, // Keep this for wider screens
-                            24, // Keep this for wider screens
-                            24, // Keep this for wider screens
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Version 1.0.0',
-                                style: TextStyle(
-                                  fontSize:
-                                      11, // This can remain as is, or use .sp
-                                  color: Color(0xFF9CA3AF),
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                '© 2025 IBACOS Services',
-                                style: TextStyle(
-                                  fontSize:
-                                      11, // This can remain as is, or use .sp
-                                  color: Color(0xFF9CA3AF),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+
                       ],
                     ),
                   ),
@@ -138,6 +114,8 @@ class RoleSelectionScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
+  const _Header();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -167,13 +145,13 @@ class _Header extends StatelessWidget {
             fit: BoxFit.contain,
           ),
           SizedBox(height: 12.h),
-          const Text(
-            'Field Service Management Platform',
+          Text(
+            'field_service_management_platform'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
+            style: const TextStyle(
+              fontSize: 13, // or 13.sp
               color: Color(0xFF6B7280),
-            ), // or 13.sp
+            ),
           ),
           // language selector jodi chai pore ekhane add korte parba
         ],
@@ -237,7 +215,7 @@ class _RoleCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      title, // already translated
                       style: TextStyle(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w600,
@@ -246,7 +224,7 @@ class _RoleCard extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      description,
+                      description, // already translated
                       style: TextStyle(
                         fontSize: 12.sp,
                         height: 1.3,
