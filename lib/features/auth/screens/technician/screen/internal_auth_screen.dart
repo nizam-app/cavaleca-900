@@ -3,12 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/auth/logic/registration_logic.dart';
-// 👈 OTP+setPassword API
+import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
 
-/// -----------------------------
-///  Auth Mode Enum
-/// -----------------------------
 enum InternalAuthMode { welcome, login, signup, signupOtp, setPassword }
 
 class InternalAuthScreen extends ConsumerStatefulWidget {
@@ -215,12 +212,14 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
           _mode = InternalAuthMode.signup;
         });
         break;
+
       case InternalAuthMode.setPassword:
         setState(() {
           _passwordController.clear();
           _mode = InternalAuthMode.signupOtp;
         });
         break;
+
       case InternalAuthMode.login:
       case InternalAuthMode.signup:
         setState(() {
@@ -231,8 +230,16 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
           _mode = InternalAuthMode.welcome;
         });
         break;
+
       case InternalAuthMode.welcome:
-        Navigator.of(context).maybePop();
+        // 🔴 এখানে আসল back behaviour
+        if (context.canPop()) {
+          // stack এ অন্য page আছে → শুধু pop করো
+          context.pop();
+        } else {
+          // stack এ কিছু নাই → direct role selection এ নিয়ে যাও
+          context.go(RoleSelectionScreen.routeName);
+        }
         break;
     }
   }
@@ -361,12 +368,14 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
 
   // ================= INDIVIDUAL SCREENS =================
 
+  /// Welcome screen
   Widget _buildWelcome() {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: const [
-        SizedBox(height: 8),
-        Text(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+        const Text(
           'Internal Team Portal',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -375,14 +384,76 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        SizedBox(height: 6),
-        Text(
+        const SizedBox(height: 6),
+        const Text(
           'Manage your assignments & performance',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
         ),
-        SizedBox(height: 24),
-        // বাকি বাটনগুলো নিচেই আছে, same as before
+
+        const SizedBox(height: 24),
+
+        // -------- Login button (outline red) ----------
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: OutlinedButton(
+            onPressed: () => setState(() {
+              _mode = InternalAuthMode.login;
+            }),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFFC20001), width: 2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor: Colors.white,
+            ),
+            child: const Text(
+              'Login to Your Account',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFC20001),
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // -------- Register button (solid red) ----------
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: () => setState(() {
+              _mode = InternalAuthMode.signup;
+            }),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC20001),
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: const Text(
+              'Register as Employee',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        const Text(
+          'For IBACOS internal team members only.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+        ),
       ],
     );
   }

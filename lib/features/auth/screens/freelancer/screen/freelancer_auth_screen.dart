@@ -117,7 +117,10 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           final user = res.user;
 
           widget.onAuthComplete(
-            FreelancerUserData(name: user.name, phone: user.phone),
+            FreelancerUserData(
+              name: user.name.isNotEmpty ? user.name : 'Unknown',
+              phone: user.phone.isNotEmpty ? user.phone : '',
+            ),
           );
         }
       },
