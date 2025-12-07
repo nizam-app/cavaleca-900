@@ -6,6 +6,7 @@ import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_scree
 
 import '../../freelancer_pages/screen/freelarcer_job_screen.dart';
 import '../logic/botton_nav_index_logic.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class FreelancerBottomNavBar extends ConsumerWidget {
   const FreelancerBottomNavBar({super.key});
@@ -57,26 +58,26 @@ class FreelancerBottomNavBar extends ConsumerWidget {
             fontWeight: FontWeight.w500,
           ),
           showUnselectedLabels: true,
-          items: const [
+          items:  [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
-              label: 'Home',
+              label: 'home'.tr(),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.work_outline),
               activeIcon: Icon(Icons.work_outline),
-              label: 'Jobs',
+              label: 'jobs'.tr(),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.attach_money_outlined),
               activeIcon: Icon(Icons.attach_money_outlined),
-              label: 'Earnings',
+              label: 'earnings'.tr(),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              label: 'profile'.tr(),
             ),
           ],
         ),

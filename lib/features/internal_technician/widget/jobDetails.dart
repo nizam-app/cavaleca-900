@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'compliteJob.dart';
 
 /// ------------------------------------------------------
@@ -73,7 +74,7 @@ class Jobdetails extends StatelessWidget {
             SizedBox(width: 24.w), // to balance close icon on right
             Expanded(
               child: Text(
-                'Job Details',
+                'job_details'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18.sp,
@@ -94,7 +95,7 @@ class Jobdetails extends StatelessWidget {
         ),
         SizedBox(height: 4.h),
         Text(
-          'Job in progress',
+          'job_in_progress_title'.tr(),
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w400,
@@ -111,13 +112,13 @@ class Jobdetails extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _StatusChip(
-          label: 'In Progress',
+          label: 'in_progress'.tr(),
           bgColor: const Color(0xFFE7F0FF),
           textColor: kAccentBlue,
         ),
         SizedBox(width: 8.w),
         _StatusChip(
-          label: 'HIGH Priority',
+          label: 'high_priority'.tr(),
           bgColor: const Color(0xFFFFE6E6),
           textColor: kPrimaryRed,
         ),
@@ -173,7 +174,7 @@ class Jobdetails extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Customer',
+                  'customer'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
@@ -236,7 +237,7 @@ class Jobdetails extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Location',
+                  'location'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
@@ -276,7 +277,7 @@ class Jobdetails extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Scheduled',
+                  'scheduled'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
@@ -329,7 +330,7 @@ class Jobdetails extends StatelessWidget {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  'Performance Bonus (5%)',
+                  'performance_bonus'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -396,7 +397,7 @@ class Jobdetails extends StatelessWidget {
             ),
             SizedBox(width: 8.w),
             Text(
-              'Complete Job',
+              'complete_job'.tr(),
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
@@ -423,7 +424,7 @@ class Jobdetails extends StatelessWidget {
         ),
         onPressed: () => Navigator.of(context).pop(),
         child: Text(
-          'Close',
+          'close'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w500,

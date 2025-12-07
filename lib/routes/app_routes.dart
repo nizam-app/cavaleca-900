@@ -8,6 +8,7 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
+import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_earnings_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
@@ -82,11 +83,31 @@ class AppRouter {
         name: CustomerAuthScreen.routeName,
         builder: (context, state) => const CustomerAuthScreen(),
       ),
+
       // GoRoute(
-      //   path: CustomerMainShell.routeName,
-      //   name: CustomerMainShell.routeName,
-      //   builder: (context, state) => const CustomerMainShell(),
+      //   path: CustomerEditProfile.routeName,
+      //   name: CustomerEditProfile.routeName,
+      //   builder: (context, state) => const CustomerEditProfile(),
       // ),
+      // go_router config e:
+      GoRoute(
+        path: CustomerEditProfile.routeName,
+        builder: (context, state) {
+          final profile = state.extra as CustomerProfileData?;
+          return CustomerEditProfile(
+            initialName: profile?.name ?? '',
+            initialPhone: profile?.phone ?? '',
+            initialEmail: profile?.email ?? '',
+            initialAddress: profile?.address ?? '',
+            initialPlaceName: profile?.placeName,
+            initialLocation: profile?.location,
+          );
+        },
+      ),
+
+
+
+
       GoRoute(
         path: GuestProfileScreen.routeName,
         name: GuestProfileScreen.routeName,

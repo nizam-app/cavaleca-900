@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:workpleis/features/notification/data/notificaion_data.dart';
 import 'package:workpleis/features/notification/model/notification_model.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -60,7 +61,7 @@ class CustomerNotificationsScreen extends ConsumerWidget {
                             error: (err, _) => Column(
                               children: [
                                 Text(
-                                  'Failed to load notifications',
+                                  'failed_load_notifications'.tr(),
                                   style: TextStyle(
                                     color: Colors.red,
                                     fontSize: 13.sp,
@@ -69,7 +70,7 @@ class CustomerNotificationsScreen extends ConsumerWidget {
                                 SizedBox(height: 8.h),
                                 TextButton(
                                   onPressed: notifier.refresh,
-                                  child: const Text('Retry'),
+                                  child:  Text('Retry'),
                                 ),
                               ],
                             ),
@@ -86,7 +87,7 @@ class CustomerNotificationsScreen extends ConsumerWidget {
                                       ),
                                       SizedBox(height: 8.h),
                                       Text(
-                                        'No notifications yet',
+                                        'no_notifications_yet'.tr(),
                                         style: TextStyle(
                                           fontSize: 14.sp,
                                           color: const Color(0xFF6B7280),
@@ -200,7 +201,7 @@ class _NotificationsHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Notifications',
+            'notifications'.tr(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 18.sp,
@@ -209,7 +210,7 @@ class _NotificationsHeader extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Stay updated with your services',
+            'stay_updated'.tr(),
             style: TextStyle(color: Colors.white70, fontSize: 13.sp),
           ),
         ],
@@ -262,7 +263,7 @@ class _GuestLimitedCard extends StatelessWidget {
             ),
             SizedBox(height: 16.h),
             Text(
-              'Guest Access Limited',
+              'guest_access_limited'.tr(),
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
@@ -271,7 +272,7 @@ class _GuestLimitedCard extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             Text(
-              'Create an account to receive notifications about your bookings and services',
+              'create_account_receive_notifications'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13.sp, color: Color(0xFF6B7280)),
             ),
@@ -289,7 +290,7 @@ class _GuestLimitedCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Create Account',
+                  'create_account'.tr(),
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,

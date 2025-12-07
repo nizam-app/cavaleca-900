@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 import '../screen/internal_jobs.dart';
 
 class JobDetailOverlay extends StatefulWidget {
@@ -182,7 +182,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                             borderRadius: BorderRadius.circular(999.r),
                           ),
                           child: Text(
-                            'PENDING',
+                            'p_ending'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
@@ -201,7 +201,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                             borderRadius: BorderRadius.circular(999.r),
                           ),
                           child: Text(
-                            'HIGH PRIORITY',
+                            'high_priority'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
@@ -233,7 +233,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                'Response Time',
+                                'response_time'.tr(),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 13.sp,
@@ -291,7 +291,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                           SizedBox(height: 8.h),
 
                           Text(
-                            'Please review and respond to this work order',
+                            'please_review_respond_order'.tr(),
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.8),
                               fontSize: 11.sp,
@@ -428,7 +428,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                 ),
                                 SizedBox(width: 6.w),
                                 Text(
-                                  'Job Details',
+                                  'job_details'.tr(),
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w600,
@@ -441,7 +441,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
 
                             _DetailRow(
                               icon: Icons.category_outlined,
-                              label: 'Category',
+                              label: 'category'.tr(),
                               value: job.category ?? 'N/A',
                             ),
                             SizedBox(height: 8.h),
@@ -450,7 +450,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                 job.description!.isNotEmpty) ...[
                               _DetailRow(
                                 icon: Icons.notes_outlined,
-                                label: 'Description',
+                                label: 'description'.tr(),
                                 value: job.description!,
                                 multiline: true,
                               ),
@@ -459,17 +459,16 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
 
                             _DetailRow(
                               icon: Icons.location_on_outlined,
-                              label: 'Location',
+                              label: 'location'.tr(),
                               value: job.address?.isNotEmpty == true
                                   ? '${job.location}\n${job.address}'
                                   : job.location,
                               multiline: true,
                             ),
                             SizedBox(height: 8.h),
-
                             _DetailRow(
                               icon: Icons.access_time,
-                              label: 'Schedule',
+                              label: 'schedule'.tr(),
                               value:
                               '${job.date}${job.time != null ? ' at ${job.time}' : ''}',
                             ),
@@ -490,7 +489,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                     CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Payment',
+                                        'p_ayment'.tr(),
                                         style: TextStyle(
                                           fontSize: 11.sp,
                                           color: const Color(0xFF6B7280),
@@ -558,7 +557,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                                       ),
                                       SizedBox(width: 6.w),
                                       Text(
-                                        'Open in Maps',
+                                        'open_in_maps'.tr(),
                                         style: TextStyle(
                                           fontSize: 13.sp,
                                           color: const Color(0xFF111827),
@@ -599,7 +598,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 4.h),
                           child: Text(
-                            'Decline',
+                            'd_ecline'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               color: const Color(0xFF6B7280),
@@ -623,7 +622,7 @@ class _JobDetailOverlayState extends State<JobDetailOverlay> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 4.h),
                           child: Text(
-                            'Accept Work Order',
+                            'accept_work_order'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,

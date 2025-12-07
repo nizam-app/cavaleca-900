@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:workpleis/features/internal_technician/widget/newJobAssigned.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../widget/jobDetails.dart';
 import '../widget/job_detail-overlay.dart';
@@ -352,7 +352,7 @@ class _InternalJobsState extends State<InternalJobs> {
                     children: [
                       SizedBox(height: 24.h),
                       Text(
-                        'My Jobs',
+                        'my_jobs'.tr(),
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -361,7 +361,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'Manage your assigned work orders',
+                        'manage_your_assigned_orders'.tr(),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: const Color(0xFFD1D5DB),
                           fontSize: 13.sp,
@@ -522,7 +522,7 @@ class _InternalJobsState extends State<InternalJobs> {
       child: Row(
         children: [
           buildTab(
-            label: 'Incoming',
+            label: 'incoming'.tr(),
             index: 0,
             showCount: true,
             count: _incomingJobs.length,
@@ -530,13 +530,13 @@ class _InternalJobsState extends State<InternalJobs> {
           ),
           SizedBox(width: 4.w),
           buildTab(
-            label: 'Active',
+            label: 'active'.tr(),
             index: 1,
             activeColor: const Color(0xFF111827),
           ),
           SizedBox(width: 4.w),
           buildTab(
-            label: 'Done',
+            label: 'done'.tr(),
             index: 2,
             activeColor: const Color(0xFF111827),
           ),
@@ -653,7 +653,7 @@ class _InternalJobsState extends State<InternalJobs> {
                     borderRadius: BorderRadius.circular(999.r),
                   ),
                   child: Text(
-                    'NEW',
+                    'new'.tr(),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 11.sp,
@@ -714,7 +714,7 @@ class _InternalJobsState extends State<InternalJobs> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Job Payment',
+                            'job_payment'.tr(),
                             style: TextStyle(
                               color: const Color(0xFF9CA3AF),
                               fontSize: 11.sp,
@@ -736,7 +736,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Your Bonus ($bonusRate%)',
+                          'Track bonus ($bonusRate%)',
                           style: TextStyle(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 11.sp,
@@ -782,7 +782,7 @@ class _InternalJobsState extends State<InternalJobs> {
 
                     },
                     child: Text(
-                      'View Details',
+                      'view_details'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         // requested: black text
@@ -809,7 +809,7 @@ class _InternalJobsState extends State<InternalJobs> {
 
                     },
                     child: Text(
-                      'Accept',
+                      'accept'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w500,
@@ -941,7 +941,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       borderRadius: BorderRadius.circular(999.r),
                     ),
                     child: Text(
-                      isInProgress ? 'In Progress' : 'Assigned',
+                      isInProgress ? 'in_progress'.tr() : 'assigned'.tr(),
                       style: TextStyle(
                         color: isInProgress
                             ? const Color(0xFF1D4ED8)
@@ -1004,7 +1004,7 @@ class _InternalJobsState extends State<InternalJobs> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Job Payment',
+                              'job_payment'.tr(),
                               style: TextStyle(
                                 color: const Color(0xFF9CA3AF),
                                 fontSize: 11.sp,
@@ -1078,7 +1078,7 @@ class _InternalJobsState extends State<InternalJobs> {
 
                   },
                   child: Text(
-                    isInProgress ? 'Continue Job' : 'Start Job',
+                    isInProgress ? 'continue_job_btn'.tr() : 'start_job_short'.tr(),
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
@@ -1212,7 +1212,7 @@ class _InternalJobsState extends State<InternalJobs> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Job Payment',
+                        'job_payment'.tr(),
                         style: TextStyle(
                           color: const Color(0xFF9CA3AF),
                           fontSize: 11.sp,
@@ -1367,7 +1367,7 @@ class InternalWorkflowOverlay extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: onClose,
-                      child: const Text('Close'),
+                      child:  Text('close'.tr()),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -1378,7 +1378,7 @@ class InternalWorkflowOverlay extends StatelessWidget {
                           job.copyWith(status: JobStatus.completed),
                         );
                       },
-                      child: const Text('Mark Completed'),
+                      child:  Text('mark_completed'.tr()),
                     ),
                   ),
                 ],

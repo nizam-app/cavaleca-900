@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 /// ------------------------------------------------------
 ///  Colors (same style as Job Details popup)
 /// ------------------------------------------------------
@@ -73,7 +75,7 @@ class Complitejob extends StatelessWidget {
             SizedBox(width: 24.w),
             Expanded(
               child: Text(
-                'Complete Job',
+                'complete_job'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18.sp,
@@ -113,7 +115,7 @@ class Complitejob extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Work Photos *',
+          'work_photos'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
@@ -152,7 +154,7 @@ class Complitejob extends StatelessWidget {
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  'Tap to upload photos',
+                  'tap_to_upload'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -161,7 +163,7 @@ class Complitejob extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'At least 1 photo required',
+                  'one_photo_required'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w400,
@@ -182,7 +184,7 @@ class Complitejob extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Work Notes (Optional)',
+          'work_notes_optional'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
@@ -205,7 +207,7 @@ class Complitejob extends StatelessWidget {
               // color: kTextMain,
                 ),
                 decoration: InputDecoration(
-                    hintText: 'Add any notes about the work completed',
+                    hintText: 'add_notes'.tr(),
                   hintStyle: TextStyle(
                   fontSize: 12.sp,
                   color: kTextMuted,
@@ -252,7 +254,7 @@ class Complitejob extends StatelessWidget {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  'Bonus Calculation',
+                  'bonus_calculation'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
@@ -267,7 +269,7 @@ class Complitejob extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Job Payment:',
+                  'job_payment'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: kPrimaryGreen,
@@ -290,7 +292,7 @@ class Complitejob extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Bonus Rate:',
+                  'bonus_rate'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: kPrimaryGreen,
@@ -320,7 +322,7 @@ class Complitejob extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Your Bonus:',
+                  'your_bonus'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
@@ -340,7 +342,7 @@ class Complitejob extends StatelessWidget {
           ),
           SizedBox(height: 6.h),
           Text(
-            'Paid every Monday with your weekly bonuses',
+            'paid_every_monday'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w400,
@@ -370,7 +372,7 @@ class Complitejob extends StatelessWidget {
               ),
               child: Center(
                     child: Text(
-                      'Cancel',
+                      'cancel'.tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
@@ -405,7 +407,7 @@ class Complitejob extends StatelessWidget {
                   ),
                   SizedBox(width: 8.w),
                   Text(
-                    'Complete Job',
+                    'complete_job_btn'.tr(),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
