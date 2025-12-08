@@ -107,8 +107,6 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     super.dispose();
   }
 
-<<<<<<< HEAD
-=======
   Future<void> _loadCustomerProfile() async {
     try {
       final profile = await CustomerProfileApi.getProfile();
@@ -141,7 +139,6 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
       debugPrint('Failed to load customer profile: $e');
     }
   }
->>>>>>> 0e295764f7e7e62fcae2d348811629d320cda0d2
 
   Future<void> _pickDate() async {
     final now = DateTime.now();

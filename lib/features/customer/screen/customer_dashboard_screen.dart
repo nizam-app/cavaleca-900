@@ -11,10 +11,6 @@ import 'package:workpleis/features/customer/widget/service_details.dart';
 import 'package:workpleis/features/customer/model/customer_booking_model.dart';
 import 'package:workpleis/features/customer/logic/customer_booking_logic.dart';
 import 'package:url_launcher/url_launcher.dart';
-<<<<<<< HEAD
-import 'service/model/create_sr_model.dart';
-=======
->>>>>>> 0e295764f7e7e62fcae2d348811629d320cda0d2
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);

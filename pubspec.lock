@@ -462,7 +462,7 @@ packages:
     source: hosted
     version: "1.6.0"
   http_parser:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http_parser
       sha256: "178d74305e7866013777bab2c3d8726205dc5a4dd935297175b19a23a2e66571"
@@ -485,7 +485,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
-
   image_picker_android:
     dependency: transitive
     description:
@@ -498,12 +497,10 @@ packages:
     dependency: transitive
     description:
       name: image_picker_for_web
-
       sha256: "66257a3191ab360d23a55c8241c91a6e329d31e94efa7be9cf7a212e65850214"
       url: "https://pub.dev"
     source: hosted
     version: "3.1.1"
-
   image_picker_ios:
     dependency: transitive
     description:
@@ -639,18 +636,7 @@ packages:
       sha256: "41a20518f0cb1256669420fdba0cd90d21561e560ac240f26ef8322e45bb7ed6"
       url: "https://pub.dev"
     source: hosted
-
     version: "2.0.0"
-
-  mime:
-    dependency: transitive
-    description:
-      name: mime
-      sha256: "801fd0b26f14a4a58ccb09d5892c3fbdeff209594300a542492cf13fba9d247a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.6"
-
   octo_image:
     dependency: transitive
     description:
