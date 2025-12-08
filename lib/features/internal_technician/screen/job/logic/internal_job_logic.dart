@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
@@ -125,11 +126,31 @@ class TechnicianJobsApi {
     // Add photos if provided
     if (photos != null && photos.isNotEmpty) {
       for (var i = 0; i < photos.length; i++) {
-        final file = await http.MultipartFile.fromPath(
-          'photos',
-          photos[i].path,
+        final photo = photos[i];
+        final fileExtension = photo.path.split('.').last.toLowerCase();
+        
+        // Determine content type based on file extension
+        String contentType;
+        if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
+          contentType = 'image/jpeg';
+        } else if (fileExtension == 'png') {
+          contentType = 'image/png';
+        } else if (fileExtension == 'pdf') {
+          contentType = 'application/pdf';
+        } else {
+          // Default to jpeg if unknown
+          contentType = 'image/jpeg';
+        }
+        
+        // Read file bytes and create multipart file with proper content type
+        final bytes = await photo.readAsBytes();
+        final fileWithType = http.MultipartFile.fromBytes(
+          'photos', // API expects 'photos' as field name
+          bytes,
+          filename: photo.name.isNotEmpty ? photo.name : 'photo_$i.$fileExtension',
+          contentType: MediaType.parse(contentType),
         );
-        request.files.add(file);
+        request.files.add(fileWithType);
       }
     }
 
