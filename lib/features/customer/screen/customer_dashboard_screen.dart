@@ -850,9 +850,9 @@ class _ActiveRequestCard extends StatelessWidget {
     final Color statusBg = const Color(0xFFEFF6FF);
     final Color statusText = const Color(0xFF1D4ED8);
     final String technicianName =
-        booking.assignedTechnician?.name ?? 'Not Assigned';
+        booking.assignedTechnician?.name ?? 'not_assigned'.tr();
     final String? technicianPhone = booking.assignedTechnician?.phone;
-    final String serviceName = booking.service?.name ?? 'Service';
+    final String serviceName = booking.service?.name ?? 'service'.tr();
     final String categoryName = booking.category?.name ?? '';
 
     return Card(
@@ -886,7 +886,7 @@ class _ActiveRequestCard extends StatelessWidget {
                       ],
                       SizedBox(height: 2.h),
                       Text(
-                        'Technician: $technicianName',
+                        '${'technician_label'.tr()} $technicianName',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF6B7280),
@@ -1103,7 +1103,7 @@ class _BookingDetailSheet extends StatelessWidget {
             : const Color(0xFF991B1B);
     final String chipLabel = booking.readableStatus;
 
-    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
     final String? technicianPhone = booking.assignedTechnician?.phone;
     final String initials = _getInitials(technicianName);
 
@@ -1182,11 +1182,11 @@ class _BookingDetailSheet extends StatelessWidget {
               SizedBox(height: 16.h),
 
               // SR Number
-              _buildDetailRow('SR Number', booking.srNumber),
+              _buildDetailRow('sr_number'.tr(), booking.srNumber),
               SizedBox(height: 8.h),
               _buildDetailRow('Status', booking.status),
               SizedBox(height: 8.h),
-              _buildDetailRow('Internal Status', booking.internalStatus),
+              _buildDetailRow('internal_status'.tr(), booking.internalStatus),
               SizedBox(height: 8.h),
               _buildDetailRow('Priority', booking.priority),
               SizedBox(height: 16.h),
@@ -1204,7 +1204,7 @@ class _BookingDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Service',
+                        'service'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: const Color(0xFF9CA3AF),
@@ -1212,7 +1212,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        booking.service?.name ?? 'N/A',
+                        booking.service?.name ?? 'n_a'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -1247,7 +1247,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       if (booking.subservice != null) ...[
                         SizedBox(height: 12.h),
                         Text(
-                          'Subservice',
+                          'subservice'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1330,7 +1330,7 @@ class _BookingDetailSheet extends StatelessWidget {
                                 booking.preferredAppointmentTime != null) ...[
                               SizedBox(height: 4.h),
                               Text(
-                                'Preferred: ${booking.preferredAppointmentDate ?? ''} ${booking.preferredAppointmentTime ?? ''}',
+                                '${'preferred'.tr()} ${booking.preferredAppointmentDate ?? ''} ${booking.preferredAppointmentTime ?? ''}',
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: const Color(0xFF6B7280),
@@ -1509,21 +1509,21 @@ class _BookingDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Payment Summary',
+                          'payment_summary'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        _buildDetailRow('Total Amount',
+                        _buildDetailRow('total_amount'.tr(),
                             '\$${booking.paymentSummary!.totalAmount.toStringAsFixed(2)}'),
                         SizedBox(height: 4.h),
-                        _buildDetailRow('Payment Status',
+                        _buildDetailRow('payment_status'.tr(),
                             booking.paymentSummary!.paymentStatus),
                         if (booking.paymentSummary!.paymentMethod != null) ...[
                           SizedBox(height: 4.h),
-                          _buildDetailRow('Payment Method',
+                          _buildDetailRow('payment_method'.tr(),
                               booking.paymentSummary!.paymentMethod!),
                         ],
                       ],
@@ -1547,7 +1547,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Technician Rating',
+                          'technician_rating'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1586,9 +1586,9 @@ class _BookingDetailSheet extends StatelessWidget {
 
               // Dates
               SizedBox(height: 12.h),
-              _buildDetailRow('Created At', _formatDate(booking.createdAt)),
+              _buildDetailRow('created_at'.tr(), _formatDate(booking.createdAt)),
               SizedBox(height: 4.h),
-              _buildDetailRow('Updated At', _formatDate(booking.updatedAt)),
+              _buildDetailRow('updated_at'.tr(), _formatDate(booking.updatedAt)),
 
               SizedBox(height: 16.h),
 

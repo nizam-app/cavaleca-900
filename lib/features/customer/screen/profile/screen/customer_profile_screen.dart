@@ -2,8 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/global_language_dialog.dart';
-import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
+import 'package:workpleis/features/shared/screen/edit_profile_screen.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
@@ -259,8 +259,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () {
-                    // _showToast('Edit profile tapped');
-                 context.push(CustomerEditProfile.routeName);
+                    context.push(EditProfileScreen.routeName);
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFFE5E5),

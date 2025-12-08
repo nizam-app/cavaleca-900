@@ -8,8 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/log_out_utton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
-import 'package:workpleis/features/freelancer_pages/screen/freelancer_edit_profile.dart';
 import 'package:workpleis/features/freelancer_pages/screen/profile/data/freelancer_profile_data.dart';
+import 'package:workpleis/features/shared/screen/edit_profile_screen.dart';
 
 /// ---------------------------------------------------------------------------
 /// Colors
@@ -450,17 +450,14 @@ class _ProfileInfoCard extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           GestureDetector(
-            onTap: ()async {
-              final updatedProfile = await context.push<FreelancerProfileData>(
-                FreelancerEditProfile.routeName,
-                extra: context, // optional, jodi profile data pass korte caao
+            onTap: () async {
+              final updated = await context.push<bool>(
+                EditProfileScreen.routeName,
               );
 
-              if (updatedProfile != null) {
-                // user save kore screen close korle ekhane pabe updated data
-                // setState(() {
-                //   currentProfileData = updatedProfile;
-                // });
+              if (updated == true) {
+                // Profile updated, refresh if needed
+                // You can invalidate the profile provider here if using Riverpod
               }
             },
             child: Container(

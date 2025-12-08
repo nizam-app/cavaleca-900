@@ -25,6 +25,7 @@ import 'package:workpleis/features/splashScreen/screen/splashScreen.dart';
 import '../features/freelancer_pages/screen/freelancer_edit_profile.dart';
 import '../features/internal_technician/screen/internal_technician_home.dart';
 import '../features/nav_bar/screen/internal_bottom_nav_bar.dart';
+import '../features/shared/screen/edit_profile_screen.dart';
 import 'error_screen.dart';
 
 class AppRouter {
@@ -262,6 +263,11 @@ class AppRouter {
         builder: (context, state) => const CustomerEditProfile(),
       ),
 
+      GoRoute(
+        path: EditProfileScreen.routeName,
+        name: EditProfileScreen.routeName,
+        builder: (context, state) => const EditProfileScreen(),
+      ),
 
       GoRoute(
         path: CustomerAppScreen.routeName, // '/customerApp'
