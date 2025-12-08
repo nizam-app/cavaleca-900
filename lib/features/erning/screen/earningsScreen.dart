@@ -1,78 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/erning/data/erning_data.dart';
+import 'package:workpleis/features/erning/model/erninig_model.dart';
 
-class Earningsscreen extends StatelessWidget {
+class Earningsscreen extends ConsumerWidget {
   const Earningsscreen({super.key});
 
   static const String routeName = '/internalEarningsScreen';
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F4),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: 30.h),
-        child: Column(
-          children: [
-            _header(),
-            SizedBox(height: 16.h),
-            _statsRow(),
-            SizedBox(height: 16.h),
-            _availableBonusCard(),
-            SizedBox(height: 16.h),
-            _bonusRateCard(),
-            SizedBox(height: 16.h),
-            monthlySalaryCard(),
-            SizedBox(height: 22.h),
-            _recentBonusesHeader(),
-            _recentBonusItem(
-              job: "HVAC System Maintenance",
-              name: "Ahmed Mohammed",
-              time: "Today, 2:00 PM",
-              amount: "\$180",
-              bonus: "+\$25",
-              dateColor: Colors.green,
-            ),
-            _recentBonusItem(
-              job: "Plumbing Emergency",
-              name: "Omar Abdullah",
-              time: "Nov 2, 2025",
-              amount: "\$200",
-              bonus: "+\$30",
-              dateColor: Colors.green,
-            ),
-            _recentBonusItem(
-              job: "HVAC Installation",
-              name: "Amadou Diallo",
-              time: "Nov 2, 2025",
-              amount: "\$350",
-              bonus: "+\$75",
-              dateColor: Colors.green,
-            ),
-            _recentBonusItem(
-              job: "Electrical Panel Upgrade",
-              name: "Sidi Mohamed",
-              time: "Nov 1, 2025",
-              amount: "\$280",
-              bonus: "+\$140",
-              dateColor: Colors.green,
-            ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncSummary = ref.watch(internalEarningsProvider);
 
-          ],
+    return asyncSummary.when(
+      loading: () => const Scaffold(
+        backgroundColor: Color(0xFFF4F4F4),
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: const Color(0xFFF4F4F4),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Text(
+              'Failed to load earnings:\n$err',
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
       ),
+      data: (summary) {
+        return Scaffold(
+          backgroundColor: const Color(0xFFF4F4F4),
+          body: SingleChildScrollView(
+            padding: EdgeInsets.only(bottom: 30.h),
+            child: Column(
+              children: [
+                _header(summary),
+                SizedBox(height: 16.h),
+                _statsRow(summary),
+                SizedBox(height: 16.h),
+                _availableBonusCard(summary),
+                SizedBox(height: 16.h),
+                _bonusRateCard(summary),
+                SizedBox(height: 16.h),
+                monthlySalaryCard(summary),
+                SizedBox(height: 22.h),
+                _recentBonusesHeader(),
+                if (summary.monthlySalary.isFreelancer == false &&
+                    summary.availableBonus.jobsCount == 0)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'No recent bonuses yet',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ),
+                  ),
+                // যদি backend পরে recentBonuses পাঠায়, এখানে list map করে দেখাবে
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  // -------------------------------------------------------
-  // HEADER
-  // -------------------------------------------------------
-  Widget _header() {
+  // ------------------------------------------------------------------
+  // HEADER  – use totalBonuses
+  // ------------------------------------------------------------------
+  Widget _header(TechnicianEarningsSummary summary) {
+    final total = summary.totalBonuses;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 26.h),
       decoration: BoxDecoration(
-
         color: const Color(0xFF0F1625),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(26.r),
@@ -101,34 +110,27 @@ class Earningsscreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.file_download_outlined,
-                        color: Colors.white70, size: 16.sp),
+                    Icon(
+                      Icons.file_download_outlined,
+                      color: Colors.white70,
+                      size: 16.sp,
+                    ),
                     SizedBox(width: 6.w),
                     Text(
                       "Export",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13.sp,
-                      ),
-                    )
+                      style: TextStyle(color: Colors.white70, fontSize: 13.sp),
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
-
           SizedBox(height: 6.h),
-
           Text(
             "Track your bonus earnings",
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.white70,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: Colors.white70),
           ),
           SizedBox(height: 18.h),
-
-          // TOTAL BONUSES CARD
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(16.w),
@@ -141,14 +143,11 @@ class Earningsscreen extends StatelessWidget {
               children: [
                 Text(
                   "Total Bonuses (All Time)",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14.sp,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 14.sp),
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  "\$4,820",
+                  "\$${total.amount.toStringAsFixed(2)}",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18.sp,
@@ -157,9 +156,11 @@ class Earningsscreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "+8.5% from last month",
+                  total.increaseText.isNotEmpty
+                      ? total.increaseText
+                      : "${total.increaseRate.toStringAsFixed(1)}% from last month",
                   style: TextStyle(
-                    color: Color(0xFF05DF72),
+                    color: const Color(0xFF05DF72),
                     fontSize: 14.sp,
                   ),
                 ),
@@ -171,36 +172,35 @@ class Earningsscreen extends StatelessWidget {
     );
   }
 
-  // -------------------------------------------------------
-  // TODAY / WEEK / MONTH ROW
-  // -------------------------------------------------------
-  Widget _statsRow() {
+  // ------------------------------------------------------------------
+  // TODAY / WEEK / MONTH  – use breakdown
+  // ------------------------------------------------------------------
+  Widget _statsRow(TechnicianEarningsSummary summary) {
+    final br = summary.breakdown;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _statBox(
           title: "Today",
-          value: "\$16.50",
+          value: "\$${br.today.toStringAsFixed(2)}",
           icon: Icons.attach_money,
           bgColor: const Color(0xFFE8FEEA),
-          // light green
-          iconColor: const Color(0xFF4CAF50), // green
+          iconColor: const Color(0xFF4CAF50),
         ),
         _statBox(
-          title: "This Week (5%)",
-          value: "\$37.25",
+          title: "This Week (${br.thisWeekPercentage.toStringAsFixed(0)}%)",
+          value: "\$${br.thisWeek.toStringAsFixed(2)}",
           icon: Icons.trending_up,
           bgColor: const Color(0xFFEAF3FF),
-          // light blue
-          iconColor: const Color(0xFF2979FF), // blue
+          iconColor: const Color(0xFF2979FF),
         ),
         _statBox(
           title: "This Month",
-          value: "\$142",
+          value: "\$${br.thisMonth.toStringAsFixed(2)}",
           icon: Icons.calendar_month,
           bgColor: const Color(0xFFF5E8FF),
-          // light purple
-          iconColor: const Color(0xFF9C27B0), // purple
+          iconColor: const Color(0xFF9C27B0),
         ),
       ],
     );
@@ -224,31 +224,21 @@ class Earningsscreen extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 3),
-          )
+          ),
         ],
       ),
       child: Column(
         children: [
           Container(
             padding: EdgeInsets.all(10.r),
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 22.sp,
-            ),
+            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 22.sp),
           ),
           SizedBox(height: 10.h),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: Colors.black54),
           ),
           SizedBox(height: 4.h),
           Text(
@@ -264,10 +254,12 @@ class Earningsscreen extends StatelessWidget {
     );
   }
 
-  // -------------------------------------------------------
-  // AVAILABLE BONUS (Blue Card)
-  // -------------------------------------------------------
-  Widget _availableBonusCard() {
+  // ------------------------------------------------------------------
+  // AVAILABLE BONUS card – use availableBonus
+  // ------------------------------------------------------------------
+  Widget _availableBonusCard(TechnicianEarningsSummary summary) {
+    final ab = summary.availableBonus;
+
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 18.w),
@@ -280,7 +272,7 @@ class Earningsscreen extends StatelessWidget {
             color: Colors.blue.withOpacity(0.2),
             blurRadius: 12,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -289,7 +281,6 @@ class Earningsscreen extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ---- Icon with Background ----
               Container(
                 padding: EdgeInsets.all(10.r),
                 decoration: BoxDecoration(
@@ -303,8 +294,6 @@ class Earningsscreen extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 12.w),
-
-              // ---- Texts ----
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -328,40 +317,29 @@ class Earningsscreen extends StatelessWidget {
               ),
             ],
           ),
-
           SizedBox(height: 20.h),
-
-          // ---- Amount ----
           Text(
-            "\$37.25",
+            "\$${ab.amount.toStringAsFixed(2)}",
             style: TextStyle(
               fontSize: 32.sp,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-
           SizedBox(height: 4.h),
-
           Text(
-            "5 jobs × 5% bonus",
+            "${ab.jobsText} × ${ab.bonusText}",
             style: TextStyle(
               fontSize: 12.sp,
               color: Colors.white.withOpacity(0.85),
             ),
           ),
-
           SizedBox(height: 20.h),
-
-          // ---- Early Payout Button ----
           _earlyPayoutButton(),
-
           SizedBox(height: 12.h),
-
-          // ---- Regular Payout Info ----
           Center(
             child: Text(
-              "Regular payout: Every Monday",
+              ab.payoutInfo,
               style: TextStyle(
                 fontSize: 11.sp,
                 color: Colors.white.withOpacity(0.85),
@@ -383,11 +361,7 @@ class Earningsscreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.attach_money,
-            color: const Color(0xFF0A77FF),
-            size: 20.sp,
-          ),
+          Icon(Icons.attach_money, color: const Color(0xFF0A77FF), size: 20.sp),
           SizedBox(width: 8.w),
           Text(
             "Request Early Payout",
@@ -402,7 +376,12 @@ class Earningsscreen extends StatelessWidget {
     );
   }
 
-  Widget _bonusRateCard() {
+  // ------------------------------------------------------------------
+  // BONUS RATE card – use bonusRate
+  // ------------------------------------------------------------------
+  Widget _bonusRateCard(TechnicianEarningsSummary summary) {
+    final br = summary.bonusRate;
+
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 18.w),
@@ -414,7 +393,6 @@ class Earningsscreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ---- Header icon + title ----
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -425,7 +403,7 @@ class Earningsscreen extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.workspace_premium_outlined, // ribbon-like icon
+                  Icons.workspace_premium_outlined,
                   color: Colors.white,
                   size: 22.sp,
                 ),
@@ -435,7 +413,7 @@ class Earningsscreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Current Bonus Rate",
+                    "Current ${br.type} Rate",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 14.sp,
@@ -445,24 +423,18 @@ class Earningsscreen extends StatelessWidget {
                   SizedBox(height: 2.h),
                   Text(
                     "For internal employees",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11.sp,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 11.sp),
                   ),
                 ],
-              )
+              ),
             ],
           ),
-
           SizedBox(height: 20.h),
-
-          // ---- 5% Per Job ----
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                "5",
+                br.ratePercentage.toStringAsFixed(0),
                 style: TextStyle(
                   fontSize: 48.sp,
                   color: Colors.white,
@@ -480,17 +452,11 @@ class Earningsscreen extends StatelessWidget {
               SizedBox(width: 6.w),
               Text(
                 "per job",
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14.sp,
-                ),
-              )
+                style: TextStyle(color: Colors.white70, fontSize: 14.sp),
+              ),
             ],
           ),
-
           SizedBox(height: 20.h),
-
-          // ---- Info Box ----
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(14.w),
@@ -505,7 +471,7 @@ class Earningsscreen extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    "Earn 5% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.",
+                    br.description,
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: Colors.white70,
@@ -521,11 +487,12 @@ class Earningsscreen extends StatelessWidget {
     );
   }
 
+  // ------------------------------------------------------------------
+  // MONTHLY SALARY card – use monthlySalary
+  // ------------------------------------------------------------------
+  Widget monthlySalaryCard(TechnicianEarningsSummary summary) {
+    final ms = summary.monthlySalary;
 
-  // -------------------------------------------------------
-  // MONTHLY SALARY (Green Card)
-  // -------------------------------------------------------
-  Widget monthlySalaryCard() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 18.w),
       padding: EdgeInsets.all(20.w),
@@ -533,18 +500,13 @@ class Earningsscreen extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0CCE6B),
-            Color(0xFF00B95A),
-          ],
+          colors: [Color(0xFF0CCE6B), Color(0xFF00B95A)],
         ),
         borderRadius: BorderRadius.circular(24.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          /// Title
           Text(
             "Monthly Salary",
             style: TextStyle(
@@ -554,13 +516,11 @@ class Earningsscreen extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10.h),
-
-          /// Amount + Icon Box
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                "\$2,400",
+                "\$${ms.total.toStringAsFixed(2)}",
                 style: TextStyle(
                   fontSize: 32.sp,
                   color: Colors.white,
@@ -568,13 +528,10 @@ class Earningsscreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-
-              /// Icon Background
               Container(
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.15),
-                  shape: BoxShape.rectangle,
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Icon(
@@ -585,10 +542,7 @@ class Earningsscreen extends StatelessWidget {
               ),
             ],
           ),
-
           SizedBox(height: 14.h),
-
-          /// Inner small container like your design
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             decoration: BoxDecoration(
@@ -601,18 +555,12 @@ class Earningsscreen extends StatelessWidget {
                   children: [
                     Text(
                       "Base Salary",
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 13.sp, color: Colors.white70),
                     ),
                     const Spacer(),
                     Text(
-                      "\$2,400",
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.white,
-                      ),
+                      "\$${ms.baseSalary.toStringAsFixed(2)}",
+                      style: TextStyle(fontSize: 13.sp, color: Colors.white),
                     ),
                   ],
                 ),
@@ -621,18 +569,12 @@ class Earningsscreen extends StatelessWidget {
                   children: [
                     Text(
                       "This Month Bonus",
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 13.sp, color: Colors.white70),
                     ),
                     const Spacer(),
                     Text(
-                      "+\$142",
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.white,
-                      ),
+                      "+\$${ms.thisMonthBonus.toStringAsFixed(2)}",
+                      style: TextStyle(fontSize: 13.sp, color: Colors.white),
                     ),
                   ],
                 ),
@@ -644,10 +586,9 @@ class Earningsscreen extends StatelessWidget {
     );
   }
 
-
-  // -------------------------------------------------------
-  // RECENT BONUSES HEADER
-  // -------------------------------------------------------
+  // ------------------------------------------------------------------
+  // RECENT BONUSES HEADER (same)
+  // ------------------------------------------------------------------
   Widget _recentBonusesHeader() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 18.w),
@@ -674,131 +615,4 @@ class Earningsscreen extends StatelessWidget {
       ),
     );
   }
-
-  // -------------------------------------------------------
-  // RECENT BONUS ITEM
-  // -------------------------------------------------------
-  Widget _recentBonusItem({
-    required String job,
-    required String name,
-    required String time,
-    required String amount,
-    required String bonus,
-    required Color dateColor,
-  }) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// ---------- TOP ROW ----------
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// Left text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      job,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.black45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              /// Right amount & bonus
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    amount,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    bonus,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          SizedBox(height: 5.h),
-
-          /// ---------- DIVIDER ----------
-          Container(
-            height: 1,
-            color: Colors.black12,
-            width: double.infinity,
-          ),
-
-           SizedBox(height: 5.h),
-
-          /// ---------- BOTTOM ROW ----------
-          Row(
-            children: [
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.black38,
-                ),
-              ),
-              const Spacer(),
-
-              /// Right green icon
-              Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 22.sp,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
 }
