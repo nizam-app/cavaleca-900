@@ -140,6 +140,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     }
   }
 
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
 
@@ -257,7 +258,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
         _phoneCtrl.text.trim().isEmpty ||
         _addressCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name, phone & address are required')),
+        SnackBar(content: Text('name_phone_address_required'.tr())),
       );
       return;
     }
@@ -285,8 +286,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
       Navigator.of(context).pop(); // dialog close
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Service request submitted successfully'),
+        SnackBar(
+          content: Text('service_request_submitted_successfully'.tr()),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -294,7 +295,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to submit request: $e'),
+          content: Text('${'failed_to_submit_request'.tr()}: $e'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -675,7 +676,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
             Expanded(
               child: _DateTimeChip(
                 icon: Icons.access_time,
-                label: _timeText ?? 'Time',
+                label: _timeText ?? 'time'.tr(),
                 onTap: _pickTime,
               ),
             ),
@@ -683,7 +684,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
         ),
         const SizedBox(height: 6),
          Text(
-          'We’ll try our best to schedule your service at this time',
+          'appointment_notice'.tr(),
           style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
         ),
       ],
@@ -809,7 +810,7 @@ class _DateTimeChip extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: label == 'Date' || label == 'Time'
+                    color: label == 'date'.tr() || label == 'time'.tr()
                         ? const Color(0xFF9CA3AF)
                         : const Color(0xFF111827),
                   ),

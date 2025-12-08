@@ -341,5 +341,25 @@
 
   "cleaning_title": "Cleaning",
   "cleaning_subtitle": "Professional home and office cleaning",
-  "cleaning_services_count": "8 services"
+  "cleaning_services_count": "8 services",
+  
+  "name_phone_address_required": "Name, phone & address are required",
+  "service_request_submitted_successfully": "Service request submitted successfully",
+  "failed_to_submit_request": "Failed to submit request",
+  "time": "Time",
+  "not_assigned": "Not Assigned",
+  "service": "Service",
+  "technician_label": "Technician:",
+  "sr_number": "SR Number",
+  "internal_status": "Internal Status",
+  "subservice": "Subservice",
+  "preferred": "Preferred:",
+  "payment_summary": "Payment Summary",
+  "total_amount": "Total Amount",
+  "payment_status": "Payment Status",
+  "payment_method": "Payment Method",
+  "technician_rating": "Technician Rating",
+  "created_at": "Created At",
+  "updated_at": "Updated At",
+  "n_a": "N/A"
 }

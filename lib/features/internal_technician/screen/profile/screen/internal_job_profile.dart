@@ -9,6 +9,7 @@ import 'package:workpleis/features/auth/screens/role/screen/role_selection_scree
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 import 'package:workpleis/features/internal_technician/screen/profile/data/internal_profile_data.dart';
 import 'package:workpleis/features/internal_technician/screen/profile/model/internal_profile_modle.dart';
+import 'package:workpleis/features/shared/screen/edit_profile_screen.dart';
 
 /// ------------------ COLORS ------------------
 const kBG = Color(0xFFF4F4F4);
@@ -40,7 +41,7 @@ class InternalJobProfile extends ConsumerWidget {
               children: [
                 _headerSection(),
                 SizedBox(height: 16.h),
-                _profileCard(profile, tech),
+                _profileCard(context, profile, tech),
                 SizedBox(height: 16.h),
                 if (tech != null) _employmentDetails(tech),
                 SizedBox(height: 16.h),
@@ -142,7 +143,7 @@ class InternalJobProfile extends ConsumerWidget {
   // ----------------------------------------------------
   // Profile Card
   // ----------------------------------------------------
-  Widget _profileCard(InternalProfile profile, TechnicianProfile? tech) {
+  Widget _profileCard(BuildContext context, InternalProfile profile, TechnicianProfile? tech) {
     final initials = _getInitials(profile.name);
     final roleLabel = tech?.position ?? "Internal Technician";
     final employeeId = 'TECH-${profile.id}';
@@ -185,7 +186,7 @@ class InternalJobProfile extends ConsumerWidget {
             ],
           ),
           SizedBox(height: 16.h),
-          _simpleButton("Edit Profile"),
+          _simpleButton(context, "Edit Profile"),
         ],
       ),
     );
@@ -215,10 +216,12 @@ class InternalJobProfile extends ConsumerWidget {
     );
   }
 
-  Widget _simpleButton(String text) {
+  Widget _simpleButton(BuildContext context, String text) {
     return GestureDetector(
       onTap: () {
-        // TODO: go to edit profile
+        // Profile will auto-refresh when we come back
+        // because provider is invalidated in edit screen
+        context.push(EditProfileScreen.routeName);
       },
       child: Container(
         width: double.infinity,
