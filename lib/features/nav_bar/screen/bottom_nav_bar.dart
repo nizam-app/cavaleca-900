@@ -8,8 +8,8 @@ import 'package:workpleis/features/auth/screens/role/screen/role_selection_scree
 import 'package:workpleis/features/customer/logic/custom_logic.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
+import 'package:workpleis/features/customer/screen/profile/screen/customer_profile_screen.dart';
 import 'package:workpleis/features/notification/customer_notifications_screen.dart';
-import 'package:workpleis/features/profile/screen/customer_profile_screen.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kNavInactive = Color(0xFF9CA3AF);

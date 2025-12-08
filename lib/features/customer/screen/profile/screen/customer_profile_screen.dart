@@ -1,12 +1,7 @@
-
-import 'package:flutter/material.dart';
-
 import 'package:easy_localization/easy_localization.dart';
-import 'package:go_router/go_router.dart';
-import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
-
-import 'package:workpleis/features/profile/logic/logout_logic.dart';
-
+import 'package:flutter/material.dart';
+import 'package:workpleis/core/widget/global_language_dialog.dart';
+import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
@@ -33,7 +28,12 @@ class CustomerProfileScreen extends StatefulWidget {
 }
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
-  String _languageCode = 'en'; // en, fr, ar
+  late String _languageCode;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _languageCode = context.locale.languageCode; // ← EasyLocalization theke
+  }
 
   void _showToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -67,16 +67,22 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     }
   }
 
-  void _openLanguageDialog() async {
+  Future<void> _openLanguageDialog() async {
     final selected = await showDialog<String>(
       context: context,
       builder: (context) {
-        return _LanguageDialog(currentCode: _languageCode);
+        return LanguageDialog(currentCode: _languageCode);
       },
     );
 
     if (selected != null && selected != _languageCode) {
+      // 1) EasyLocalization er locale change
+      await context.setLocale(Locale(selected));
+
+      // 2) local state update
       setState(() => _languageCode = selected);
+
+      // 3) toast
       _showToast('Language updated to $_currentLanguageNative');
     }
   }
@@ -162,9 +168,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            isGuest
-                ? 'guest_account'.tr()
-                : 'manage_account_info'.tr(),
+            isGuest ? 'guest_account'.tr() : 'manage_account_info'.tr(),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
@@ -196,8 +200,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     gradient: isGuest
                         ? null
                         : const LinearGradient(
-                      colors: [Color(0xFFC20001), Color(0xFF9A0001)],
-                    ),
+                            colors: [Color(0xFFC20001), Color(0xFF9A0001)],
+                          ),
                     color: isGuest ? const Color(0xFF9CA3AF) : null,
                   ),
                   alignment: Alignment.center,
@@ -247,22 +251,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ],
             ),
             if (!isGuest) ...[
-               SizedBox(height: 16),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () {
-                    // je screen theke edit profile e jabe:
-                    final updated =  context.push<CustomerProfileData>(
-                      CustomerEditProfile.routeName,
-                     // extra: ,
-                    );
-
-                    if (updated != null) {
-                      // ekhane Riverpod notifier / state update kore nite parba
-                    }
-
-                    // _showToast('edit_profile_tapped'.tr());
+                    _showToast('Edit profile tapped');
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFFE5E5),
@@ -271,8 +265,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child:  Text(
-                    'edit_profile'.tr(),
+                  child: const Text(
+                    'Edit Profile',
                     style: TextStyle(
                       color: Color(0xFFC20001),
                       fontSize: 13,
@@ -334,7 +328,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               borderRadius: BorderRadius.circular(18),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
                   const Text(
@@ -345,7 +339,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     'total_spent'.tr(),
                     style: const TextStyle(
@@ -403,8 +397,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               width: double.infinity,
               child: TextButton(
                 onPressed:
-                widget.onSignUp ??
-                        () => _showToast('Sign Up tapped (guest)'),
+                    widget.onSignUp ??
+                    () => _showToast('Sign Up tapped (guest)'),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
@@ -440,8 +434,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         title: 'notifications'.tr(),
         subtitle: '3 new',
         onTap:
-        widget.onNavigateToNotifications ??
-                () => _showToast('Open notifications'),
+            widget.onNavigateToNotifications ??
+            () => _showToast('Open notifications'),
         showForGuest: false,
       ),
       _MenuItem(
@@ -536,11 +530,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Align(
+        const Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'support'.tr(),
-            style: const TextStyle(
+            'Support',
+            style: TextStyle(
               fontSize: 15,
               color: Color(0xFF111827),
               fontWeight: FontWeight.w600,
@@ -694,20 +688,21 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                _BusinessHoursTitle(),
+                Text(
+                  'Business Hours',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF111827),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 SizedBox(height: 10),
                 _BusinessHourRow(
-                  dayKey: 'monday_friday',
-                  timeKey: 'monday_friday_time',
+                  day: 'Monday - Friday',
+                  time: '8:00 AM - 8:00 PM',
                 ),
-                _BusinessHourRow(
-                  dayKey: 'saturday',
-                  timeKey: 'saturday_time',
-                ),
-                _BusinessHourRow(
-                  dayKey: 'sunday',
-                  timeKey: 'sunday_time',
-                ),
+                _BusinessHourRow(day: 'Saturday', time: '9:00 AM - 6:00 PM'),
+                _BusinessHourRow(day: 'Sunday', time: '10:00 AM - 4:00 PM'),
               ],
             ),
           ),
@@ -726,14 +721,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
-// <<<<<<< main
-//         onPressed: widget.onLogout ??
-//                 () => _showToast(
-//               isGuest ? 'Exit guest mode' : 'sign_out'.tr(),
-//             ),
-// =======
         onPressed: _confirmAndLogout, // 👈 popup + api
-
         style: TextButton.styleFrom(
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -744,7 +732,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
         icon: const Icon(Icons.logout, color: Color(0xFFC20001), size: 20),
         label: Text(
-          isGuest ? 'exit_guest_mode'.tr() : 'sign_out'.tr(),
+          isGuest ? 'Exit Guest Mode' : 'Sign Out',
           style: const TextStyle(
             color: Color(0xFFC20001),
             fontSize: 14,
@@ -765,7 +753,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title:  Text('Confirm'.tr()),
+          title: const Text('Confirm'),
           content: Text(
             isGuest
                 ? 'Do you want to exit guest mode?'
@@ -774,7 +762,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child:  Text('cancel'.tr()),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -836,30 +824,11 @@ class _MenuItem {
   });
 }
 
-class _BusinessHoursTitle extends StatelessWidget {
-  const _BusinessHoursTitle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'business_hours'.tr(),
-      style: const TextStyle(
-        fontSize: 15,
-        color: Color(0xFF111827),
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
 class _BusinessHourRow extends StatelessWidget {
-  const _BusinessHourRow({
-    required this.dayKey,
-    required this.timeKey,
-  });
+  const _BusinessHourRow({required this.day, required this.time});
 
-  final String dayKey;
-  final String timeKey;
+  final String day;
+  final String time;
 
   @override
   Widget build(BuildContext context) {
@@ -869,11 +838,11 @@ class _BusinessHourRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            dayKey.tr(),
+            day,
             style: const TextStyle(fontSize: 13, color: Color(0xFF1F2933)),
           ),
           Text(
-            timeKey.tr(),
+            time,
             style: const TextStyle(fontSize: 13, color: Color(0xFF1F2933)),
           ),
         ],
@@ -885,106 +854,3 @@ class _BusinessHourRow extends StatelessWidget {
 // ============================================================================
 // Language dialog
 // ============================================================================
-
-class _LanguageDialog extends StatelessWidget {
-  const _LanguageDialog({required this.currentCode});
-
-  final String currentCode;
-
-  @override
-  Widget build(BuildContext context) {
-    final languages = [
-      ('en', 'English', 'English'),
-      ('fr', 'French', 'Français'),
-      ('ar', 'Arabic', 'العربية'),
-    ];
-
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title:  Text('select_language'.tr()),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-           Text(
-            'choose_you_preferred_language'.tr(),
-            style: TextStyle(fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          for (final item in languages) ...[
-            _LanguageTile(
-              code: item.$1,
-              nativeName: item.$3,
-              name: item.$2,
-              isSelected: currentCode == item.$1,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _LanguageTile extends StatelessWidget {
-  const _LanguageTile({
-    required this.code,
-    required this.nativeName,
-    required this.name,
-    required this.isSelected,
-  });
-
-  final String code;
-  final String nativeName;
-  final String name;
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).pop(code),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFFC20001)
-                : const Color(0xFFE5E7EB),
-            width: 2,
-          ),
-          color: isSelected ? const Color(0xFFFFE5E5) : Colors.white,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    nativeName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF111827),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              const Icon(Icons.check, color: Color(0xFFC20001), size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}

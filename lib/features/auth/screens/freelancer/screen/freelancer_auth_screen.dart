@@ -1,14 +1,12 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
-import 'package:workpleis/features/auth/model/auth_login_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
+import 'package:workpleis/features/auth/logic/registration_logic.dart';
+import 'package:workpleis/features/auth/model/auth_login_model.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
-
-
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -47,6 +45,10 @@ class FreelancerAuthScreen extends ConsumerStatefulWidget {
 class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
   AuthMode _mode = AuthMode.welcome;
   bool _showPassword = false;
+  bool _isSendingSignupOtp = false;
+  bool _isVerifyingSignupOtp = false;
+  bool _isCompletingSignup = false;
+  String? _signupTempToken;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -116,7 +118,10 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           final user = res.user;
 
           widget.onAuthComplete(
-            FreelancerUserData(name: user.name, phone: user.phone),
+            FreelancerUserData(
+              name: user.name.isNotEmpty ? user.name : 'Unknown',
+              phone: user.phone.isNotEmpty ? user.phone : '',
+            ),
           );
         }
       },
@@ -124,54 +129,125 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
       error: (err, _) {
         _showSnack(err.toString(), error: true);
       },
-
     );
   }
 
-  void _handleSignupSubmit() {
+  Future<void> _handleSignupSubmit() async {
     FocusScope.of(context).unfocus();
 
-    if (_nameController.text.trim().isEmpty ||
-        _phoneController.text.trim().isEmpty) {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty) {
       _showSnack('Please fill all fields', error: true);
       return;
     }
+    if (_isSendingSignupOtp) return;
 
-    setState(() {
-      _mode = AuthMode.signupOtp;
-    });
-    _showSnack('OTP sent to your phone');
+    try {
+      setState(() => _isSendingSignupOtp = true);
+
+      final res = await RegistrationApi.sendRegistrationOtp(
+        phone: phone,
+        name: name,
+        role: 'TECH_FREELANCER',
+      );
+
+      debugPrint('REG OTP (freelancer) => ${res.code}');
+      _signupTempToken = res.tempToken;
+
+      setState(() => _mode = AuthMode.signupOtp);
+      _showSnack(res.message);
+    } catch (e) {
+      _showSnack(e.toString(), error: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingSignupOtp = false);
+      }
+    }
   }
 
-  void _handleSignupOtpVerify() {
+  Future<void> _handleSignupOtpVerify() async {
     FocusScope.of(context).unfocus();
 
-    if (_otpController.text.length != 6) {
+    final code = _otpController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (code.length != 6) {
       _showSnack('Please enter a valid 6-digit OTP', error: true);
       return;
     }
+    if (_signupTempToken == null) {
+      _showSnack('Missing temp token, please resend OTP', error: true);
+      return;
+    }
+    if (_isVerifyingSignupOtp) return;
 
-    _showSnack('Phone number verified!');
-    setState(() {
-      _mode = AuthMode.setPassword;
-    });
+    try {
+      setState(() => _isVerifyingSignupOtp = true);
+
+      final res = await RegistrationApi.verifyRegistrationOtp(
+        phone: phone,
+        code: code,
+        tempToken: _signupTempToken!,
+      );
+
+      if (!res.verified) {
+        _showSnack('OTP verification failed', error: true);
+        return;
+      }
+
+      _signupTempToken = res.tempToken;
+      _showSnack(res.message);
+      setState(() => _mode = AuthMode.setPassword);
+    } catch (e) {
+      _showSnack(e.toString(), error: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifyingSignupOtp = false);
+      }
+    }
   }
 
-  void _handleSetPassword() {
+  Future<void> _handleSetPassword() async {
     FocusScope.of(context).unfocus();
 
-    if (_passwordController.text.length < 6) {
+    final password = _passwordController.text.trim();
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (password.length < 6) {
       _showSnack('Password must be at least 6 characters', error: true);
       return;
     }
+    if (_signupTempToken == null) {
+      _showSnack('Missing temp token, please restart signup', error: true);
+      return;
+    }
+    if (_isCompletingSignup) return;
 
-    _showSnack('Account created successfully!');
-    widget.onAuthComplete(
-      FreelancerUserData(
-        name: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
-      ),
-    );
+    try {
+      setState(() => _isCompletingSignup = true);
+
+      final res = await RegistrationApi.setPassword(
+        phone: phone,
+        password: password,
+        tempToken: _signupTempToken!,
+        role: 'TECH_FREELANCER',
+      );
+
+      _showSnack(res.message);
+      // token save হয়েছে, এখন nav + callback
+      context.push(FreelancerBottomNavBar.routeName);
+
+      widget.onAuthComplete(FreelancerUserData(name: name, phone: phone));
+    } catch (e) {
+      _showSnack(e.toString(), error: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isCompletingSignup = false);
+      }
+    }
   }
 
   void _resetForm() {
@@ -617,7 +693,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
                Text(
-                'already_have_an_account .tr()',
+                'already_have_an_account'.tr(),
                 style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               ),
               GestureDetector(
@@ -661,7 +737,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
         ),
          SizedBox(height: 4),
         Text(
-          'step_2_of_3.tr(),  \n${_phoneController.text}',
+          '${'step_2_of_3'.tr()}\n${_phoneController.text}',
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
         ),
@@ -690,7 +766,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
               _showSnack('OTP resent!');
             },
             child:  Text(
-              'otp_code'.tr(),
+              'resend_otp'.tr(),
               style: TextStyle(fontSize: 13, color: kPrimaryRed),
             ),
           ),

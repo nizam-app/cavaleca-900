@@ -180,7 +180,7 @@ class _BookingDetailsDialog extends StatelessWidget {
         fg = const Color(0xFF059669);
         break;
       case BookingStatus.cancelled:
-        text = 'completed'.tr();
+        text = 'cancelled'.tr();
         bg = const Color(0xFFFEE2E2);
         fg = const Color(0xFFDC2626);
         break;

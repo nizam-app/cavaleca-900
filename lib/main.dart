@@ -13,6 +13,7 @@ Future<void> main() async {
       supportedLocales: const [Locale('en'), Locale('fr')],
       path: 'assets/langs', // JSON files location
       fallbackLocale: const Locale('en'),
+      saveLocale: true,
       child: ProviderScope(
         child: ScreenUtilInit(
           designSize: const Size(392, 851),

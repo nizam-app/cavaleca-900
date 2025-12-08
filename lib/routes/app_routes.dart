@@ -8,21 +8,19 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
-import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
-import 'package:workpleis/features/freelancer_pages/screen/freelancer_earnings_screen.dart';
+import 'package:workpleis/features/customer/screen/profile/screen/customer_profile_screen.dart';
+import 'package:workpleis/features/erning/screen/freelancer_earnings_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
-import 'package:workpleis/features/freelancer_pages/profile/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelarcer_job_screen.dart';
-import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
-import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
+import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
+import 'package:workpleis/features/erning/screen/earningsScreen.dart';
+import 'package:workpleis/features/internal_technician/screen/job/screen/internal_jobs.dart';
+import 'package:workpleis/features/internal_technician/screen/profile/screen/internal_job_profile.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
-import 'package:workpleis/features/profile/screen/customer_profile_screen.dart';
 import 'package:workpleis/features/splashScreen/screen/splashScreen.dart';
 
-import '../features/customer/screen/guest_profile_screen.dart';
 import '../features/internal_technician/screen/internal_technician_home.dart';
 import '../features/nav_bar/screen/internal_bottom_nav_bar.dart';
 import 'error_screen.dart';
@@ -83,36 +81,16 @@ class AppRouter {
         name: CustomerAuthScreen.routeName,
         builder: (context, state) => const CustomerAuthScreen(),
       ),
-
       // GoRoute(
-      //   path: CustomerEditProfile.routeName,
-      //   name: CustomerEditProfile.routeName,
-      //   builder: (context, state) => const CustomerEditProfile(),
+      //   path: CustomerMainShell.routeName,
+      //   name: CustomerMainShell.routeName,
+      //   builder: (context, state) => const CustomerMainShell(),
       // ),
-      // go_router config e:
-      GoRoute(
-        path: CustomerEditProfile.routeName,
-        builder: (context, state) {
-          final profile = state.extra as CustomerProfileData?;
-          return CustomerEditProfile(
-            initialName: profile?.name ?? '',
-            initialPhone: profile?.phone ?? '',
-            initialEmail: profile?.email ?? '',
-            initialAddress: profile?.address ?? '',
-            initialPlaceName: profile?.placeName,
-            initialLocation: profile?.location,
-          );
-        },
-      ),
-
-
-
-
-      GoRoute(
-        path: GuestProfileScreen.routeName,
-        name: GuestProfileScreen.routeName,
-        builder: (context, state) => const GuestProfileScreen(),
-      ),
+      // GoRoute(
+      //   path: GuestProfileScreen.routeName,
+      //   name: GuestProfileScreen.routeName,
+      //   builder: (context, state) => const GuestProfileScreen(),
+      // ),
       //Internal Technician flow;
       GoRoute(
         path: InternalDashboardV2Screen.routeName,

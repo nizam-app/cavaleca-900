@@ -1,91 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
+import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 
-import '../widget/jobDetails.dart';
-import '../widget/job_detail-overlay.dart';
-import '../widget/newJobAssignedPopup.dart';
-///  Models
-
-enum JobStatus { incoming, pending, accepted, inProgress, completed, assigned }
-
-enum JobPriority { high, medium, low }
-
-class Job {
-  final int id;
-  final String title;
-  final String customer;
-  final String? customerPhone;
-  final String location;
-  final String? address;
-  final String date;
-  final String? time;
-  final String payment; // e.g. "$120"
-  final String bonus; // e.g. "$6.00"
-  final String? description;
-  final String? category;
-  final JobStatus status;
-  final JobPriority? priority;
-  final double? latitude;
-  final double? longitude;
-
-  const Job({
-    required this.id,
-    required this.title,
-    required this.customer,
-    this.customerPhone,
-    required this.location,
-    this.address,
-    required this.date,
-    this.time,
-    required this.payment,
-    required this.bonus,
-    this.description,
-    this.category,
-    required this.status,
-    this.priority,
-    this.latitude,
-    this.longitude,
-  });
-
-  Job copyWith({
-    int? id,
-    String? title,
-    String? customer,
-    String? customerPhone,
-    String? location,
-    String? address,
-    String? date,
-    String? time,
-    String? payment,
-    String? bonus,
-    String? description,
-    String? category,
-    JobStatus? status,
-    JobPriority? priority,
-    double? latitude,
-    double? longitude,
-  }) {
-    return Job(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      customer: customer ?? this.customer,
-      customerPhone: customerPhone ?? this.customerPhone,
-      location: location ?? this.location,
-      address: address ?? this.address,
-      date: date ?? this.date,
-      time: time ?? this.time,
-      payment: payment ?? this.payment,
-      bonus: bonus ?? this.bonus,
-      description: description ?? this.description,
-      category: category ?? this.category,
-      status: status ?? this.status,
-      priority: priority ?? this.priority,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-    );
-  }
-}
+import '../../../widget/jobDetails.dart';
+import '../model/internal_job_model.dart';
 
 ///  Screen
 
@@ -104,139 +23,49 @@ class _InternalJobsState extends State<InternalJobs> {
   /// tabs: 0 = incoming, 1 = active, 2 = completed
   int _selectedTab = 0;
 
-  Job? _selectedJob; // for workflow
-  Job? _selectedJobForDetails; // for incoming detail modal
+  InternalJob? _selectedJob; // for workflow
+  InternalJob? _selectedJobForDetails; // for incoming detail modal
 
-  late List<Job> _incomingJobs;
-  late List<Job> _activeJobs;
-  late List<Job> _completedJobs;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<InternalJob> _incomingJobs = [];
+  List<InternalJob> _activeJobs = [];
+  List<InternalJob> _completedJobs = [];
 
   @override
   void initState() {
     super.initState();
+    _loadAllJobs();
+  }
 
-    // ------------------- mock data: incoming -------------------
-    _incomingJobs = [
-      Job(
-        id: 10,
-        title: 'Emergency Plumbing Repair',
-        customer: 'Mariam Sy',
-        customerPhone: '+222 45 67 89 01',
-        location: 'Sebkha District',
-        address: 'Building 15, Sebkha, Nouakchott',
-        date: 'Nov 5, 2025',
-        time: '6:00 PM',
-        payment: '\$120',
-        bonus: '\$6.00',
-        description:
-        'Urgent water leak in bathroom. Customer reports water damage spreading.',
-        category: 'Plumbing',
-        priority: JobPriority.high,
-        status: JobStatus.pending,
-      ),
-      Job(
-        id: -2025-0011,
-        title: 'Emergency Plumbing Repair',
-        customer: 'Ibrahim Kane',
-        customerPhone: '+222 45 78 90 12',
-        location: 'Tevragh Zeina',
-        address: 'Avenue 8, Tevragh Zeina, Nouakchott',
-        date: 'Nov 6, 2025',
-        time: '9:00 AM',
-        payment: '\$95',
-        bonus: '\$4.75',
-        description: 'Regular AC maintenance check and filter cleaning.',
-        category: 'HVAC',
-        priority: JobPriority.medium,
-        status: JobStatus.pending,
-      ),
-    ];
+  Future<void> _loadAllJobs() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    // ------------------- mock data: active -------------------
-    _activeJobs = [
-      Job(
-        id: 1,
-        title: 'HVAC System Maintenance',
-        customer: 'Ahmed Mohammed',
-        customerPhone: '+222 45 12 34 56',
-        location: 'Tevragh Zeina District',
-        address: 'Building 42, Tevragh Zeina, Nouakchott',
-        date: 'Nov 5, 2025',
-        time: '2:00 PM',
-        payment: '\$180',
-        bonus: '\$9.00',
-        description:
-        'Complete HVAC system maintenance and filter replacement.',
-        category: 'HVAC',
-        priority: JobPriority.high,
-        status: JobStatus.inProgress,
-      ),
-      Job(
-        id: 2,
-        title: 'Electrical Safety Check',
-        customer: 'Fatima Hassan',
-        customerPhone: '+222 45 23 45 67',
-        location: 'Ksar District',
-        address: 'Rue 15, Ksar, Nouakchott',
-        date: 'Nov 5, 2025',
-        time: '4:30 PM',
-        payment: '\$150',
-        bonus: '\$7.50',
-        description: 'Comprehensive electrical safety inspection.',
-        category: 'Electrical',
-        priority: JobPriority.medium,
-        status: JobStatus.assigned,
-      ),
-    ];
+    try {
+      final incoming = await TechnicianJobsApi.fetchJobs('incoming');
+      final active = await TechnicianJobsApi.fetchJobs('active');
+      final done = await TechnicianJobsApi.fetchJobs('done');
 
-    // ------------------- mock data: completed -------------------
-    _completedJobs = [
-      Job(
-        id: 3,
-        title: 'Plumbing Emergency Repair',
-        customer: 'Omar Abdullah',
-        customerPhone: '+222 45 34 56 78',
-        location: 'Sebkha District',
-        address: 'Avenue 20, Sebkha, Nouakchott',
-        date: 'Nov 3, 2025',
-        time: '10:00 AM',
-        payment: '\$200',
-        bonus: '\$10.00',
-        description: 'Emergency pipe repair and leak detection.',
-        category: 'Plumbing',
-        status: JobStatus.completed,
-      ),
-      Job(
-        id: 4,
-        title: 'HVAC Installation',
-        customer: 'Aminata Diallo',
-        customerPhone: '+222 45 45 67 89',
-        location: 'Tevragh Zeina',
-        address: 'Building 28, Tevragh Zeina, Nouakchott',
-        date: 'Nov 2, 2025',
-        time: '11:30 AM',
-        payment: '\$350',
-        bonus: '\$17.50',
-        description: 'New HVAC unit installation in residential building.',
-        category: 'HVAC',
-        status: JobStatus.completed,
-      ),
-      Job(
-        id: 5,
-        title: 'Electrical Panel Upgrade',
-        customer: 'Sidi Mohamed',
-        customerPhone: '+222 45 56 78 90',
-        location: 'Arafat District',
-        address: 'Street 12, Arafat, Nouakchott',
-        date: 'Nov 1, 2025',
-        time: '3:00 PM',
-        payment: '\$280',
-        bonus: '\$14.00',
-        description: 'Electrical panel replacement and upgrade.',
-        category: 'Electrical',
-        status: JobStatus.completed,
-      ),
-    ];
+      setState(() {
+        _incomingJobs = incoming;
+        _activeJobs = active;
+        _completedJobs = done;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   // ------------------------------------------------------
@@ -262,7 +91,7 @@ class _InternalJobsState extends State<InternalJobs> {
     return (amount * bonusRate) / 100;
   }
 
-  void _handleJobUpdate(Job updatedJob) {
+  void _handleJobUpdate(InternalJob updatedJob) {
     // active list update + if completed, move to completed
     setState(() {
       _activeJobs = _activeJobs
@@ -271,42 +100,59 @@ class _InternalJobsState extends State<InternalJobs> {
 
       if (updatedJob.status == JobStatus.completed) {
         _completedJobs = [..._completedJobs, updatedJob];
-        _activeJobs =
-            _activeJobs.where((job) => job.id != updatedJob.id).toList();
+        _activeJobs = _activeJobs
+            .where((job) => job.id != updatedJob.id)
+            .toList();
       }
     });
   }
 
-  void _handleAcceptIncoming(Job job) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Work order accepted! Moving to Active Jobs.'),
-      ),
-    );
+  Future<void> _handleAcceptIncoming(InternalJob job) async {
+    try {
+      final updated = await TechnicianJobsApi.respondToWorkOrder(
+        woId: job.id,
+        action: 'ACCEPT',
+      );
 
-    setState(() {
-      _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
-      _activeJobs = [
-        ..._activeJobs,
-        job.copyWith(
-          status: JobStatus.assigned,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Work order accepted! Moving to Active Jobs.'),
         ),
-      ];
-      _selectedJobForDetails = null;
-    });
+      );
+
+      setState(() {
+        _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
+        // updated job now "assigned" or "in progress" → active list
+        _activeJobs = [..._activeJobs, updated];
+        _selectedJobForDetails = null;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to accept job: $e')));
+    }
   }
 
-  void _handleDeclineIncoming(Job job) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Work order declined. Notifying dispatcher.'),
-      ),
-    );
+  Future<void> _handleDeclineIncoming(InternalJob job) async {
+    try {
+      await TechnicianJobsApi.respondToWorkOrder(
+        woId: job.id,
+        action: 'DECLINE',
+      );
 
-    setState(() {
-      _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
-      _selectedJobForDetails = null;
-    });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Work order declined.')));
+
+      setState(() {
+        _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
+        _selectedJobForDetails = null;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to decline job: $e')));
+    }
   }
 
   // ------------------------------------------------------
@@ -324,16 +170,13 @@ class _InternalJobsState extends State<InternalJobs> {
           body: SafeArea(
             child: Column(
               children: [
-                // Header
+                // ---------- Header ----------
                 Container(
                   width: double.infinity,
                   height: 119.h,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF1F2937), // gray-800
-                        Color(0xFF111827), // gray-900
-                      ],
+                      colors: [Color(0xFF1F2937), Color(0xFF111827)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -352,7 +195,7 @@ class _InternalJobsState extends State<InternalJobs> {
                     children: [
                       SizedBox(height: 24.h),
                       Text(
-                        'my_jobs'.tr(),
+                        'My Jobs',
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -361,7 +204,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'manage_your_assigned_orders'.tr(),
+                        'Manage your assigned work orders',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: const Color(0xFFD1D5DB),
                           fontSize: 13.sp,
@@ -371,46 +214,121 @@ class _InternalJobsState extends State<InternalJobs> {
                   ),
                 ),
 
-                // Body
+                // ---------- Content (একটাই Expanded) ----------
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 24.w,
-                      vertical: 16.h,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildTabs(),
-                        SizedBox(height: 16.h),
-                        if (_selectedTab == 0)
-                          _buildIncomingTab()
-                        else if (_selectedTab == 1)
-                          _buildActiveTab()
-                        else
-                          _buildCompletedTab(),
-                        SizedBox(height: 24.h),
-                      ],
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.w),
+                            child: Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 16.h,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildTabs(),
+                              SizedBox(height: 16.h),
+                              if (_selectedTab == 0)
+                                _buildIncomingTab()
+                              else if (_selectedTab == 1)
+                                _buildActiveTab()
+                              else
+                                _buildCompletedTab(),
+                              SizedBox(height: 24.h),
+                            ],
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
         ),
+        // SizedBox(
+        //   width: double.infinity,
+        //   height: 40.h,
+        //   child: ElevatedButton(
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: isInProgress
+        //           ? const Color(0xFF2563EB)
+        //           : const Color(0xFF111827),
+        //       foregroundColor: Colors.white,
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(14.r),
+        //       ),
+        //     ),
+        //     onPressed: () async {
+        //       if (isInProgress) {
+        //         // 👉 Continue Job: details popup খুলবে
+        //         await showDialog(
+        //           context: context,
+        //           barrierDismissible: true,
+        //           builder: (_) => const Jobdetails(), // পরে চাইলে job পাস করবে
+        //         );
+        //         // এখানে চাইলে complete সফল হলে আবার reload করতে পারো
+        //         // await _loadAllJobs();
+        //       } else {
+        //         // 👉 Start Job flow: প্রথমে GPS popup
+        //         await showDialog(
+        //           context: context,
+        //           barrierDismissible: true,
+        //           builder: (_) => const Gpscheckinpopup(),
+        //         );
+        //
+        //         // এখন আপাতত job এর latitude/longitude দিয়ে start করছি
+        //         final lat = job.latitude ?? 0;
+        //         final lng = job.longitude ?? 0;
+        //
+        //         try {
+        //           final updated = await TechnicianJobsApi.startWorkOrder(
+        //             woId: job.id,
+        //             lat: lat,
+        //             lng: lng,
+        //           );
+        //           _handleJobUpdate(updated);
+        //         } catch (e) {
+        //           ScaffoldMessenger.of(context).showSnackBar(
+        //             SnackBar(content: Text('Failed to start job: $e')),
+        //           );
+        //         }
+        //       }
+        //     },
+        //     child: Text(
+        //       isInProgress ? 'Continue Job' : 'Start Job',
+        //       style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500),
+        //     ),
+        //   ),
+        // ),
 
-        // Job workflow overlay (placeholder)
-        if (_selectedJob != null)
-          InternalWorkflowOverlay(
-            job: _selectedJob!,
-            onClose: () => setState(() => _selectedJob = null),
-            onJobUpdate: (job) {
-              _handleJobUpdate(job);
-              setState(() => _selectedJob = null);
-            },
-          ),
-
-        // Incoming job detail overlay (placeholder)
+        // // Job workflow overlay (placeholder)
+        // if (_selectedJob != null)
+        //   InternalWorkflowOverlay(
+        //     job: _selectedJob!,
+        //     onClose: () => setState(() => _selectedJob = null),
+        //     onJobUpdate: (job) {
+        //       _handleJobUpdate(job);
+        //       setState(() => _selectedJob = null);
+        //     },
+        //   ),
+        //
+        // // Incoming job detail overlay (placeholder)
+        // // if (_selectedJobForDetails != null)
+        // //   JobDetailOverlay(
+        // //     job: _selectedJobForDetails!,
+        // //     responseTimeLimitSeconds: 180,
+        // //     onClose: () => setState(() => _selectedJobForDetails = null),
+        // //     onAccept: () => _handleAcceptIncoming(_selectedJobForDetails!),
+        // //     onDecline: () => _handleDeclineIncoming(_selectedJobForDetails!),
+        // //   ),
         // if (_selectedJobForDetails != null)
         //   JobDetailOverlay(
         //     job: _selectedJobForDetails!,
@@ -419,16 +337,6 @@ class _InternalJobsState extends State<InternalJobs> {
         //     onAccept: () => _handleAcceptIncoming(_selectedJobForDetails!),
         //     onDecline: () => _handleDeclineIncoming(_selectedJobForDetails!),
         //   ),
-
-
-        if (_selectedJobForDetails != null)
-          JobDetailOverlay(
-            job: _selectedJobForDetails!,
-            responseTimeLimitSeconds: 180,
-            onClose: () => setState(() => _selectedJobForDetails = null),
-            onAccept: () => _handleAcceptIncoming(_selectedJobForDetails!),
-            onDecline: () => _handleDeclineIncoming(_selectedJobForDetails!),
-          ),
       ],
     );
   }
@@ -522,7 +430,7 @@ class _InternalJobsState extends State<InternalJobs> {
       child: Row(
         children: [
           buildTab(
-            label: 'incoming'.tr(),
+            label: 'Incoming',
             index: 0,
             showCount: true,
             count: _incomingJobs.length,
@@ -530,13 +438,13 @@ class _InternalJobsState extends State<InternalJobs> {
           ),
           SizedBox(width: 4.w),
           buildTab(
-            label: 'active'.tr(),
+            label: 'Active',
             index: 1,
             activeColor: const Color(0xFF111827),
           ),
           SizedBox(width: 4.w),
           buildTab(
-            label: 'done'.tr(),
+            label: 'Done',
             index: 2,
             activeColor: const Color(0xFF111827),
           ),
@@ -563,7 +471,7 @@ class _InternalJobsState extends State<InternalJobs> {
     );
   }
 
-  Widget _buildIncomingJobCard(Job job) {
+  Widget _buildIncomingJobCard(InternalJob job) {
     final gradient = const LinearGradient(
       colors: [
         Color(0xFFFFF5F5), // red-50
@@ -646,14 +554,13 @@ class _InternalJobsState extends State<InternalJobs> {
                   ),
                 ),
                 Container(
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFC20001),
                     borderRadius: BorderRadius.circular(999.r),
                   ),
                   child: Text(
-                    'new'.tr(),
+                    'NEW',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 11.sp,
@@ -714,7 +621,7 @@ class _InternalJobsState extends State<InternalJobs> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'job_payment'.tr(),
+                            'Job Payment',
                             style: TextStyle(
                               color: const Color(0xFF9CA3AF),
                               fontSize: 11.sp,
@@ -736,7 +643,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Track bonus ($bonusRate%)',
+                          'Your Bonus ($bonusRate%)',
                           style: TextStyle(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 11.sp,
@@ -779,10 +686,12 @@ class _InternalJobsState extends State<InternalJobs> {
                       //   barrierDismissible: true,
                       //   builder: (_) => JobDetailOverlay(),
                       // );
-
+                      setState(() {
+                        _selectedJobForDetails = job;
+                      });
                     },
                     child: Text(
-                      'view_details'.tr(),
+                      'View Details',
                       style: TextStyle(
                         fontSize: 13.sp,
                         // requested: black text
@@ -803,13 +712,13 @@ class _InternalJobsState extends State<InternalJobs> {
                       ),
                     ),
                     onPressed: () {
-                      setState(() {
-                        _selectedJobForDetails = job;
-                      });
-
+                      // setState(() {
+                      //   _selectedJobForDetails = job;
+                      // });
+                      _handleAcceptIncoming(job);
                     },
                     child: Text(
-                      'accept'.tr(),
+                      'Accept',
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w500,
@@ -843,30 +752,23 @@ class _InternalJobsState extends State<InternalJobs> {
     );
   }
 
-  Widget _buildActiveJobCard(Job job) {
+  Widget _buildActiveJobCard(InternalJob job) {
     final bool isInProgress = job.status == JobStatus.inProgress;
 
-    // requested: in-progress background ta aro white-ish, light gradient
     final BoxDecoration decoration = isInProgress
         ? BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [
-          Color(0xFFF5F7FF), // very light
-          Color(0xFFE5EDFF),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(18.r),
-      border: Border.all(
-        color: const Color(0xFFBFDBFE),
-        width: 2,
-      ),
-    )
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF5F7FF), Color(0xFFE5EDFF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
+          )
         : BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18.r),
-    );
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18.r),
+          );
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -887,7 +789,7 @@ class _InternalJobsState extends State<InternalJobs> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // header
+              // -------- header --------
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -932,8 +834,10 @@ class _InternalJobsState extends State<InternalJobs> {
                     ),
                   ),
                   Container(
-                    padding:
-                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: isInProgress
                           ? const Color(0xFFDBEAFE)
@@ -941,7 +845,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       borderRadius: BorderRadius.circular(999.r),
                     ),
                     child: Text(
-                      isInProgress ? 'in_progress'.tr() : 'assigned'.tr(),
+                      isInProgress ? 'In Progress' : 'Assigned',
                       style: TextStyle(
                         color: isInProgress
                             ? const Color(0xFF1D4ED8)
@@ -955,7 +859,7 @@ class _InternalJobsState extends State<InternalJobs> {
               ),
               SizedBox(height: 10.h),
 
-              // details
+              // -------- details --------
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1004,7 +908,7 @@ class _InternalJobsState extends State<InternalJobs> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'job_payment'.tr(),
+                              'Job Payment',
                               style: TextStyle(
                                 color: const Color(0xFF9CA3AF),
                                 fontSize: 11.sp,
@@ -1049,6 +953,8 @@ class _InternalJobsState extends State<InternalJobs> {
               ),
 
               SizedBox(height: 10.h),
+
+              // -------- start / continue button --------
               SizedBox(
                 width: double.infinity,
                 height: 40.h,
@@ -1062,23 +968,41 @@ class _InternalJobsState extends State<InternalJobs> {
                       borderRadius: BorderRadius.circular(14.r),
                     ),
                   ),
-                  onPressed: () {
-                    //this is the pop up of Continue and start button
-                    showDialog(
-                      context: context,
-                      barrierDismissible: true,
-                      builder: (_) => Jobdetails() ,
-                    );
+                  onPressed: () async {
+                    if (isInProgress) {
+                      // Continue Job -> details popup
+                      await showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (_) => Jobdetails(job: job),
+                      );
+                    } else {
+                      // Start Job flow (GPS popup + API call)
+                      await showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (_) => const Gpscheckinpopup(),
+                      );
 
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (_) => const NewJobAssignedPopup(),
-                    );
+                      final lat = job.latitude ?? 0;
+                      final lng = job.longitude ?? 0;
 
+                      try {
+                        final updated = await TechnicianJobsApi.startWorkOrder(
+                          woId: job.id,
+                          lat: lat,
+                          lng: lng,
+                        );
+                        _handleJobUpdate(updated);
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to start job: $e')),
+                        );
+                      }
+                    }
                   },
                   child: Text(
-                    isInProgress ? 'continue_job_btn'.tr() : 'start_job_short'.tr(),
+                    isInProgress ? 'Continue Job' : 'Start Job',
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
@@ -1106,12 +1030,13 @@ class _InternalJobsState extends State<InternalJobs> {
     }
 
     return Column(
-      children:
-      _completedJobs.map((job) => _buildCompletedJobCard(job)).toList(),
+      children: _completedJobs
+          .map((job) => _buildCompletedJobCard(job))
+          .toList(),
     );
   }
 
-  Widget _buildCompletedJobCard(Job job) {
+  Widget _buildCompletedJobCard(InternalJob job) {
     final bonus = _calculateBonus(job.payment);
 
     return Container(
@@ -1212,7 +1137,7 @@ class _InternalJobsState extends State<InternalJobs> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'job_payment'.tr(),
+                        'Job Payment',
                         style: TextStyle(
                           color: const Color(0xFF9CA3AF),
                           fontSize: 11.sp,
@@ -1265,11 +1190,7 @@ class _InternalJobsState extends State<InternalJobs> {
 /// ------------------------------------------------------
 
 class _EmptyCard extends StatelessWidget {
-  const _EmptyCard({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-  });
+  const _EmptyCard({required this.icon, required this.title, this.subtitle});
 
   final IconData icon;
   final String title;
@@ -1285,18 +1206,11 @@ class _EmptyCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 48.w,
-              color: const Color(0xFFD1D5DB),
-            ),
+            Icon(icon, size: 48.w, color: const Color(0xFFD1D5DB)),
             SizedBox(height: 8.h),
             Text(
               title,
-              style: TextStyle(
-                color: const Color(0xFF6B7280),
-                fontSize: 14.sp,
-              ),
+              style: TextStyle(color: const Color(0xFF6B7280), fontSize: 14.sp),
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
@@ -1329,9 +1243,9 @@ class InternalWorkflowOverlay extends StatelessWidget {
     required this.onJobUpdate,
   });
 
-  final Job job;
+  final InternalJob job;
   final VoidCallback onClose;
-  final void Function(Job job) onJobUpdate;
+  final void Function(InternalJob job) onJobUpdate;
 
   @override
   Widget build(BuildContext context) {
@@ -1350,10 +1264,7 @@ class InternalWorkflowOverlay extends StatelessWidget {
             children: [
               Text(
                 job.title,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
               ),
               SizedBox(height: 8.h),
               Text(
@@ -1367,18 +1278,16 @@ class InternalWorkflowOverlay extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: onClose,
-                      child:  Text('close'.tr()),
+                      child: const Text('Close'),
                     ),
                   ),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        onJobUpdate(
-                          job.copyWith(status: JobStatus.completed),
-                        );
+                        onJobUpdate(job.copyWith(status: JobStatus.completed));
                       },
-                      child:  Text('mark_completed'.tr()),
+                      child: const Text('Mark Completed'),
                     ),
                   ),
                 ],
@@ -1390,4 +1299,3 @@ class InternalWorkflowOverlay extends StatelessWidget {
     );
   }
 }
-

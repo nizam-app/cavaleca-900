@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
-import 'package:workpleis/features/profile/model/Custom_profile_model.dart';
+import 'package:workpleis/features/customer/screen/profile/model/Custom_profile_model.dart';
 
 class CustomerProfileApi {
   static Future<CustomerProfile> getProfile() async {

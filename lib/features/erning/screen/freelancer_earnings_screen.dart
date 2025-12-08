@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:workpleis/features/erning/data/erning_data.dart';
+import 'package:workpleis/features/erning/model/freelancer_transaction.dart';
 
 /// ------------------------------------------------------
 ///  COLORS
@@ -19,122 +21,6 @@ const kEarningsYellow = Color(0xFFFFB111);
 /// ------------------------------------------------------
 ///  MODELS
 /// ------------------------------------------------------
-class FreelancerTransaction {
-  final int id;
-  final String job;
-  final String customer;
-  final String date;
-  final String amount;
-
-  const FreelancerTransaction({
-    required this.id,
-    required this.job,
-    required this.customer,
-    required this.date,
-    required this.amount,
-  });
-}
-
-class FreelancerEarningsData {
-  final double commissionRate;
-  final double totalEarningsAllTime;
-  final double monthChangePercent;
-
-  final double todayEarnings;
-  final double thisWeekEarnings;
-  final double thisMonthEarnings;
-
-  final double availableBalance;
-  final int thisWeekJobs;
-
-  final int monthJobsCompleted;
-  final double monthJobsAmount;
-  final double monthCommission;
-
-  final List<FreelancerTransaction> recentTransactions;
-
-  const FreelancerEarningsData({
-    required this.commissionRate,
-    required this.totalEarningsAllTime,
-    required this.monthChangePercent,
-    required this.todayEarnings,
-    required this.thisWeekEarnings,
-    required this.thisMonthEarnings,
-    required this.availableBalance,
-    required this.thisWeekJobs,
-    required this.monthJobsCompleted,
-    required this.monthJobsAmount,
-    required this.monthCommission,
-    required this.recentTransactions,
-  });
-}
-
-/// ------------------------------------------------------
-///  RIVERPOD PROVIDER  (এখানে পরে API কল বসিয়ে দেবে)
-/// ------------------------------------------------------
-
-final freelancerEarningsProvider =
-Provider<FreelancerEarningsData>((ref) {
-  const commissionRate = 15.0;
-
-  // const না, normal list রাখো
-  final weekJobPayments = <double>[150, 120, 200, 95, 180, 110, 85];
-
-  final availableBalance = weekJobPayments.fold<double>(
-    0,
-        (sum, p) => sum + (p * commissionRate) / 100,
-  );
-
-  final todayEarnings =
-      (150 * commissionRate) / 100 + (120 * commissionRate) / 100;
-
-  final monthlyEarnings = availableBalance * 3.5; // approx
-
-  return FreelancerEarningsData(
-    commissionRate: commissionRate,
-    totalEarningsAllTime: 24680,
-    monthChangePercent: 12.5,
-    todayEarnings: todayEarnings,
-    thisWeekEarnings: availableBalance,
-    thisMonthEarnings: monthlyEarnings,
-    availableBalance: availableBalance,
-    thisWeekJobs: weekJobPayments.length,
-    monthJobsCompleted: 28,
-    monthJobsAmount: 6450,
-    monthCommission: 320,
-    recentTransactions: const [
-      FreelancerTransaction(
-        id: 1,
-        job: 'HVAC Maintenance',
-        customer: 'Michael Johnson',
-        date: 'Today, 2:00 PM',
-        amount: '\$95',
-      ),
-      FreelancerTransaction(
-        id: 2,
-        job: 'Plumbing Repair',
-        customer: 'Robert Brown',
-        date: 'Nov 3, 2025',
-        amount: '\$75',
-      ),
-      FreelancerTransaction(
-        id: 3,
-        job: 'HVAC Installation',
-        customer: 'Emily Davis',
-        date: 'Nov 2, 2025',
-        amount: '\$200',
-      ),
-      FreelancerTransaction(
-        id: 4,
-        job: 'Electrical Repair',
-        customer: 'James Wilson',
-        date: 'Nov 1, 2025',
-        amount: '\$55',
-      ),
-    ],
-  );
-});
-
 
 /// ------------------------------------------------------
 ///  MAIN SCREEN
@@ -146,37 +32,58 @@ class FreelancerEarningsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(freelancerEarningsProvider);
+    final asyncData = ref.watch(freelancerEarningsProvider);
 
-    return Scaffold(
-      backgroundColor: kEarningsBg,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _HeaderSection(data: data),
-              SizedBox(height: 16.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: Column(
-                  children: [
-                    _StatsRow(data: data),
-                    SizedBox(height: 16.h),
-                    _AvailableBalanceCard(data: data),
-                    SizedBox(height: 16.h),
-                    _CommissionRateCard(data: data),
-                    SizedBox(height: 16.h),
-                    _MonthBreakdownCard(data: data),
-                    SizedBox(height: 16.h),
-                    _RecentTransactions(data: data),
-                    SizedBox(height: 32.h),
-                  ],
-                ),
-              ),
-            ],
+    return asyncData.when(
+      loading: () => const Scaffold(
+        backgroundColor: kEarningsBg,
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: kEarningsBg,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Text(
+              'Failed to load earnings:\n$err',
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),
+      data: (data) {
+        // এখানে নিচের body আগের মতই থাকবে, শুধু উপরে থেকে data পাঠাচ্ছো
+        return Scaffold(
+          backgroundColor: kEarningsBg,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _HeaderSection(data: data),
+                  SizedBox(height: 16.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    child: Column(
+                      children: [
+                        _StatsRow(data: data),
+                        SizedBox(height: 16.h),
+                        _AvailableBalanceCard(data: data),
+                        SizedBox(height: 16.h),
+                        _CommissionRateCard(data: data),
+                        SizedBox(height: 16.h),
+                        _MonthBreakdownCard(data: data),
+                        SizedBox(height: 16.h),
+                        _RecentTransactions(data: data),
+                        SizedBox(height: 32.h),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -253,15 +160,10 @@ class _HeaderSection extends StatelessWidget {
                 ),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                     SnackBar(
-                      content: Text('Export coming soon…'),
-                    ),
+                    const SnackBar(content: Text('Export coming soon…')),
                   );
                 },
-                icon: Icon(
-                  Icons.download_rounded,
-                  size: 16.sp,
-                ),
+                icon: Icon(Icons.download_rounded, size: 16.sp),
                 label: Text(
                   'export'.tr(),
                   style: TextStyle(
@@ -290,10 +192,7 @@ class _HeaderSection extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 20.w,
-                vertical: 16.h,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
               child: Column(
                 children: [
                   Text(
@@ -424,10 +323,7 @@ class _StatCard extends StatelessWidget {
             SizedBox(height: 6.h),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: kEarningsTextMuted,
-              ),
+              style: TextStyle(fontSize: 12.sp, color: kEarningsTextMuted),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -556,34 +452,32 @@ class _AvailableBalanceCard extends StatelessWidget {
                 onPressed: data.availableBalance == 0
                     ? null
                     : () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    barrierDismissible: true,
-                    builder: (_) => EarlyPayoutDialog(
-                      availableBalance: data.availableBalance,
-                      jobsCount: data.thisWeekJobs,
-                      commissionRate: data.commissionRate,
-                    ),
-                  ) ??
-                      false;
+                        final confirmed =
+                            await showDialog<bool>(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (_) => EarlyPayoutDialog(
+                                availableBalance: data.availableBalance,
+                                jobsCount: data.thisWeekJobs,
+                                commissionRate: data.commissionRate,
+                              ),
+                            ) ??
+                            false;
 
-                  if (confirmed && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Payout request submitted successfully! You will receive your payment within 24 hours.',
-                        ),
-                      ),
-                    );
-                  }
-                },
+                        if (confirmed && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Payout request submitted successfully! You will receive your payment within 24 hours.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.attach_money_rounded,
-                      size: 18.sp,
-                    ),
+                    Icon(Icons.attach_money_rounded, size: 18.sp),
                     SizedBox(width: 6.w),
                     Text(
                       'request_payout'.tr(),
@@ -851,10 +745,7 @@ class _BreakdownRow extends StatelessWidget {
                 SizedBox(height: 2.h),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: kEarningsTextMuted,
-                  ),
+                  style: TextStyle(fontSize: 11.sp, color: kEarningsTextMuted),
                 ),
               ],
             ),
@@ -917,71 +808,71 @@ class _RecentTransactions extends StatelessWidget {
           children: data.recentTransactions
               .map(
                 (tx) => Container(
-              margin: EdgeInsets.only(bottom: 8.h),
-              decoration: BoxDecoration(
-                color: kEarningsCard,
-                borderRadius: BorderRadius.circular(18.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 10.r,
-                    offset: Offset(0, 4.h),
+                  margin: EdgeInsets.only(bottom: 8.h),
+                  decoration: BoxDecoration(
+                    color: kEarningsCard,
+                    borderRadius: BorderRadius.circular(18.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10.r,
+                        offset: Offset(0, 4.h),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(14.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                  child: Padding(
+                    padding: EdgeInsets.all(14.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                tx.job,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: kEarningsTextMain,
-                                ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    tx.job,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: kEarningsTextMain,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    tx.customer,
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      color: kEarningsTextMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                tx.customer,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: kEarningsTextMuted,
-                                ),
+                            ),
+                            Text(
+                              tx.amount,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: kEarningsGreenDark,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                        SizedBox(height: 4.h),
                         Text(
-                          tx.amount,
+                          tx.date,
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: kEarningsGreenDark,
+                            fontSize: 11.sp,
+                            color: kEarningsTextMuted,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      tx.date,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: kEarningsTextMuted,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          )
+              )
               .toList(),
         ),
       ],
@@ -1023,15 +914,13 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: 24.w),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22.r)),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-           crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// header
               SizedBox(
@@ -1064,7 +953,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
               ),
               SizedBox(height: 4.h),
               Text(
-                'early_payout_description.'.tr(),
+                'early_payout_description'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: kEarningsTextMuted,
@@ -1078,9 +967,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFFDF3),
                   borderRadius: BorderRadius.circular(18.r),
-                  border: Border.all(
-                    color: const Color(0xFFBBF7D0),
-                  ),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
                 ),
                 child: Padding(
                   padding: EdgeInsets.all(14.w),
@@ -1175,10 +1062,8 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _infoText('payment_processing_time'.tr()),
-                            _infoText(
-                                'sent_to_bank'.tr()),
-                            _infoText(
-                                'regular_payout_next_week'.tr()),
+                            _infoText('sent_to_bank'.tr()),
+                            _infoText('regular_payout_next_week'.tr()),
                           ],
                         ),
                       ),
@@ -1191,7 +1076,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
 
               /// payment method
               Text(
-                'payment_method',
+                'payment_method'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: kEarningsTextMuted,
@@ -1263,37 +1148,38 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                   ),
                   child: _isProcessing
                       ? Text(
-                    'Processing...',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  )
+                          'Processing...',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
                       : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 18.sp,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'confirm_payout_request'.tr(),
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 18.sp,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'confirm_payout_request'.tr(),
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
               SizedBox(height: 8.h),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed:
-                  _isProcessing ? null : () => Navigator.of(context).pop(false),
+                  onPressed: _isProcessing
+                      ? null
+                      : () => Navigator.of(context).pop(false),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18.r),
@@ -1319,10 +1205,68 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
     padding: EdgeInsets.symmetric(vertical: 2.h),
     child: Text(
       '• $text',
-      style: TextStyle(
-        fontSize: 11.sp,
-        color: const Color(0xFF1F2937),
-      ),
+      style: TextStyle(fontSize: 11.sp, color: const Color(0xFF1F2937)),
     ),
   );
 }
+
+// final freelancerEarningsProvider = Provider<FreelancerEarningsData>((ref) {
+//   const commissionRate = 15.0;
+//
+//   // const না, normal list রাখো
+//   final weekJobPayments = <double>[150, 120, 200, 95, 180, 110, 85];
+//
+//   final availableBalance = weekJobPayments.fold<double>(
+//     0,
+//     (sum, p) => sum + (p * commissionRate) / 100,
+//   );
+//
+//   final todayEarnings =
+//       (150 * commissionRate) / 100 + (120 * commissionRate) / 100;
+//
+//   final monthlyEarnings = availableBalance * 3.5; // approx
+//
+//   return FreelancerEarningsData(
+//     commissionRate: commissionRate,
+//     totalEarningsAllTime: 24680,
+//     monthChangePercent: 12.5,
+//     todayEarnings: todayEarnings,
+//     thisWeekEarnings: availableBalance,
+//     thisMonthEarnings: monthlyEarnings,
+//     availableBalance: availableBalance,
+//     thisWeekJobs: weekJobPayments.length,
+//     monthJobsCompleted: 28,
+//     monthJobsAmount: 6450,
+//     monthCommission: 320,
+//     recentTransactions: const [
+//       FreelancerTransaction(
+//         id: 1,
+//         job: 'HVAC Maintenance',
+//         customer: 'Michael Johnson',
+//         date: 'Today, 2:00 PM',
+//         amount: '\$95',
+//       ),
+//       FreelancerTransaction(
+//         id: 2,
+//         job: 'Plumbing Repair',
+//         customer: 'Robert Brown',
+//         date: 'Nov 3, 2025',
+//         amount: '\$75',
+//       ),
+//       FreelancerTransaction(
+//         id: 3,
+//         job: 'HVAC Installation',
+//         customer: 'Emily Davis',
+//         date: 'Nov 2, 2025',
+//         amount: '\$200',
+//       ),
+//       FreelancerTransaction(
+//         id: 4,
+//         job: 'Electrical Repair',
+//         customer: 'James Wilson',
+//         date: 'Nov 1, 2025',
+//         amount: '\$55',
+//       ),
+//     ],
+//   );
+// });

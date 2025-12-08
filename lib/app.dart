@@ -33,8 +33,14 @@ import 'package:workpleis/routes/app_routes.dart';
 
 import 'core/constants/color_control/all_color.dart';
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
@@ -43,6 +49,7 @@ class App extends StatelessWidget {
       locale: context.locale,
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
+
       theme: ThemeData(
         brightness: Brightness.light,
         primaryColor: AllColor.black,

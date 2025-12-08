@@ -1,22 +1,23 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../screen/internal_jobs.dart';
-import 'package:easy_localization/easy_localization.dart';
+
+import '../screen/job/model/internal_job_model.dart';
 
 class Newjobassigned extends StatefulWidget {
   const Newjobassigned(
-      this.job, {
-        super.key,
+    this.job, {
+    super.key,
 
-        this.initialSeconds = 20,
-        required this.onClose,
-        required this.onAccept,
-        required this.onDecline,
-        this.onTimeout,
-      });
+    this.initialSeconds = 20,
+    required this.onClose,
+    required this.onAccept,
+    required this.onDecline,
+    this.onTimeout,
+  });
 
-  final Job job;
+  final InternalJob job;
   final int initialSeconds;
   final VoidCallback onClose;
   final VoidCallback onAccept;
@@ -26,7 +27,6 @@ class Newjobassigned extends StatefulWidget {
   @override
   State<Newjobassigned> createState() => _NewjobassignedState();
 }
-
 
 class _NewjobassignedState extends State<Newjobassigned> {
   late int _remainingSeconds;
@@ -94,10 +94,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
       child: Center(
         child: Container(
           width: 0.9.sw,
-          constraints: BoxConstraints(
-            maxWidth: 420.w,
-            maxHeight: 0.9.sh,
-          ),
+          constraints: BoxConstraints(maxWidth: 420.w, maxHeight: 0.9.sh),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(28.r),
@@ -114,11 +111,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
             children: [
               // -------- top close button row --------
               Padding(
-                padding: EdgeInsets.only(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 12.h,
-                ),
+                padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 12.h),
                 child: Row(
                   children: [
                     const Spacer(),
@@ -154,7 +147,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                     ),
                     SizedBox(height: 12.h),
                     Text(
-                      'new_job_assigned'.tr(),
+                      'New Job Assigned!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 18.sp,
@@ -206,9 +199,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                         offset: Offset(0, 6.h),
                       ),
                     ],
-                    border: Border.all(
-                      color: const Color(0xFFF3F4F6),
-                    ),
+                    border: Border.all(color: const Color(0xFFF3F4F6)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,14 +270,11 @@ class _NewjobassignedState extends State<Newjobassigned> {
                       _InfoRow(
                         icon: Icons.calendar_today_outlined,
                         label:
-                        '${job.date}${job.time != null ? ' at ${job.time}' : ''}',
+                            '${job.date}${job.time != null ? ' at ${job.time}' : ''}',
                       ),
 
                       SizedBox(height: 10.h),
-                      Divider(
-                        color: const Color(0xFFE5E7EB),
-                        height: 1.h,
-                      ),
+                      Divider(color: const Color(0xFFE5E7EB), height: 1.h),
                       SizedBox(height: 8.h),
 
                       // description
@@ -321,7 +309,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'job_payment_label'.tr(),
+                                    'Job Payment',
                                     style: TextStyle(
                                       fontSize: 12.sp,
                                       color: const Color(0xFF059669),
@@ -344,7 +332,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'you_bonus'.tr(),
+                                  'Your Bonus (5%)',
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: const Color(0xFF059669),
@@ -353,7 +341,9 @@ class _NewjobassignedState extends State<Newjobassigned> {
                                 ),
                                 SizedBox(height: 4.h),
                                 Text(
-                                  job.bonus.isNotEmpty ? '+${job.bonus}' : '+\$0.00',
+                                  job.bonus.isNotEmpty
+                                      ? '+${job.bonus}'
+                                      : '+\$0.00',
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w600,
@@ -390,7 +380,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 6.h),
                           child: Text(
-                            'decline'.tr(),
+                            'Decline',
                             style: TextStyle(
                               fontSize: 13.sp,
                               color: const Color(0xFF6B7280),
@@ -414,7 +404,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 6.h),
                           child: Text(
-                            'accept_job'.tr(),
+                            'Accept Job',
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -435,11 +425,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    this.secondary,
-  });
+  const _InfoRow({required this.icon, required this.label, this.secondary});
 
   final IconData icon;
   final String label;
@@ -448,14 +434,11 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-      secondary != null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: secondary != null
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
-        Icon(
-          icon,
-          size: 16.sp,
-          color: const Color(0xFF9CA3AF),
-        ),
+        Icon(icon, size: 16.sp, color: const Color(0xFF9CA3AF)),
         SizedBox(width: 8.w),
         Expanded(
           child: Column(

@@ -1,12 +1,13 @@
+// freelarcer_job_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../internal_technician/widget/jobDetails.dart';
-import '../../internal_technician/widget/job_detail-overlay.dart';
-import '../../internal_technician/widget/viewJobDetails.dart';
-import '../widgets/freelancerJobDetails.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
+import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
+import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
+import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
+import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 
@@ -22,267 +23,195 @@ const Color kJobsPrimaryBlue = Color(0xFF2563EB);
 const Color kJobsSuccess = Color(0xFF16A34A);
 
 /// ------------------------------------------------------
-///  Models
+///  Tabs
 /// ------------------------------------------------------
-enum ActiveJobStatus { inProgress, scheduled }
+enum FreelancerJobsTab { incoming, active, done }
 
-class ActiveJob {
-  final int id;
-  final String title;
-  final String customer;
-  final String location;
-  final String dateLabel; // "Today, 2:00 PM"
-  final double payment;
-  final double earning;
-  final ActiveJobStatus status;
-
-  const ActiveJob({
-    required this.id,
-    required this.title,
-    required this.customer,
-    required this.location,
-    required this.dateLabel,
-    required this.payment,
-    required this.earning,
-    required this.status,
-  });
-}
-
-enum JobUrgency { high, medium, low }
-
-class AvailableJob {
-  final int id;
-  final String srId;
-  final String title;
-  final String category;
-  final String description;
-  final String locationShort;
-  final String address;
-  final String customerName;
-  final String customerPhone;
-  final int customerRating;
-  final String time;
-  final String date;
-  final String distance;
-  final double payment;
-  final double earning;
-  final JobUrgency urgency;
-
-  const AvailableJob({
-    required this.id,
-    required this.srId,
-    required this.title,
-    required this.category,
-    required this.description,
-    required this.locationShort,
-    required this.address,
-    required this.customerName,
-    required this.customerPhone,
-    required this.customerRating,
-    required this.time,
-    required this.date,
-    required this.distance,
-    required this.payment,
-    required this.earning,
-    required this.urgency,
-  });
-}
-
-class CompletedJob {
-  final int id;
-  final String title;
-  final String customer;
-  final String location;
-  final String dateLabel;
-  final double payment;
-  final double earning;
-
-  const CompletedJob({
-    required this.id,
-    required this.title,
-    required this.customer,
-    required this.location,
-    required this.dateLabel,
-    required this.payment,
-    required this.earning,
-  });
-}
-
-/// ------------------------------------------------------
-///  Riverpod Providers
-/// ------------------------------------------------------
-enum FreelancerJobsTab { active, available, completed }
-
-final freelancerJobsTabProvider =
-StateProvider<FreelancerJobsTab>((ref) => FreelancerJobsTab.active);
-
-final activeJobsProvider = StateProvider<List<ActiveJob>>((ref) {
-  return const [
-    ActiveJob(
-      id: 1,
-      title: 'HVAC Maintenance',
-      customer: 'Michael Johnson',
-      location: '123 Main St, Apt 4B',
-      dateLabel: 'Today, 2:00 PM',
-      payment: 120,
-      earning: 95,
-      status: ActiveJobStatus.inProgress,
-    ),
-    ActiveJob(
-      id: 2,
-      title: 'Electrical Inspection',
-      customer: 'Sarah Williams',
-      location: '456 Oak Avenue',
-      dateLabel: 'Today, 4:30 PM',
-      payment: 85,
-      earning: 65,
-      status: ActiveJobStatus.scheduled,
-    ),
-  ];
-});
-
-final availableJobsProvider = StateProvider<List<AvailableJob>>((ref) {
-  return const [
-    AvailableJob(
-      id: 6,
-      srId: 'SR-2025-1106',
-      title: 'Electrical Repair',
-      category: 'Electrical',
-      description:
-      'Urgent electrical outlet repair needed. Multiple outlets not working in living room and bedroom. May need circuit breaker inspection.',
-      locationShort: '456 Oak Avenue',
-      address: '456 Oak Avenue, Tevragh Zeina, Nouakchott',
-      customerName: 'Fatima Hassan',
-      customerPhone: '+222 45 23 45 67',
-      customerRating: 5,
-      time: '3:00 PM',
-      date: 'Nov 5, 2025',
-      distance: '2.3 km',
-      payment: 85,
-      earning: 65,
-      urgency: JobUrgency.high,
-    ),
-    AvailableJob(
-      id: 7,
-      srId: 'SR-2025-1107',
-      title: 'HVAC Inspection',
-      category: 'HVAC',
-      description:
-      'Annual HVAC system inspection and maintenance. Check filters, coolant levels, and overall system performance.',
-      locationShort: '789 Pine Street',
-      address: '789 Pine Street, Ksar District, Nouakchott',
-      customerName: 'Omar Abdullah',
-      customerPhone: '+222 45 34 56 78',
-      customerRating: 4,
-      time: '10:00 AM',
-      date: 'Nov 6, 2025',
-      distance: '4.1 km',
-      payment: 120,
-      earning: 95,
-      urgency: JobUrgency.medium,
-    ),
-    AvailableJob(
-      id: 8,
-      srId: 'SR-2025-1108',
-      title: 'Plumbing Fix',
-      category: 'Plumbing',
-      description:
-      'Minor plumbing leak under kitchen sink. Need quick repair to prevent water damage.',
-      locationShort: '321 Elm Road',
-      address: '321 Elm Road, Arafat District, Nouakchott',
-      customerName: 'Aminata Diallo',
-      customerPhone: '+222 45 45 67 89',
-      customerRating: 5,
-      time: '5:00 PM',
-      date: 'Nov 5, 2025',
-      distance: '1.8 km',
-      payment: 75,
-      earning: 55,
-      urgency: JobUrgency.low,
-    ),
-  ];
-});
-
-final completedJobsProvider = StateProvider<List<CompletedJob>>((ref) {
-  return const [
-    CompletedJob(
-      id: 3,
-      title: 'Plumbing Repair',
-      customer: 'Robert Brown',
-      location: '789 Pine Street',
-      dateLabel: 'Nov 3, 2025',
-      payment: 95,
-      earning: 75,
-    ),
-    CompletedJob(
-      id: 4,
-      title: 'HVAC Installation',
-      customer: 'Emily Davis',
-      location: '321 Elm Road',
-      dateLabel: 'Nov 2, 2025',
-      payment: 250,
-      earning: 200,
-    ),
-    CompletedJob(
-      id: 5,
-      title: 'Electrical Repair',
-      customer: 'James Wilson',
-      location: '654 Maple Drive',
-      dateLabel: 'Nov 1, 2025',
-      payment: 75,
-      earning: 55,
-    ),
-  ];
-});
+final freelancerJobsTabProvider = StateProvider<FreelancerJobsTab>(
+  (ref) => FreelancerJobsTab.incoming,
+);
 
 /// ------------------------------------------------------
 ///  Screen
 /// ------------------------------------------------------
-class FreelarcerJobScreen extends ConsumerWidget {
+class FreelarcerJobScreen extends ConsumerStatefulWidget {
   const FreelarcerJobScreen({super.key});
 
   static const routeName = '/freelarcerJobScreen';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tab = ref.watch(freelancerJobsTabProvider);
-    final activeJobs = ref.watch(activeJobsProvider);
-    final availableJobs = ref.watch(availableJobsProvider);
-    final completedJobs = ref.watch(completedJobsProvider);
+  ConsumerState<FreelarcerJobScreen> createState() =>
+      _FreelarcerJobScreenState();
+}
 
+class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<InternalJob> _incomingJobs = [];
+  List<InternalJob> _activeJobs = [];
+  List<InternalJob> _completedJobs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAllJobs();
+  }
+
+  Future<void> _loadAllJobs() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final incoming = await TechnicianJobsApi.fetchJobs('incoming');
+      final active = await TechnicianJobsApi.fetchJobs('active');
+      final done = await TechnicianJobsApi.fetchJobs('done');
+
+      setState(() {
+        _incomingJobs = incoming;
+        _activeJobs = active;
+        _completedJobs = done;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleAcceptJob(InternalJob job) async {
+    try {
+      final updated = await TechnicianJobsApi.respondToWorkOrder(
+        woId: job.id,
+        action: 'ACCEPT',
+      );
+
+      setState(() {
+        _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
+        _activeJobs = [..._activeJobs, updated];
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Job accepted and moved to Active.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to accept job: $e')));
+      }
+    }
+  }
+
+  Future<void> _handleStartJob(InternalJob job) async {
+    // GPS popup dekhao + start API
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const Gpscheckinpopup(),
+    );
+
+    final lat = job.latitude ?? 0;
+    final lng = job.longitude ?? 0;
+
+    try {
+      final updated = await TechnicianJobsApi.startWorkOrder(
+        woId: job.id,
+        lat: lat,
+        lng: lng,
+      );
+
+      setState(() {
+        _activeJobs = _activeJobs
+            .map((j) => j.id == updated.id ? updated : j)
+            .toList();
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to start job: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tab = ref.watch(freelancerJobsTabProvider);
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: kJobsBg,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: kJobsBg,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Text(_errorMessage!, textAlign: TextAlign.center),
+          ),
+        ),
+      );
+    }
+
+    // active tab → jobs already accepted
+    // available tab → incoming offers
+    // completed tab → done
     return Scaffold(
       backgroundColor: kJobsBg,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: 24.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _JobsHeader(),
-              SizedBox(height: 16.h),
-              _JobsTabs(
-                currentTab: tab,
-                onTabChanged: (newTab) =>
-                ref.read(freelancerJobsTabProvider.notifier).state =
-                    newTab,
-              ),
-              SizedBox(height: 12.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Builder(
-                  builder: (_) {
-                    switch (tab) {
-                      case FreelancerJobsTab.active:
-                        return _ActiveJobsList(jobs: activeJobs);
-                      case FreelancerJobsTab.available:
-                        return _AvailableJobsList(jobs: availableJobs);
-                      case FreelancerJobsTab.completed:
-                        return _CompletedJobsList(jobs: completedJobs);
-                    }
-                  },
+        child: RefreshIndicator(
+          onRefresh: _loadAllJobs,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(bottom: 24.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _JobsHeader(),
+                SizedBox(height: 16.h),
+                _JobsTabs(
+                  currentTab: tab,
+                  onTabChanged: (newTab) =>
+                      ref.read(freelancerJobsTabProvider.notifier).state =
+                          newTab,
                 ),
-              ),
-            ],
+                SizedBox(height: 12.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Builder(
+                    builder: (_) {
+                      switch (tab) {
+                        case FreelancerJobsTab.incoming:
+                          return _ActiveJobsList(
+                            jobs: _activeJobs,
+                            onStartJob: _handleStartJob,
+                          );
+                        case FreelancerJobsTab.active:
+                          return _AvailableJobsList(
+                            jobs: _incomingJobs,
+                            onAcceptJob: _handleAcceptJob,
+                          );
+                        case FreelancerJobsTab.done:
+                          return _CompletedJobsList(jobs: _completedJobs);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -301,8 +230,12 @@ class _JobsHeader extends StatelessWidget {
     return Container(
       height: 110.h,
       width: double.infinity,
-      padding:
-      EdgeInsets.only(left: 16.w, right: 16.w, top: 30.h, bottom: 14.h),
+      padding: EdgeInsets.only(
+        left: 16.w,
+        right: 16.w,
+        top: 30.h,
+        bottom: 14.h,
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [kJobsHeaderYellow, kJobsHeaderYellowDark],
@@ -346,10 +279,7 @@ class _JobsTabs extends StatelessWidget {
   final FreelancerJobsTab currentTab;
   final ValueChanged<FreelancerJobsTab> onTabChanged;
 
-  const _JobsTabs({
-    required this.currentTab,
-    required this.onTabChanged,
-  });
+  const _JobsTabs({required this.currentTab, required this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +295,7 @@ class _JobsTabs extends StatelessWidget {
               color: Colors.black.withOpacity(0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -380,15 +310,15 @@ class _JobsTabs extends StatelessWidget {
             Expanded(
               child: _TabChip(
                 label: 'available'.tr(),
-                selected: currentTab == FreelancerJobsTab.available,
-                onTap: () => onTabChanged(FreelancerJobsTab.available),
+                selected: currentTab == FreelancerJobsTab.incoming,
+                onTap: () => onTabChanged(FreelancerJobsTab.incoming),
               ),
             ),
             Expanded(
               child: _TabChip(
                 label: 'completed'.tr(),
-                selected: currentTab == FreelancerJobsTab.completed,
-                onTap: () => onTabChanged(FreelancerJobsTab.completed),
+                selected: currentTab == FreelancerJobsTab.done,
+                onTap: () => onTabChanged(FreelancerJobsTab.done),
               ),
             ),
           ],
@@ -425,7 +355,7 @@ class _TabChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w600,
-              color: selected ? kJobsTextMain: kJobsTextMain,
+              color: kJobsTextMain,
             ),
           ),
         ),
@@ -435,12 +365,13 @@ class _TabChip extends StatelessWidget {
 }
 
 /// ------------------------------------------------------
-///  Active Jobs Tab
+///  Active Jobs Tab (accepted + in-progress)
 /// ------------------------------------------------------
 class _ActiveJobsList extends StatelessWidget {
-  final List<ActiveJob> jobs;
+  final List<InternalJob> jobs;
+  final Future<void> Function(InternalJob job) onStartJob;
 
-  const _ActiveJobsList({required this.jobs});
+  const _ActiveJobsList({required this.jobs, required this.onStartJob});
 
   @override
   Widget build(BuildContext context) {
@@ -459,22 +390,25 @@ class _ActiveJobsList extends StatelessWidget {
     return Column(
       children: [
         for (final job in jobs) ...[
-          _ActiveJobCard(job: job),
+          _ActiveJobCard(job: job, onStartJob: onStartJob),
           SizedBox(height: 12.h),
-        ]
+        ],
       ],
     );
   }
 }
 
 class _ActiveJobCard extends StatelessWidget {
-  final ActiveJob job;
+  final InternalJob job;
+  final Future<void> Function(InternalJob job) onStartJob;
 
-  const _ActiveJobCard({required this.job});
+  const _ActiveJobCard({required this.job, required this.onStartJob});
 
   @override
   Widget build(BuildContext context) {
-    final isInProgress = job.status == ActiveJobStatus.inProgress;
+    final isInProgress = job.status == JobStatus.inProgress;
+    final address = job.address ?? job.location;
+    final dateLabel = '${job.date}${job.time != null ? ' at ${job.time}' : ''}';
 
     return Container(
       decoration: BoxDecoration(
@@ -485,7 +419,7 @@ class _ActiveJobCard extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
-          )
+          ),
         ],
       ),
       child: Padding(
@@ -520,8 +454,10 @@ class _ActiveJobCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isInProgress
                         ? const Color(0xFFE5F1FF)
@@ -538,7 +474,7 @@ class _ActiveJobCard extends StatelessWidget {
                           : const Color(0xFFE6A400),
                     ),
                   ),
-                )
+                ),
               ],
             ),
             SizedBox(height: 10.h),
@@ -546,12 +482,15 @@ class _ActiveJobCard extends StatelessWidget {
             // location + time
             Row(
               children: [
-                Icon(Icons.location_on_outlined,
-                    size: 14.sp, color: kJobsTextMuted),
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 14.sp,
+                  color: kJobsTextMuted,
+                ),
                 SizedBox(width: 4.w),
                 Expanded(
                   child: Text(
-                    job.location,
+                    address,
                     style: TextStyle(fontSize: 12.sp, color: kJobsTextMain),
                   ),
                 ),
@@ -560,18 +499,18 @@ class _ActiveJobCard extends StatelessWidget {
             SizedBox(height: 4.h),
             Row(
               children: [
-                Icon(Icons.access_time,
-                    size: 14.sp, color: kJobsTextMuted),
+                Icon(Icons.access_time, size: 14.sp, color: kJobsTextMuted),
                 SizedBox(width: 4.w),
                 Text(
-                  job.dateLabel,
+                  dateLabel,
                   style: TextStyle(fontSize: 12.sp, color: kJobsTextMain),
                 ),
               ],
             ),
             SizedBox(height: 10.h),
-            Divider(color:kJobsTextMuted , height: 1.h,),
+            Divider(color: kJobsTextMuted, height: 1.h),
             SizedBox(height: 6.h),
+
             // payment + earning
             Row(
               children: [
@@ -587,7 +526,7 @@ class _ActiveJobCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      '\$${job.payment.toStringAsFixed(0)}',
+                      job.payment,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -609,7 +548,7 @@ class _ActiveJobCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      '\$${job.earning.toStringAsFixed(0)}',
+                      job.bonus,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -627,19 +566,15 @@ class _ActiveJobCard extends StatelessWidget {
               width: double.infinity,
               height: 40.h,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (isInProgress) {
-                    showDialog(
+                    await showDialog(
                       context: context,
                       barrierDismissible: true,
-                      builder: (_) => Jobdetails(),
+                      builder: (_) => Jobdetails(job: job),
                     );
                   } else {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: true,
-                      builder: (_) => Viewjobdetails(),
-                    );
+                    await onStartJob(job);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -658,7 +593,7 @@ class _ActiveJobCard extends StatelessWidget {
                   ),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -667,26 +602,29 @@ class _ActiveJobCard extends StatelessWidget {
 }
 
 /// ------------------------------------------------------
-///  Available Jobs Tab
+///  Available Jobs Tab (incoming offers)
 /// ------------------------------------------------------
-class _AvailableJobsList extends ConsumerWidget {
-  final List<AvailableJob> jobs;
+class _AvailableJobsList extends StatelessWidget {
+  final List<InternalJob> jobs;
+  final Future<void> Function(InternalJob job) onAcceptJob;
 
-  const _AvailableJobsList({required this.jobs});
+  const _AvailableJobsList({required this.jobs, required this.onAcceptJob});
 
-  Color _urgencyDotColor(JobUrgency urgency) {
-    switch (urgency) {
-      case JobUrgency.high:
+  Color _priorityDotColor(JobPriority? priority) {
+    switch (priority) {
+      case JobPriority.high:
         return Colors.red;
-      case JobUrgency.medium:
+      case JobPriority.medium:
         return Colors.orange;
-      case JobUrgency.low:
+      case JobPriority.low:
         return Colors.green;
+      default:
+        return kJobsTextMuted;
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     if (jobs.isEmpty) {
       return Padding(
         padding: EdgeInsets.only(top: 24.h),
@@ -711,7 +649,7 @@ class _AvailableJobsList extends ConsumerWidget {
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
-                )
+                ),
               ],
             ),
             child: Padding(
@@ -739,7 +677,7 @@ class _AvailableJobsList extends ConsumerWidget {
                               height: 8.w,
                               width: 8.w,
                               decoration: BoxDecoration(
-                                color: _urgencyDotColor(job.urgency),
+                                color: _priorityDotColor(job.priority),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -751,7 +689,7 @@ class _AvailableJobsList extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '\$${job.payment.toStringAsFixed(0)}',
+                            job.payment,
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -760,7 +698,7 @@ class _AvailableJobsList extends ConsumerWidget {
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            'Earn \$${job.earning.toStringAsFixed(0)}',
+                            'Earn ${job.bonus}',
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: kJobsSuccess,
@@ -775,34 +713,35 @@ class _AvailableJobsList extends ConsumerWidget {
                   // location + date
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 14.sp, color: kJobsTextMuted),
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 14.sp,
+                        color: kJobsTextMuted,
+                      ),
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
-                          job.locationShort,
-                          style:
-                          TextStyle(fontSize: 12.sp, color: kJobsTextMain),
+                          job.address ?? job.location,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: kJobsTextMain,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        '• ${job.distance}',
-                        style:
-                        TextStyle(fontSize: 11.sp, color: kJobsTextMuted),
                       ),
                     ],
                   ),
                   SizedBox(height: 4.h),
                   Row(
                     children: [
-                      Icon(Icons.access_time,
-                          size: 14.sp, color: kJobsTextMuted),
+                      Icon(
+                        Icons.access_time,
+                        size: 14.sp,
+                        color: kJobsTextMuted,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
                         job.date,
-                        style:
-                        TextStyle(fontSize: 12.sp, color: kJobsTextMain),
+                        style: TextStyle(fontSize: 12.sp, color: kJobsTextMain),
                       ),
                     ],
                   ),
@@ -813,22 +752,18 @@ class _AvailableJobsList extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          // onPressed: () {
-                          //
-                          //   // Details → route to job detail (modal/screen)
-                          //   context.pushNamed(
-                          //     'freelancer-available-detail',
-                          //     pathParameters: {'id': job.id.toString()},
-                          //     extra: job,
-                          //   );
-                          // },
-
-                            onPressed: () {
-
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (_) => Viewjobdetails(),
+                            );
                           },
-                 style: OutlinedButton.styleFrom(
+                          style: OutlinedButton.styleFrom(
                             side: const BorderSide(
-                                color: Colors.grey, width: 1),
+                              color: Colors.grey,
+                              width: 1,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18.r),
                             ),
@@ -846,48 +781,7 @@ class _AvailableJobsList extends ConsumerWidget {
                       SizedBox(width: 8.w),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Accept Job:
-                            // 1) move from available -> active (scheduled)
-                            // 2) navigate to details/workflow screen
-
-                            final availableCtrl =
-                            ref.read(availableJobsProvider.notifier);
-                            final activeCtrl =
-                            ref.read(activeJobsProvider.notifier);
-
-                            // remove from available list
-                            final currentAvailable = [...availableCtrl.state];
-                            final idx = currentAvailable
-                                .indexWhere((e) => e.id == job.id);
-                            if (idx != -1) {
-                              currentAvailable.removeAt(idx);
-                              availableCtrl.state = currentAvailable;
-                            }
-
-                            // add to active list
-                            final newActive = [
-                              ...activeCtrl.state,
-                              ActiveJob(
-                                id: job.id,
-                                title: job.title,
-                                customer: job.customerName,
-                                location: job.locationShort,
-                                dateLabel: '${job.date}, ${job.time}',
-                                payment: job.payment,
-                                earning: job.earning,
-                                status: ActiveJobStatus.scheduled,
-                              )
-                            ];
-                            activeCtrl.state = newActive;
-
-                            // navigate
-                            context.pushNamed(
-                              'freelancer-available-detail',
-                              pathParameters: {'id': job.id.toString()},
-                              extra: job,
-                            );
-                          },
+                          onPressed: () => onAcceptJob(job),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: kJobsPrimaryYellow,
                             elevation: 0,
@@ -906,13 +800,13 @@ class _AvailableJobsList extends ConsumerWidget {
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
           ),
           SizedBox(height: 12.h),
-        ]
+        ],
       ],
     );
   }
@@ -922,7 +816,7 @@ class _AvailableJobsList extends ConsumerWidget {
 ///  Completed Jobs Tab
 /// ------------------------------------------------------
 class _CompletedJobsList extends StatelessWidget {
-  final List<CompletedJob> jobs;
+  final List<InternalJob> jobs;
 
   const _CompletedJobsList({required this.jobs});
 
@@ -952,7 +846,7 @@ class _CompletedJobsList extends StatelessWidget {
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
-                )
+                ),
               ],
             ),
             child: Padding(
@@ -979,20 +873,24 @@ class _CompletedJobsList extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Text(
                     'Customer: ${job.customer}',
-                    style:
-                    TextStyle(fontSize: 12.sp, color: kJobsTextMuted),
+                    style: TextStyle(fontSize: 12.sp, color: kJobsTextMuted),
                   ),
                   SizedBox(height: 6.h),
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 14.sp, color: kJobsTextMuted),
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 14.sp,
+                        color: kJobsTextMuted,
+                      ),
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
-                          job.location,
-                          style:
-                          TextStyle(fontSize: 12.sp, color: kJobsTextMain),
+                          job.address ?? job.location,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: kJobsTextMain,
+                          ),
                         ),
                       ),
                     ],
@@ -1000,13 +898,15 @@ class _CompletedJobsList extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Row(
                     children: [
-                      Icon(Icons.access_time,
-                          size: 14.sp, color: kJobsTextMuted),
+                      Icon(
+                        Icons.access_time,
+                        size: 14.sp,
+                        color: kJobsTextMuted,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
-                        job.dateLabel,
-                        style:
-                        TextStyle(fontSize: 12.sp, color: kJobsTextMain),
+                        job.date,
+                        style: TextStyle(fontSize: 12.sp, color: kJobsTextMain),
                       ),
                     ],
                   ),
@@ -1026,7 +926,7 @@ class _CompletedJobsList extends StatelessWidget {
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            '\$${job.earning.toStringAsFixed(0)}',
+                            job.bonus,
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -1042,7 +942,7 @@ class _CompletedJobsList extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-        ]
+        ],
       ],
     );
   }
