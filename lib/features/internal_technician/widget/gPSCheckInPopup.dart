@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:workpleis/features/customer/model/map_local_data_map.dart';
+import 'package:workpleis/features/customer/screen/map.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 
@@ -13,8 +16,77 @@ const kPrimaryBlue = Color(0xFF2563EB);
 const kBorderLight = Color(0xFFE5E5E5);
 const kPrimaryRed = Color(0xFFE60000);
 
-class Gpscheckinpopup extends StatelessWidget {
-  const Gpscheckinpopup({super.key});
+class Gpscheckinpopup extends StatefulWidget {
+  final String? jobAddress;
+  final Function(double lat, double lng)? onLocationVerified;
+
+  const Gpscheckinpopup({
+    super.key,
+    this.jobAddress,
+    this.onLocationVerified,
+  });
+
+  @override
+  State<Gpscheckinpopup> createState() => _GpscheckinpopupState();
+}
+
+class _GpscheckinpopupState extends State<Gpscheckinpopup> {
+  bool _isLoadingLocation = true;
+  double? _currentLat;
+  double? _currentLng;
+  String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+      _locationError = null;
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _isLoadingLocation = false;
+          _locationError = 'Location service disabled';
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLoadingLocation = false;
+          _locationError = 'Location permission denied';
+        });
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _currentLat = position.latitude;
+        _currentLng = position.longitude;
+        _isLoadingLocation = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingLocation = false;
+        _locationError = 'Could not get location: $e';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +178,7 @@ class Gpscheckinpopup extends StatelessWidget {
                       Icon(Icons.location_on, size: 18.sp, color: Colors.red),
                       SizedBox(width: 6.w),
                       Text(
-                        "job_location".tr(),
+                        "your_location".tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: kTextMuted,
@@ -116,14 +188,66 @@ class Gpscheckinpopup extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 6.h),
-                  Text(
-                    "Rue 15, Ksar, Nouakchott",
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
-                      color: kTextMain,
+                  if (_isLoadingLocation)
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 16.w,
+                          height: 16.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "getting_location".tr(),
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: kTextMuted,
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (_locationError != null)
+                    Text(
+                      _locationError!,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.red,
+                      ),
+                    )
+                  else if (_currentLat != null && _currentLng != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Lat: ${_currentLat!.toStringAsFixed(6)}",
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
+                            color: kTextMain,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          "Lng: ${_currentLng!.toStringAsFixed(6)}",
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
+                            color: kTextMain,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      "location_not_available".tr(),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: kTextMuted,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -132,27 +256,52 @@ class Gpscheckinpopup extends StatelessWidget {
 
             // ----------- VERIFY BUTTON -----------
             GestureDetector(
-              onTap: () {
+              onTap: () async {
+                // Close GPS popup first
                 context.pop();
+                
+                // Open map to verify/select location
+                if (widget.onLocationVerified != null) {
+                  final locationData = await Navigator.push<LocationData>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MapAddressPickerScreen(
+                        initialLocation: (_currentLat != null && _currentLng != null)
+                            ? LocationData(
+                                latitude: _currentLat!,
+                                longitude: _currentLng!,
+                                address: widget.jobAddress ?? '',
+                              )
+                            : null,
+                      ),
+                    ),
+                  );
+                  
+                  if (locationData != null) {
+                    widget.onLocationVerified!(locationData.latitude, locationData.longitude);
+                  }
+                }
               },
               child: Container(
                 height: 50.h,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: kPrimaryBlue,
+                  color: (_currentLat != null && _currentLng != null) 
+                      ? kPrimaryBlue 
+                      : Colors.grey,
                   borderRadius: BorderRadius.circular(26.r),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.navigation_rounded,
+                      Icons.check_circle_outline,
                       color: Colors.white,
                       size: 20.sp,
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      "verify_location".tr(),
+                      "accept_location".tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,

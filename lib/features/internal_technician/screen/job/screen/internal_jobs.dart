@@ -4,6 +4,8 @@ import 'package:workpleis/features/internal_technician/screen/job/logic/internal
 import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 
 import '../../../widget/jobDetails.dart';
+import '../../../widget/viewJobDetails.dart';
+import '../../../widget/incomingJobDetails.dart';
 import '../model/internal_job_model.dart';
 
 ///  Screen
@@ -22,9 +24,6 @@ class _InternalJobsState extends State<InternalJobs> {
 
   /// tabs: 0 = incoming, 1 = active, 2 = completed
   int _selectedTab = 0;
-
-  InternalJob? _selectedJob; // for workflow
-  InternalJob? _selectedJobForDetails; // for incoming detail modal
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -124,7 +123,6 @@ class _InternalJobsState extends State<InternalJobs> {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
         // updated job now "assigned" or "in progress" → active list
         _activeJobs = [..._activeJobs, updated];
-        _selectedJobForDetails = null;
       });
     } catch (e) {
       ScaffoldMessenger.of(
@@ -146,7 +144,6 @@ class _InternalJobsState extends State<InternalJobs> {
 
       setState(() {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
-        _selectedJobForDetails = null;
       });
     } catch (e) {
       ScaffoldMessenger.of(
@@ -216,9 +213,9 @@ class _InternalJobsState extends State<InternalJobs> {
 
                 // ---------- Content (একটাই Expanded) ----------
                 Expanded(
-                  child: _isLoading
+                  child: _isLoading && _incomingJobs.isEmpty && _activeJobs.isEmpty && _completedJobs.isEmpty
                       ? const Center(child: CircularProgressIndicator())
-                      : _errorMessage != null
+                      : _errorMessage != null && _incomingJobs.isEmpty && _activeJobs.isEmpty && _completedJobs.isEmpty
                       ? Center(
                           child: Padding(
                             padding: EdgeInsets.all(16.w),
@@ -228,24 +225,33 @@ class _InternalJobsState extends State<InternalJobs> {
                             ),
                           ),
                         )
-                      : SingleChildScrollView(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24.w,
-                            vertical: 16.h,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildTabs(),
-                              SizedBox(height: 16.h),
-                              if (_selectedTab == 0)
-                                _buildIncomingTab()
-                              else if (_selectedTab == 1)
-                                _buildActiveTab()
-                              else
-                                _buildCompletedTab(),
-                              SizedBox(height: 24.h),
-                            ],
+                      : RefreshIndicator(
+                          onRefresh: _loadAllJobs,
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 16.h,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildTabs(),
+                                SizedBox(height: 16.h),
+                                if (_isLoading)
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 20.h),
+                                    child: const Center(child: CircularProgressIndicator()),
+                                  )
+                                else if (_selectedTab == 0)
+                                  _buildIncomingTab()
+                                else if (_selectedTab == 1)
+                                  _buildActiveTab()
+                                else
+                                  _buildCompletedTab(),
+                                SizedBox(height: 24.h),
+                              ],
+                            ),
                           ),
                         ),
                 ),
@@ -677,18 +683,17 @@ class _InternalJobsState extends State<InternalJobs> {
                       ),
                     ),
                     onPressed: () {
-                      // setState(() {
-                      //   _selectedJobForDetails = job;
-                      // });
-
-                      // showDialog(
-                      //   context: context,
-                      //   barrierDismissible: true,
-                      //   builder: (_) => JobDetailOverlay(),
-                      // );
-                      setState(() {
-                        _selectedJobForDetails = job;
-                      });
+                      // Show incoming job details dialog with Accept/Reject buttons
+                      showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (_) => IncomingJobDetails(
+                          job: job,
+                          onAccept: () => _handleAcceptIncoming(job),
+                          onReject: () => _handleDeclineIncoming(job),
+                          bonusRate: bonusRate.toDouble(),
+                        ),
+                      );
                     },
                     child: Text(
                       'View Details',
@@ -954,62 +959,125 @@ class _InternalJobsState extends State<InternalJobs> {
 
               SizedBox(height: 10.h),
 
-              // -------- start / continue button --------
-              SizedBox(
-                width: double.infinity,
-                height: 40.h,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isInProgress
-                        ? const Color(0xFF2563EB)
-                        : const Color(0xFF111827),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+              // -------- buttons (View Details + Start/Continue) --------
+              if (isInProgress)
+                SizedBox(
+                  width: double.infinity,
+                  height: 40.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
                     ),
-                  ),
-                  onPressed: () async {
-                    if (isInProgress) {
+                    onPressed: () async {
                       // Continue Job -> details popup
                       await showDialog(
                         context: context,
                         barrierDismissible: true,
                         builder: (_) => Jobdetails(job: job),
                       );
-                    } else {
-                      // Start Job flow (GPS popup + API call)
-                      await showDialog(
-                        context: context,
-                        barrierDismissible: true,
-                        builder: (_) => const Gpscheckinpopup(),
-                      );
-
-                      final lat = job.latitude ?? 0;
-                      final lng = job.longitude ?? 0;
-
-                      try {
-                        final updated = await TechnicianJobsApi.startWorkOrder(
-                          woId: job.id,
-                          lat: lat,
-                          lng: lng,
-                        );
-                        _handleJobUpdate(updated);
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to start job: $e')),
-                        );
-                      }
-                    }
-                  },
-                  child: Text(
-                    isInProgress ? 'Continue Job' : 'Start Job',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
+                    },
+                    child: Text(
+                      'Continue Job',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFD1D5DB)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
+                        ),
+                        onPressed: () {
+                          // View Details -> same as InternalDashboardV2Screen
+                          showDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (_) => Viewjobdetails(
+                              job: job,
+                              onJobUpdate: (updatedJob) => _handleJobUpdate(updatedJob),
+                              bonusRate: bonusRate.toDouble(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'View Details',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF111827),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
+                        ),
+                        onPressed: () async {
+                          // Start Job flow (GPS popup -> Map screen -> API call)
+                          await showDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (_) => Gpscheckinpopup(
+                              jobAddress: job.address ?? job.location,
+                              onLocationVerified: (lat, lng) async {
+                                // Location verified from map, now start the job
+                                try {
+                                  final updated = await TechnicianJobsApi.startWorkOrder(
+                                    woId: job.id,
+                                    lat: lat,
+                                    lng: lng,
+                                  );
+                                  _handleJobUpdate(updated);
+                                  
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Job started successfully!'),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to start job: $e')),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Start Job',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
             ],
           ),
         ),

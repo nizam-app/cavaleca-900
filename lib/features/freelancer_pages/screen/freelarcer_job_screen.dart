@@ -756,7 +756,10 @@ class _AvailableJobsList extends StatelessWidget {
                             showDialog(
                               context: context,
                               barrierDismissible: true,
-                              builder: (_) => Viewjobdetails(),
+                              builder: (_) => Viewjobdetails(
+                                job: job,
+                                bonusRate: 5.0,
+                              ),
                             );
                           },
                           style: OutlinedButton.styleFrom(

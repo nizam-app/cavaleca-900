@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
+import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 
 /// ------------------------------------------------------
 ///  Colors (same style as Job Details popup)
@@ -14,21 +18,230 @@ const Color kTextSubtle = Color(0xFFB0B0B0);
 const Color kPrimaryGreen = Color(0xFF00B357);
 const Color kBorderLight = Color(0xFFE5E5E5);
 
-class Complitejob extends StatelessWidget {
+class Complitejob extends StatefulWidget {
   final int woId;
-  final double jobPayment;
-  final double bonusRate;
+  final InternalJob job;
+  final Function(InternalJob)? onJobCompleted;
 
   const Complitejob({
     super.key,
     required this.woId,
-    this.jobPayment = 150,
-    this.bonusRate = 0.05,
+    required this.job,
+    this.onJobCompleted,
   });
 
   @override
+  State<Complitejob> createState() => _ComplitejobState();
+}
+
+class _ComplitejobState extends State<Complitejob> {
+  final TextEditingController _notesController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
+  List<XFile> _selectedImages = [];
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  double _calculateBonus(String payment) {
+    final sanitized = payment.replaceAll('\$', '').replaceAll(',', '');
+    final amount = double.tryParse(sanitized) ?? 0;
+    return amount * 0.05; // 5% bonus
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo_library, color: kPrimaryGreen),
+                title: Text('Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImagesFromGallery();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: kPrimaryGreen),
+                title: Text('Camera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImageFromCamera();
+                },
+              ),
+              SizedBox(height: 10.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _requestStoragePermission() async {
+    if (Platform.isAndroid) {
+      // For Android 13+ (API 33+), use READ_MEDIA_IMAGES
+      if (await Permission.photos.isGranted) {
+        return true;
+      }
+      final status = await Permission.photos.request();
+      if (status.isGranted) {
+        return true;
+      }
+      // Fallback to storage permission for older Android versions
+      if (await Permission.storage.isGranted) {
+        return true;
+      }
+      final storageStatus = await Permission.storage.request();
+      return storageStatus.isGranted;
+    }
+    return true; // iOS handles permissions automatically
+  }
+
+  Future<bool> _requestCameraPermission() async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      if (await Permission.camera.isGranted) {
+        return true;
+      }
+      final status = await Permission.camera.request();
+      if (status.isDenied || status.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Camera permission is required to take photos'),
+            ),
+          );
+        }
+        return false;
+      }
+      return status.isGranted;
+    }
+    return true;
+  }
+
+  Future<void> _pickImagesFromGallery() async {
+    try {
+      final hasPermission = await _requestStoragePermission();
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Storage permission is required to select images'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final List<XFile> images = await _imagePicker.pickMultiImage();
+      if (images.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(images);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick images: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final hasPermission = await _requestCameraPermission();
+      if (!hasPermission) {
+        return;
+      }
+
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+      );
+      if (image != null) {
+        setState(() {
+          _selectedImages.add(image);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to take photo: $e')),
+        );
+      }
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  Future<void> _submitCompletion() async {
+    if (_selectedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload at least 1 photo')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final updated = await TechnicianJobsApi.completeWorkOrder(
+        woId: widget.woId,
+        completionNotes: _notesController.text.trim(),
+        materialsUsedJson: '[]',
+        photos: _selectedImages,
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop(); // close Complete dialog
+        Navigator.of(context).pop(); // close Jobdetails dialog
+
+        if (widget.onJobCompleted != null) {
+          widget.onJobCompleted!(updated);
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Job completed successfully'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to complete job: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bonus = jobPayment * bonusRate;
+    final paymentAmount = double.tryParse(widget.job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0;
+    final bonus = _calculateBonus(widget.job.payment);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -49,36 +262,11 @@ class Complitejob extends StatelessWidget {
                 children: [
                   _buildHeader(context),
                   SizedBox(height: 18.h),
-                  _buildWorkPhotosCard(
-                    onTap: () async {
-                      try {
-                        await TechnicianJobsApi.completeWorkOrder(
-                          woId: woId,
-                          completionNotes:
-                              '', // আপাতত ফাঁকা, চাইলে TextField থেকে নেবে
-                          materialsUsedJson:
-                              '[]', // পরে materials list থেকে বানাবে
-                        );
-
-                        Navigator.of(context).pop(); // close Complete dialog
-                        Navigator.of(context).pop(); // close Jobdetails dialog
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Job completed successfully'),
-                          ),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to complete job: $e')),
-                        );
-                      }
-                    },
-                  ),
+                  _buildWorkPhotosCard(),
                   SizedBox(height: 14.h),
                   _buildNotesField(),
                   SizedBox(height: 14.h),
-                  _buildBonusCard(jobPayment, bonusRate, bonus),
+                  _buildBonusCard(paymentAmount, 0.05, bonus),
                   SizedBox(height: 20.h),
                   _buildBottomButtons(context),
                 ],
@@ -134,7 +322,7 @@ class Complitejob extends StatelessWidget {
   }
 
   /// -------------------  WORK PHOTOS  ------------------
-  Widget _buildWorkPhotosCard({required VoidCallback onTap}) {
+  Widget _buildWorkPhotosCard() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -147,8 +335,62 @@ class Complitejob extends StatelessWidget {
           ),
         ),
         SizedBox(height: 8.h),
+        // Selected images grid
+        if (_selectedImages.isNotEmpty) ...[
+          SizedBox(
+            height: 100.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  width: 100.w,
+                  margin: EdgeInsets.only(right: 8.w),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: kBorderLight),
+                  ),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12.r),
+                        child: Image.file(
+                          File(_selectedImages[index].path),
+                          width: 100.w,
+                          height: 100.h,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 4.h,
+                        right: 4.w,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              size: 16.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: 8.h),
+        ],
+        // Upload button
         GestureDetector(
-          onTap: onTap,
+          onTap: _showImageSourceDialog,
           child: Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 24.h),
@@ -175,7 +417,7 @@ class Complitejob extends StatelessWidget {
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  'Tap to upload photos',
+                  _selectedImages.isEmpty ? 'Tap to upload photos' : 'Add more photos',
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -213,24 +455,20 @@ class Complitejob extends StatelessWidget {
           ),
         ),
         SizedBox(height: 8.h),
-
         Container(
           decoration: BoxDecoration(
             color: const Color(0xFFF4F4F4),
             borderRadius: BorderRadius.circular(20.r),
-            //border: Border.all(color: kTextMuted, width: 0.5.w),
           ),
-
           child: TextField(
+            controller: _notesController,
             maxLines: 4,
             style: TextStyle(
               fontSize: 12.sp,
-              // color: kTextMain,
             ),
             decoration: InputDecoration(
               hintText: 'Add any notes about the work completed',
               hintStyle: TextStyle(fontSize: 12.sp, color: kTextMuted),
-              // border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
             ),
@@ -398,28 +636,36 @@ class Complitejob extends StatelessWidget {
         SizedBox(width: 10.w),
         Expanded(
           child: GestureDetector(
-            onTap: () {
-              // TODO: complete job logic here
-            },
+            onTap: _isSubmitting ? null : _submitCompletion,
             child: Container(
               height: 46.h,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: kPrimaryGreen,
+                color: _isSubmitting ? Colors.grey : kPrimaryGreen,
                 borderRadius: BorderRadius.circular(18.r),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 20.sp,
-                    color: Colors.white,
-                  ),
+                  if (_isSubmitting)
+                    SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 20.sp,
+                      color: Colors.white,
+                    ),
                   SizedBox(width: 8.w),
                   Text(
-                    'Complete Job',
+                    _isSubmitting ? 'Completing...' : 'Complete Job',
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,

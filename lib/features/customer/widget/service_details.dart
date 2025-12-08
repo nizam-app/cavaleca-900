@@ -5,6 +5,7 @@ import 'package:workpleis/features/customer/screen/map.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../screen/service/data/service_data.dart';
 import '../screen/service/model/create_sr_model.dart';
+import '../screen/profile/data/customer_profile_data.dart';
 const _kPrimaryRed = Color(0xFFC20001);
 const _kPrimaryRedDark = Color(0xFF9A0001);
 const _kDialogShadow = BoxShadow(
@@ -92,12 +93,51 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
   LocationData? _selectedLocation; // map থেকে latitude/longitude
 
   @override
+  void initState() {
+    super.initState();
+    _loadCustomerProfile();
+  }
+
+  @override
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCustomerProfile() async {
+    try {
+      final profile = await CustomerProfileApi.getProfile();
+      
+      if (!mounted) return;
+      
+      // Auto-fill name, phone, and address if available
+      if (profile.name.isNotEmpty) {
+        _nameCtrl.text = profile.name;
+      }
+      if (profile.phone.isNotEmpty) {
+        _phoneCtrl.text = profile.phone;
+      }
+      if (profile.homeAddress != null && profile.homeAddress!.isNotEmpty) {
+        _addressCtrl.text = profile.homeAddress!;
+      }
+      
+      // Set location if available
+      if (profile.latitude != null && profile.longitude != null) {
+        _selectedLocation = LocationData(
+          latitude: profile.latitude!,
+          longitude: profile.longitude!,
+          address: profile.homeAddress ?? '',
+          placeName: null,
+        );
+      }
+    } catch (e) {
+      // If profile load fails (e.g., user not logged in or guest), just continue
+      // without auto-filling - this is expected for guest users
+      debugPrint('Failed to load customer profile: $e');
+    }
   }
 
   Future<void> _pickDate() async {
