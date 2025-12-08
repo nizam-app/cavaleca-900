@@ -336,29 +336,29 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
               Icon(Icons.arrow_back, size: 18.sp, color: const Color(0xFF374151)),
               SizedBox(width: 8.w),
               Text(
                 _mode == AuthMode.welcome
                     ? 'back_to_role_selection'.tr()
                     : 'back'.tr(),
-                style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151)),),
-
-              Icon(
-                Icons.arrow_back,
-                size: 18.sp,
-                color: const Color(0xFF374151),
+                style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151)),
               ),
-              SizedBox(width: 8.w),
-              Text(
-                _mode == AuthMode.welcome ? 'Back to Role Selection' : 'Back',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: const Color(0xFF374151),
-                ),
-
-              ),
+              // Icon(
+              //   Icons.arrow_back,
+              //   size: 18.sp,
+              //   color: const Color(0xFF374151),
+              // ),
+              //
+              // SizedBox(width: 8.w),
+              // Text(
+              //   _mode == AuthMode.welcome ? 'Back to Role Selection' : 'Back',
+              //   style: TextStyle(
+              //     fontSize: 14.sp,
+              //     color: const Color(0xFF374151),
+              //   ),
+              //
+              // ),
             ],
           ),
         ),
@@ -1037,11 +1037,8 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
         SizedBox(height: 6.h),
          Text(
           'Password must be at least 6 characters long',
-
           style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF)),
-
         ),
-
         SizedBox(height: 24.h),
         SizedBox(
           width: double.infinity,

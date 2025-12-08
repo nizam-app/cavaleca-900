@@ -1,4 +1,3 @@
-// lib/features/freelancer/screens/freelancer_profile_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/signOutButton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/freelancer_pages/profile/data/freelancer_profile_data.dart';
-
 import 'package:easy_localization/easy_localization.dart';
 /// ---------------------------------------------------------------------------
 /// Colors
@@ -149,7 +147,7 @@ class _FreelancerProfileScreenState
                       // TODO: auth logout logic (token clear, API/logout ইত্যাদি)
                       context.push(RoleSelectionScreen.routeName);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Signed out')),
+                         SnackBar(content: Text('Signed out')),
                       );
                     },
                   ),

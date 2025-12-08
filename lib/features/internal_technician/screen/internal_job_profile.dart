@@ -5,6 +5,8 @@ import 'package:workpleis/core/widget/signOutButton.dart';
 
 import '../../auth/screens/role/screen/role_selection_screen.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 /// ------------------ COLORS ------------------
 const kBG = Color(0xFFF4F4F4);
 const kCard = Colors.white;
@@ -68,7 +70,7 @@ class InternalJobProfile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Profile",
+            "profile".tr(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 24.sp,
@@ -77,7 +79,7 @@ class InternalJobProfile extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            "Manage your account information",
+            "manage_account_info".tr(),
             style: TextStyle(
               color: Colors.white70,
               fontSize: 13.sp,
@@ -108,7 +110,7 @@ class InternalJobProfile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Lisa Brown",
+                      "lisa_brown".tr(),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
@@ -117,11 +119,11 @@ class InternalJobProfile extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      "Internal Technician",
+                      "internal_technician_label".tr(),
                       style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                     ),
                     Text(
-                      "Employee ID: IB-2547",
+                      "employee_id".tr(),
                       style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                     ),
                   ],
@@ -130,7 +132,7 @@ class InternalJobProfile extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16.h),
-          _simpleButton("Edit Profile"),
+          _simpleButton("edit_profile".tr()),
         ],
       ),
     );
@@ -187,7 +189,7 @@ class InternalJobProfile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Employment Details",
+            "employment_details".tr(),
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w700,
@@ -195,11 +197,11 @@ class InternalJobProfile extends StatelessWidget {
             ),
           ),
           SizedBox(height: 14.h),
-          _rowItem("Department", "Field Services"),
+          _rowItem("department".tr(), "field_services".tr()),
           SizedBox(height: 10.h),
-          _rowItem("Join Date", "Jan 15, 2023"),
+          _rowItem("join_date".tr(), "Jan 15, 2023"),
           SizedBox(height: 10.h),
-          _rowItem("Position", "Senior Technician"),
+          _rowItem("position".tr(), "Senior Technician"),
         ],
       ),
     );
@@ -235,7 +237,7 @@ class InternalJobProfile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Specializations",
+            "specializations".tr(),
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w700,
@@ -248,11 +250,11 @@ class InternalJobProfile extends StatelessWidget {
             spacing: 10.w,
             runSpacing: 10.h,
             children: [
-              _chip("HVAC Systems", Colors.blue.shade100, Colors.blue.shade900),
-              _chip("Electrical", Colors.yellow.shade100, Colors.orange.shade800),
-              _chip("Plumbing", Colors.green.shade100, Colors.green.shade700),
-              _chip("Maintenance", Colors.purple.shade100, Colors.purple.shade700),
-              _chip("Emergency Repair", Colors.red.shade100, Colors.red),
+              _chip("hvac_systems".tr(), Colors.blue.shade100, Colors.blue.shade900),
+              _chip("electrical".tr(), Colors.yellow.shade100, Colors.orange.shade800),
+              _chip("plumbing".tr(), Colors.green.shade100, Colors.green.shade700),
+              _chip("maintenance".tr(), Colors.purple.shade100, Colors.purple.shade700),
+              _chip("emergency_repair".tr(), Colors.red.shade100, Colors.red),
             ],
           ),
         ],
@@ -286,35 +288,35 @@ class InternalJobProfile extends StatelessWidget {
       children: [
         _listItem(
           Icons.calendar_month,
-          "Time Off Requests",
+          "time_off_requests",
           "2 pending",
           const Color(0xFFE8F0FF),    // Light blue background
           const Color(0xFF2563EB),    // Blue icon
         ),
         _listItem(
           Icons.workspace_premium,
-          "Certifications",
+          "certifications".tr(),
           "8 active",
           const Color(0xFFFFF4D9),    // Soft yellow
           Colors.orange,              // Orange icon
         ),
         _listItem(
           Icons.work_history_rounded,
-          "Work History",
-          "View",
+          "work_history".tr(),
+          "view".tr(),
           const Color(0xFFF3E8FF),    // Purple background
           Colors.purple,
         ),
         _listItem(
           Icons.language,
-          "Language",
+          "language".tr(),
           "English",
           const Color(0xFFE8FFF4),    // Mint green
           Colors.green,
         ),
         _listItem(
           Icons.support_agent,
-          "Support",
+          "support".tr(),
           "",
           const Color(0xFFFFF0E0),    // Soft Orange
           Colors.deepOrange,

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import '../screen/internal_jobs.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class Newjobassigned extends StatefulWidget {
   const Newjobassigned(
@@ -154,7 +154,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                     ),
                     SizedBox(height: 12.h),
                     Text(
-                      'New Job Assigned!',
+                      'new_job_assigned'.tr(),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 18.sp,
@@ -321,7 +321,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Job Payment',
+                                    'job_payment_label'.tr(),
                                     style: TextStyle(
                                       fontSize: 12.sp,
                                       color: const Color(0xFF059669),
@@ -344,7 +344,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Your Bonus (5%)',
+                                  'you_bonus'.tr(),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: const Color(0xFF059669),
@@ -390,7 +390,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 6.h),
                           child: Text(
-                            'Decline',
+                            'decline'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               color: const Color(0xFF6B7280),
@@ -414,7 +414,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 6.h),
                           child: Text(
-                            'Accept Job',
+                            'accept_job'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,

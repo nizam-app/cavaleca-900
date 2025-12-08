@@ -4,7 +4,7 @@ import 'package:workpleis/features/internal_technician/screen/earningsScreen.dar
 import 'package:workpleis/features/internal_technician/screen/internal_job_profile.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_jobs.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_technician_home.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 import '../logic/botton_nav_index_logic.dart';
 
 class InternalBottomNavBar extends ConsumerWidget {
@@ -52,26 +52,26 @@ class InternalBottomNavBar extends ConsumerWidget {
             fontWeight: FontWeight.w500,
           ),
           showUnselectedLabels: true,
-          items: const [
+          items:  [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
-              label: 'Home',
+              label: 'home'.tr(),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.work_outline),
               activeIcon: Icon(Icons.work_outline),
-              label: 'Jobs',
+              label: 'jobs'.tr(),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.attach_money_outlined),
               activeIcon: Icon(Icons.attach_money_outlined),
-              label: 'Earnings',
+              label: 'earnings'.tr(),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              label: 'profile'.tr(),
             ),
           ],
         ),

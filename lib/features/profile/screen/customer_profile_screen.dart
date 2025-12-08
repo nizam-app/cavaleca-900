@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:go_router/go_router.dart';
+import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
 
 import 'package:workpleis/features/profile/logic/logout_logic.dart';
 
@@ -245,12 +247,22 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ],
             ),
             if (!isGuest) ...[
-              const SizedBox(height: 16),
+               SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () {
-                    _showToast('Edit profile tapped');
+                    // je screen theke edit profile e jabe:
+                    final updated =  context.push<CustomerProfileData>(
+                      CustomerEditProfile.routeName,
+                     // extra: ,
+                    );
+
+                    if (updated != null) {
+                      // ekhane Riverpod notifier / state update kore nite parba
+                    }
+
+                    // _showToast('edit_profile_tapped'.tr());
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFFE5E5),
@@ -259,8 +271,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: const Text(
-                    'Edit Profile',
+                  child:  Text(
+                    'edit_profile'.tr(),
                     style: TextStyle(
                       color: Color(0xFFC20001),
                       fontSize: 13,
@@ -732,7 +744,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
         icon: const Icon(Icons.logout, color: Color(0xFFC20001), size: 20),
         label: Text(
-          isGuest ? 'Exit Guest Mode' : 'sign_out'.tr(),
+          isGuest ? 'exit_guest_mode'.tr() : 'sign_out'.tr(),
           style: const TextStyle(
             color: Color(0xFFC20001),
             fontSize: 14,
@@ -753,7 +765,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Confirm'),
+          title:  Text('Confirm'.tr()),
           content: Text(
             isGuest
                 ? 'Do you want to exit guest mode?'
@@ -762,7 +774,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child:  Text('cancel'.tr()),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -893,8 +905,8 @@ class _LanguageDialog extends StatelessWidget {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Choose your preferred language for the app interface',
+           Text(
+            'choose_you_preferred_language'.tr(),
             style: TextStyle(fontSize: 13),
           ),
           const SizedBox(height: 16),

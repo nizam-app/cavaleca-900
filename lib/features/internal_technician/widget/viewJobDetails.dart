@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 import 'gPSCheckInPopup.dart';
 
 /// ------------------- COLORS --------------------
@@ -71,7 +71,7 @@ class Viewjobdetails extends StatelessWidget {
             SizedBox(width: 24.w),
             Expanded(
               child: Text(
-                "Job Details",
+                "job_details".tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18.sp,
@@ -88,7 +88,7 @@ class Viewjobdetails extends StatelessWidget {
         ),
         SizedBox(height: 4.h),
         Text(
-          "Ready to start work",
+          "ready_to_start".tr(),
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w400,
@@ -104,9 +104,9 @@ class Viewjobdetails extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _chip("Accepted - Ready to Start", const Color(0xFFFFF7CC), Colors.amber.shade800),
+        _chip("accepted_ready".tr(), const Color(0xFFFFF7CC), Colors.amber.shade800),
         SizedBox(width: 6.w),
-        _chip("MEDIUM Priority", const Color(0xFFFFF0D5), Colors.orange.shade700),
+        _chip("medium_priority".tr(), const Color(0xFFFFF0D5), Colors.orange.shade700),
       ],
     );
   }
@@ -131,14 +131,14 @@ class Viewjobdetails extends StatelessWidget {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Electrical Installation",
+          Text("electrical_installation".tr(),
               style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600, color: kTextMain)),
           SizedBox(height: 4.h),
-          Text("Electrical Services",
+          Text("electrical_services".tr(),
               style: TextStyle(fontSize: 12.sp, color: Colors.red.shade500, fontWeight: FontWeight.w500)),
           SizedBox(height: 8.h),
           Text(
-            "Install new electrical outlets in office space",
+            "install_electrical_outlets_office_space".tr(),
             style: TextStyle(fontSize: 12.sp, height: 1.4, color: kTextMuted),
           )
         ],
@@ -153,7 +153,7 @@ class Viewjobdetails extends StatelessWidget {
         children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text("Customer",
+              Text("customer".tr(),
                   style: TextStyle(fontSize: 11.sp, color: kTextSubtle, fontWeight: FontWeight.w500)),
               SizedBox(height: 6.h),
               Text("Sarah Williams",
@@ -185,7 +185,7 @@ class Viewjobdetails extends StatelessWidget {
           _circleIcon(Icons.location_on_rounded, Colors.red.shade100, Colors.red),
           SizedBox(width: 10.w),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("Location",
+            Text("location".tr(),
                 style: TextStyle(fontSize: 11.sp, color: kTextSubtle, fontWeight: FontWeight.w500)),
             SizedBox(height: 4.h),
             Text("456 Oak Ave, Suite 12",
@@ -204,7 +204,7 @@ class Viewjobdetails extends StatelessWidget {
           _circleIcon(Icons.calendar_month_rounded, Colors.blue.shade50, Colors.blue.shade600),
           SizedBox(width: 10.w),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("Scheduled",
+            Text("scheduled".tr(),
                 style: TextStyle(fontSize: 11.sp, color: kTextSubtle, fontWeight: FontWeight.w500)),
             SizedBox(height: 4.h),
             Text("Today at 4:00 PM",
@@ -231,7 +231,7 @@ class Viewjobdetails extends StatelessWidget {
           children: [
             Icon(Icons.attach_money_rounded, size: 20.sp, color: kPrimaryGreen),
             SizedBox(width: 4.w),
-            Text("Performance Bonus (5%)",
+            Text("performance_bonus".tr(),
                 style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: kPrimaryGreen)),
           ],
         ),
@@ -267,7 +267,7 @@ class Viewjobdetails extends StatelessWidget {
             Icon(Icons.gps_fixed_rounded, color: Colors.white, size: 20.sp),
             SizedBox(width: 8.w),
             Text(
-              "Start Job (GPS Check-In)",
+              "start_job".tr(),
               style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white),
             ),
           ],
@@ -291,7 +291,7 @@ class Viewjobdetails extends StatelessWidget {
           border: Border.all(color: kBorderLight),
         ),
         child: Text(
-          "Close",
+          "close".tr(),
           style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: kTextMain),
         ),
       ),

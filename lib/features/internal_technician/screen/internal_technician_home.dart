@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:workpleis/features/internal_technician/widget/compliteJob.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 
@@ -385,7 +385,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Internal Technician',
+                      'internal_technician_label'.tr(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.white.withOpacity(0.9),
                       ),
@@ -435,7 +435,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "This Week's Bonus",
+                        "this_weeks_bonus".tr(),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 11,
@@ -466,7 +466,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Jobs Today',
+                        'jobs_today'.tr(),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 11,
@@ -642,11 +642,11 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       children: [
         if (inProgressJobs.isNotEmpty) ...[
           Row(
-            children: const [
+            children:  [
               Icon(Icons.access_time, size: 16, color: Color(0xFF4B5563)),
               SizedBox(width: 6),
               Text(
-                'In Progress',
+                'in_progress'.tr(),
                 style: TextStyle(
                   color: Color(0xFF374151),
                   fontSize: 13,
@@ -665,11 +665,11 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
         ],
         if (acceptedJobs.isNotEmpty) ...[
           Row(
-            children: const [
+            children:  [
               Icon(Icons.work_outline, size: 16, color: Color(0xFF4B5563)),
               SizedBox(width: 6),
               Text(
-                'Assigned Jobs',
+                'assigned_jobs'.tr(),
                 style: TextStyle(
                   color: Color(0xFF374151),
                   fontSize: 13,
@@ -697,7 +697,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children:  [
               Icon(
                 Icons.check_circle_outline,
                 size: 40,
@@ -705,7 +705,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
               ),
               SizedBox(height: 8),
               Text(
-                'No completed jobs yet',
+                'no_completed_jobs_yet'.tr(),
                 style: TextStyle(
                   color: Color(0xFF6B7280),
                   fontSize: 14,
@@ -713,7 +713,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
               ),
               SizedBox(height: 4),
               Text(
-                'Your completed work will appear here',
+                'your_finished_work_will'.tr(),
                 style: TextStyle(
                   color: Color(0xFF9CA3AF),
                   fontSize: 12,
@@ -772,8 +772,8 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Excellent Performance',
+                   Text(
+                    'excellent_performance'.tr(),
                     style: TextStyle(
                       color: Color(0xFF111827),
                       fontSize: 15,
@@ -994,7 +994,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                         elevation: 0,
                       ),
                       child: Text(
-                        isInProgress ? 'Continue' : 'View',
+                        isInProgress ? 'continue'.tr() : 'view'.tr(),
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -1139,8 +1139,8 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                       color: const Color(0xFFE0F2FE),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: const Text(
-                      'Priority Completed',
+                    child: Text(
+                      'priority_completed'.tr(),
                       style: TextStyle(
                         color: Color(0xFF047857),
                         fontSize: 11,
@@ -1255,18 +1255,19 @@ class _PriorityBadge extends StatelessWidget {
       case JobPriority.high:
         bg = const Color(0xFFFEE2E2);
         text = const Color(0xFFB91C1C);
-        label = 'URGENT';
+        label = 'urgent'.tr();
+
         icon = Icons.error_outline;
         break;
       case JobPriority.medium:
         bg = const Color(0xFFFEF3C7);
         text = const Color(0xFF92400E);
-        label = 'Medium';
+        label = 'medium'.tr();
         break;
       case JobPriority.low:
         bg = const Color(0xFFD1FAE5);
         text = const Color(0xFF047857);
-        label = 'Low';
+        label = 'low'.tr();
         break;
     }
 
@@ -1312,18 +1313,18 @@ class _StatusBadge extends StatelessWidget {
       case JobStatus.accepted:
         bg = const Color(0xFFFEF3C7);
         text = const Color(0xFF92400E);
-        label = 'Ready';
+        label = 'ready'.tr();
         break;
       case JobStatus.inProgress:
         bg = const Color(0xFFDBEAFE);
         text = const Color(0xFF1D4ED8);
-        label = 'In Progress';
+        label = 'in_progress'.tr();
         break;
       default:
       // other statuses not shown on active list
         bg = const Color(0xFFE5E7EB);
         text = const Color(0xFF4B5563);
-        label = 'Status';
+        label = 'status'.tr();
         break;
     }
 
