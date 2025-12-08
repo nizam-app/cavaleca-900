@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
@@ -101,30 +102,42 @@ class TechnicianJobsApi {
   }
 
   /// PATCH /api/wos/{woId}/complete
-  /// এখনের জন্য simple JSON body, পরে চাইলে multipart + photos add করবে
+  /// Multipart form data with photos, completionNotes, and materialsUsed
   static Future<InternalJob> completeWorkOrder({
     required int woId,
     required String completionNotes,
     required String materialsUsedJson, // উদাহরণ: '[{"item":"Filter","qty":1}]'
+    List<XFile>? photos,
   }) async {
     final token = await _getToken();
     final url = Uri.parse(AuthAPIController.wosComplete(woId));
 
-    final res = await http.patch(
-      url,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'completionNotes': completionNotes,
-        'materialsUsed': materialsUsedJson,
-      }),
-    );
+    final request = http.MultipartRequest('PATCH', url);
+    request.headers.addAll({
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
+
+    // Add form fields
+    request.fields['completionNotes'] = completionNotes;
+    request.fields['materialsUsed'] = materialsUsedJson;
+
+    // Add photos if provided
+    if (photos != null && photos.isNotEmpty) {
+      for (var i = 0; i < photos.length; i++) {
+        final file = await http.MultipartFile.fromPath(
+          'photos',
+          photos[i].path,
+        );
+        request.files.add(file);
+      }
+    }
+
+    final streamedResponse = await request.send();
+    final res = await http.Response.fromStream(streamedResponse);
 
     if (res.statusCode != 200) {
-      throw Exception('Failed to complete work order ($woId)');
+      throw Exception('Failed to complete work order ($woId): ${res.body}');
     }
 
     final body = jsonDecode(res.body);

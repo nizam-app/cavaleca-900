@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'gPSCheckInPopup.dart';
 import '../screen/job/model/internal_job_model.dart';
-import '../screen/job/logic/internal_job_logic.dart';
 
 /// ------------------- COLORS --------------------
 const kDialogBg = Color(0xFFF4F4F4);
@@ -14,17 +11,20 @@ const kTextMuted = Color(0xFF9E9E9E);
 const kTextSubtle = Color(0xFFB0B0B0);
 const kPrimaryGreen = Color(0xFF00B357);
 const kPrimaryBlue = Color(0xFF2563EB);
+const kPrimaryRed = Color(0xFFC20001);
 const kBorderLight = Color(0xFFE5E5E5);
 
-class Viewjobdetails extends StatelessWidget {
+class IncomingJobDetails extends StatelessWidget {
   final InternalJob job;
-  final Function(InternalJob)? onJobUpdate;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
   final double bonusRate;
 
-  const Viewjobdetails({
+  const IncomingJobDetails({
     super.key,
     required this.job,
-    this.onJobUpdate,
+    required this.onAccept,
+    required this.onReject,
     this.bonusRate = 5.0,
   });
 
@@ -36,6 +36,8 @@ class Viewjobdetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bonus = _calculateBonus(job.payment);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 20.h),
@@ -65,11 +67,9 @@ class Viewjobdetails extends StatelessWidget {
                   SizedBox(height: 12.h),
                   _buildScheduleCard(),
                   SizedBox(height: 14.h),
-                  _buildBonusCard(),
+                  _buildBonusCard(bonus),
                   SizedBox(height: 20.h),
-                  _buildStartButton(context),
-                  SizedBox(height: 10.h),
-                  _buildCloseButton(context)
+                  _buildActionButtons(context),
                 ],
               ),
             ),
@@ -104,14 +104,21 @@ class Viewjobdetails extends StatelessWidget {
           ],
         ),
         SizedBox(height: 4.h),
-        Text(
-          "ready_to_start".tr(),
-          style: TextStyle(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w400,
-            color: kTextMuted,
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: kPrimaryRed,
+            borderRadius: BorderRadius.circular(999.r),
           ),
-        )
+          child: Text(
+            'NEW',
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -121,13 +128,7 @@ class Viewjobdetails extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _chip(
-          "accepted_ready".tr(),
-          const Color(0xFFFFF7CC),
-          Colors.amber.shade800,
-        ),
         if (job.priority != null) ...[
-          SizedBox(width: 6.w),
           _chip(
             job.priority == JobPriority.high
                 ? "high_priority".tr()
@@ -145,7 +146,9 @@ class Viewjobdetails extends StatelessWidget {
                     ? Colors.orange.shade700
                     : Colors.green.shade700,
           ),
+          SizedBox(width: 6.w),
         ],
+        _chip("incoming".tr(), const Color(0xFFFFF7CC), Colors.amber.shade800),
       ],
     );
   }
@@ -226,7 +229,7 @@ class Viewjobdetails extends StatelessWidget {
               height: 40.w,
               width: 40.w,
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: kPrimaryRed,
                 borderRadius: BorderRadius.circular(50.r),
               ),
               child: Icon(Icons.phone, color: Colors.white, size: 20.sp),
@@ -295,8 +298,7 @@ class Viewjobdetails extends StatelessWidget {
   }
 
   // ---------------- BONUS CARD ----------------
-  Widget _buildBonusCard() {
-    final bonus = _calculateBonus(job.payment);
+  Widget _buildBonusCard(double bonus) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -334,91 +336,91 @@ class Viewjobdetails extends StatelessWidget {
     );
   }
 
-  // ---------------- PRIMARY ACTION BUTTON ----------------
-  Widget _buildStartButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        // Close current dialog
-        Navigator.pop(context);
-        
-        // Show GPS popup -> Map screen -> Start job
-        await showDialog(
-          context: context,
-          barrierDismissible: true,
-          builder: (_) => Gpscheckinpopup(
-            jobAddress: job.address ?? job.location,
-            onLocationVerified: (lat, lng) async {
-              // Location verified from map, now start the job
-              try {
-                final updated = await TechnicianJobsApi.startWorkOrder(
-                  woId: job.id,
-                  lat: lat,
-                  lng: lng,
-                );
-                
-                // Notify parent about job update
-                if (onJobUpdate != null) {
-                  onJobUpdate!(updated);
-                }
-                
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Job started successfully!'),
+  // ---------------- ACTION BUTTONS (Accept/Reject) ----------------
+  Widget _buildActionButtons(BuildContext context) {
+    return Column(
+      children: [
+        // Accept Button
+        GestureDetector(
+          onTap: () {
+            // Show confirmation dialog
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (confirmContext) => AlertDialog(
+                title: Text("confirm_accept".tr()),
+                content: Text("are_you_sure_accept_job".tr()),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(confirmContext),
+                    child: Text("cancel".tr()),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(confirmContext); // Close confirmation
+                      Navigator.pop(context); // Close details dialog
+                      onAccept();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryRed,
+                      foregroundColor: Colors.white,
                     ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to start job: $e')),
-                  );
-                }
-              }
-            },
-          ),
-        );
-      },
-      child: Container(
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: kPrimaryBlue,
-          borderRadius: BorderRadius.circular(28.r),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.gps_fixed_rounded, color: Colors.white, size: 20.sp),
-            SizedBox(width: 8.w),
-            Text(
-              "start_job".tr(),
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white),
+                    child: Text("accept".tr()),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: Container(
+            height: 48.h,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: kPrimaryRed,
+              borderRadius: BorderRadius.circular(28.r),
             ),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.white, size: 20.sp),
+                SizedBox(width: 8.w),
+                Text(
+                  "accept".tr(),
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
-    );
-  }
-
-  // ---------------- CLOSE BUTTON ----------------
-  Widget _buildCloseButton(BuildContext context) {
-    return GestureDetector(
-      onTap: (){
-        context.pop();
-      },
-      child: Container(
-        height: 46.h,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: kCardBg,
-          borderRadius: BorderRadius.circular(24.r),
-          border: Border.all(color: kBorderLight),
+        SizedBox(height: 10.h),
+        // Reject Button
+        GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+            onReject();
+          },
+          child: Container(
+            height: 46.h,
+            width: double.infinity,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: kCardBg,
+              borderRadius: BorderRadius.circular(24.r),
+              border: Border.all(color: kBorderLight),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.cancel_outlined, color: kTextMuted, size: 20.sp),
+                SizedBox(width: 8.w),
+                Text(
+                  "reject".tr(),
+                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: kTextMain),
+                ),
+              ],
+            ),
+          ),
         ),
-        child: Text(
-          "close".tr(),
-          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: kTextMain),
-        ),
-      ),
+      ],
     );
   }
 
@@ -454,3 +456,4 @@ class Viewjobdetails extends StatelessWidget {
     );
   }
 }
+
