@@ -100,27 +100,93 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     super.dispose();
   }
 
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
+
     final picked = await showDatePicker(
       context: context,
       initialDate: now,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.black87,             // Header & selected date color
+              onPrimary: Colors.white,          // Header text color
+              onSurface: Colors.black,          // Normal text color
+            ),
+            dialogBackgroundColor: Colors.white, // Calendar background
+            datePickerTheme: DatePickerThemeData(
+              todayForegroundColor: MaterialStateProperty.all(Color(0xFFFFB111)),
+              todayBackgroundColor: MaterialStateProperty.all(
+                Colors.blue.withOpacity(0.15),
+              ),
+             // selectedDayBackgroundColor: Colors.blue, // Selected date circle
+              //selectedDayForegroundColor: Colors.white, // Selected date text
+              dayStyle: TextStyle(color: Colors.black),
+              weekdayStyle: TextStyle(color: Colors.blueGrey),
+              headerForegroundColor: Colors.white, // Month-year text
+              headerBackgroundColor:Color(0xFFFFB111),  // Header background
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (picked != null) {
       setState(() {
         _dateText =
-            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+        '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       });
     }
   }
+
+
+  // Future<void> _pickDate() async {
+  //   final now = DateTime.now();
+  //   final picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: now,
+  //     firstDate: now,
+  //     lastDate: now.add(const Duration(days: 365)),
+  //   );
+  //   if (picked != null) {
+  //     setState(() {
+  //       _dateText =
+  //           '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+  //     });
+  //   }
+  // }
 
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.white,              // Picker background
+              dialBackgroundColor: Colors.blue.shade50,   // Clock circle
+              dialHandColor: Colors.white,                 // Clock hand
+              dialTextColor: Colors.black,                // Clock numbers
+              hourMinuteColor: Colors.blue.shade100,      // Hour/min box
+              hourMinuteTextColor: Colors.black,          // Hour/min text
+              entryModeIconColor: Colors.black87,            // Keyboard icon
+            ),
+            colorScheme: ColorScheme.light(
+              primary: Colors.black87,                       // AM/PM select color
+              onSurface: Colors.black,                    // Text color
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (picked != null) {
       setState(() {
         final hour = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
@@ -130,6 +196,22 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
       });
     }
   }
+
+
+  // Future<void> _pickTime() async {
+  //   final picked = await showTimePicker(
+  //     context: context,
+  //     initialTime: TimeOfDay.now(),
+  //   );
+  //   if (picked != null) {
+  //     setState(() {
+  //       final hour = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
+  //       final minute = picked.minute.toString().padLeft(2, '0');
+  //       final period = picked.period == DayPeriod.am ? 'AM' : 'PM';
+  //       _timeText = '$hour:$minute $period';
+  //     });
+  //   }
+  // }
 
   Future<void> _submit() async {
     if (_nameCtrl.text.trim().isEmpty ||
