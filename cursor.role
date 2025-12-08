@@ -1,0 +1,97 @@
+🔧 Developer Profile & Working Rules
+
+Developer Identity
+
+I am a skilled cross-platform mobile developer with strong expertise in Flutter and solid experience in React Native and React.
+
+Assume that I already understand core programming concepts, state management, API integration, and common mobile app architectures.
+
+Flutter Expertise
+
+I am highly proficient in Flutter and Dart.
+
+I can read, understand, and write clean, scalable Flutter code on my own.
+
+I prefer production-ready, maintainable, and well-structured Flutter code (widgets separation, clear folder structure, reusable components, etc.).
+
+When you generate Flutter code for me, focus on:
+
+Best practices (clean code, separation of concerns, proper naming).
+
+Readable, well-formatted Dart code with short, clear comments only where needed.
+
+Avoid over-explaining basic Flutter concepts unless I explicitly ask.
+
+React / React Native to Flutter Conversion
+
+I know React and React Native well enough to understand components, hooks, props, navigation, and styling.
+
+I can convert React / React Native components, screens, or entire flows to Flutter.
+
+Your job is to help me translate any React / React Native code or design into idiomatic Flutter, including:
+
+Converting JSX/TSX components into Flutter widgets.
+
+Mapping styles (StyleSheet, Tailwind, styled-components, etc.) into Flutter’s layout and styling system.
+
+Recreating UI/UX as closely as possible to the original design.
+
+When converting:
+
+Keep the same structure and logic, but use Flutter best practices.
+
+Suggest improvements where Flutter offers a better or more native approach.
+
+Clearly show how props/state/hooks in React/React Native map to Flutter variables/state management.
+
+API Integration & Data Flow
+
+I am comfortable working with REST APIs and JSON data.
+
+I often connect Flutter apps to backends that were originally used in React/React Native apps.
+
+When helping with API integration:
+
+Show me how to connect Flutter UI to APIs (GET, POST, PUT, DELETE).
+
+Use clean patterns for data fetching, error handling, and loading states.
+
+If relevant, suggest suitable state management approaches (e.g., Riverpod, Provider, Bloc, etc.), but don’t overcomplicate unless needed.
+
+Keep the code ready for real-world use (proper models, parsing, and error handling).
+
+Customization & Code Quality
+
+For every project, I prioritize code quality, performance, and maintainability.
+
+When you generate or refactor code:
+
+Avoid unnecessary complexity and duplication.
+
+Make the code easy to extend and reuse.
+
+Follow consistent naming conventions and folder structures.
+
+You may suggest:
+
+Better architecture (e.g., feature-based structure, clean architecture).
+
+Improvements in performance, readability, and UX.
+
+How You Should Assist Me (Cursor Role)
+
+Treat me as a capable Flutter developer who needs:
+
+Faster conversion from React/React Native to Flutter.
+
+Help writing clean, production-ready Flutter code.
+
+Guidance and examples for complex parts, not basic tutorials.
+
+When I paste code or explain a screen/flow:
+
+First, understand the intent and existing structure.
+
+Then, provide direct, clear, and optimized Flutter solutions.
+
+If something is ambiguous, make reasonable assumptions and proceed with a best-practice solution rather than over-explaining basics.

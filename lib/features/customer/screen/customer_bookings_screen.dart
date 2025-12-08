@@ -1,36 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
+import 'package:workpleis/features/customer/model/customer_booking_model.dart';
+import 'package:workpleis/features/customer/logic/customer_booking_logic.dart';
+
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
-
-enum BookingStatus { inProgress, scheduled, completed, cancelled }
-
-class Booking {
-  final int id;
-  final String service;
-  final String? category;
-  final String technician;
-  final String date;
-  final String? location;
-  final BookingStatus status;
-  final String? phone;
-  final String? description;
-  final String? reason;
-
-  const Booking({
-    required this.id,
-    required this.service,
-    this.category,
-    required this.technician,
-    required this.date,
-    this.location,
-    required this.status,
-    this.phone,
-    this.description,
-    this.reason,
-  });
-}
 
 class CustomerBookingsScreen extends StatefulWidget {
   const CustomerBookingsScreen({
@@ -49,104 +26,106 @@ class CustomerBookingsScreen extends StatefulWidget {
 }
 
 class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
-  // ------------------ Dummy data (TSX er moto) ------------------
+  List<CustomerBookingModel> _allBookings = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  final List<Booking> _activeBookings = const [
-    Booking(
-      id: 1,
-      service: 'HVAC Maintenance',
-      category: 'HVAC Services',
-      technician: 'John Smith',
-      date: 'Today, 2:00 PM',
-      location: '123 Main St, Apt 4B',
-      status: BookingStatus.inProgress,
-      phone: '+1 234 567 8900',
-      description:
-          'Regular maintenance check for air conditioning unit including filter replacement and coolant level check.',
-    ),
-    Booking(
-      id: 2,
-      service: 'Electrical Repair',
-      category: 'Electrical Services',
-      technician: 'Sarah Johnson',
-      date: 'Tomorrow, 10:00 AM',
-      location: '123 Main St, Apt 4B',
-      status: BookingStatus.scheduled,
-      phone: '+1 234 567 8901',
-      description:
-          'Fix faulty electrical outlet in the living room. Safety inspection included.',
-    ),
-    Booking(
-      id: 3,
-      service: 'Plumbing Inspection',
-      category: 'Plumbing Services',
-      technician: 'Mike Davis',
-      date: 'Nov 6, 2025, 3:00 PM',
-      location: '123 Main St, Apt 4B',
-      status: BookingStatus.scheduled,
-      phone: '+1 234 567 8902',
-      description:
-          'Comprehensive plumbing system inspection and leak detection.',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadBookings();
+  }
 
-  final List<Booking> _completedBookings = const [
-    Booking(
-      id: 4,
-      service: 'Plumbing Fix',
-      category: 'Plumbing Services',
-      technician: 'Mike Davis',
-      date: 'Nov 1, 2025',
-      location: '123 Main St, Apt 4B',
-      status: BookingStatus.completed,
-    ),
-    Booking(
-      id: 5,
-      service: 'General Maintenance',
-      category: 'General Maintenance',
-      technician: 'Lisa Brown',
-      date: 'Oct 28, 2025',
-      location: '123 Main St, Apt 4B',
-      status: BookingStatus.completed,
-    ),
-    Booking(
-      id: 6,
-      service: 'Electrical Installation',
-      category: 'Electrical Services',
-      technician: 'John Smith',
-      date: 'Oct 15, 2025',
-      location: '123 Main St, Apt 4B',
-      status: BookingStatus.completed,
-    ),
-  ];
+  Future<void> _loadBookings() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-  final List<Booking> _cancelledBookings = const [
-    Booking(
-      id: 7,
-      service: 'HVAC Repair',
-      category: 'HVAC Services',
-      technician: 'Not Assigned',
-      date: 'Oct 20, 2025',
-      status: BookingStatus.cancelled,
-      reason: 'Rescheduled by customer',
-    ),
-  ];
+    try {
+      final bookings = await CustomerBookingLogic.fetchBookings();
+      setState(() {
+        _allBookings = bookings;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+      _showSnack('Failed to load bookings: ${e.toString()}');
+    }
+  }
+
+  List<CustomerBookingModel> _getActiveBookings() {
+    return _allBookings.where((b) => b.status == 'ACTIVE').toList();
+  }
+
+  List<CustomerBookingModel> _getCompletedBookings() {
+    return _allBookings.where((b) => b.status == 'COMPLETED').toList();
+  }
+
+  List<CustomerBookingModel> _getCancelledBookings() {
+    return _allBookings.where((b) => b.status == 'CANCELLED').toList();
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'Not scheduled';
+    try {
+      final date = DateTime.parse(dateString);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final dateOnly = DateTime(date.year, date.month, date.day);
+
+      if (dateOnly == today) {
+        return 'Today, ${DateFormat('h:mm a').format(date)}';
+      } else if (dateOnly == today.add(const Duration(days: 1))) {
+        return 'Tomorrow, ${DateFormat('h:mm a').format(date)}';
+      } else {
+        return DateFormat('MMM d, yyyy, h:mm a').format(date);
+      }
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  String _formatDateOnly(String? dateString) {
+    if (dateString == null) return 'N/A';
+    try {
+      final date = DateTime.parse(dateString);
+      return DateFormat('MMM d, yyyy').format(date);
+    } catch (e) {
+      return dateString;
+    }
+  }
 
   // ------------------ Helpers ------------------
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
-  void _call(String? phone) {
-    if (phone == null) return;
-    // TODO: url_launcher diye real call korbe
-    _showSnack('Calling $phone ...');
+  Future<void> _call(String? phone) async {
+    if (phone == null || phone.isEmpty) {
+      _showSnack('Phone number not available');
+      return;
+    }
+
+    final uri = Uri.parse('tel:$phone');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        _showSnack('Cannot make phone call');
+      }
+    } catch (e) {
+      _showSnack('Error calling: ${e.toString()}');
+    }
   }
 
-  void _openBookingDetails(Booking booking) {
+  void _openBookingDetails(CustomerBookingModel booking) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -158,6 +137,26 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
         return _BookingDetailSheet(booking: booking, onCall: _call);
       },
     );
+  }
+
+  Future<void> _handleBookAgain(int srId) async {
+    try {
+      await CustomerBookingLogic.bookAgain(srId);
+      _showSnack('Service booked again successfully');
+      _loadBookings(); // Refresh the list
+    } catch (e) {
+      _showSnack('Failed to book again: ${e.toString()}');
+    }
+  }
+
+  Future<void> _handleRebook(int srId) async {
+    try {
+      await CustomerBookingLogic.rebook(srId);
+      _showSnack('Service rebooked successfully');
+      _loadBookings(); // Refresh the list
+    } catch (e) {
+      _showSnack('Failed to rebook: ${e.toString()}');
+    }
   }
 
   BoxDecoration _cardDecoration() {
@@ -359,65 +358,139 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   // ------------------ List builders ------------------
 
   Widget _buildActiveList() {
-    if (_activeBookings.isEmpty) {
-      return const Center(child: Text('No active bookings'));
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.only(bottom: 24.h),
-      itemCount: _activeBookings.length,
-      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-      itemBuilder: (context, index) {
-        final booking = _activeBookings[index];
-        return _buildActiveCard(booking);
-      },
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_errorMessage'),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: _loadBookings,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final activeBookings = _getActiveBookings();
+    if (activeBookings.isEmpty) {
+      return Center(child: Text('no_active_bookings'.tr()));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadBookings,
+      child: ListView.separated(
+        padding: EdgeInsets.only(bottom: 24.h),
+        itemCount: activeBookings.length,
+        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        itemBuilder: (context, index) {
+          final booking = activeBookings[index];
+          return _buildActiveCard(booking);
+        },
+      ),
     );
   }
 
   Widget _buildCompletedList() {
-    if (_completedBookings.isEmpty) {
-      return const Center(child: Text('No completed bookings'));
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.only(bottom: 24.h),
-      itemCount: _completedBookings.length,
-      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-      itemBuilder: (context, index) {
-        final booking = _completedBookings[index];
-        return _buildCompletedCard(booking);
-      },
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_errorMessage'),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: _loadBookings,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final completedBookings = _getCompletedBookings();
+    if (completedBookings.isEmpty) {
+      return Center(child: Text('no_completed_bookings'.tr()));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadBookings,
+      child: ListView.separated(
+        padding: EdgeInsets.only(bottom: 24.h),
+        itemCount: completedBookings.length,
+        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        itemBuilder: (context, index) {
+          final booking = completedBookings[index];
+          return _buildCompletedCard(booking);
+        },
+      ),
     );
   }
 
   Widget _buildCancelledList() {
-    if (_cancelledBookings.isEmpty) {
-      return const Center(child: Text('No cancelled bookings'));
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.only(bottom: 24.h),
-      itemCount: _cancelledBookings.length,
-      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-      itemBuilder: (context, index) {
-        final booking = _cancelledBookings[index];
-        return _buildCancelledCard(booking);
-      },
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_errorMessage'),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: _loadBookings,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final cancelledBookings = _getCancelledBookings();
+    if (cancelledBookings.isEmpty) {
+      return Center(child: Text('no_cancelled_bookings'.tr()));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadBookings,
+      child: ListView.separated(
+        padding: EdgeInsets.only(bottom: 24.h),
+        itemCount: cancelledBookings.length,
+        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        itemBuilder: (context, index) {
+          final booking = cancelledBookings[index];
+          return _buildCancelledCard(booking);
+        },
+      ),
     );
   }
 
   // ------------------ Cards ------------------
 
-  Widget _buildActiveCard(Booking booking) {
-    final bool isInProgress = booking.status == BookingStatus.inProgress;
+  Widget _buildActiveCard(CustomerBookingModel booking) {
+    final bool hasTechnician = booking.assignedTechnician != null;
+    final String technicianName = hasTechnician
+        ? booking.assignedTechnician!.name
+        : 'Not Assigned';
+    final String? technicianPhone = hasTechnician
+        ? booking.assignedTechnician!.phone
+        : null;
 
-    final Color chipBg = isInProgress
-        ? const Color(0xFFEFF6FF)
-        : const Color(0xFFFEF3C7);
-    final Color chipText = isInProgress
-        ? const Color(0xFF1D4ED8)
-        : const Color(0xFF92400E);
-    final String chipLabel = isInProgress ? 'in_progress'.tr() : 'scheduled'.tr();
+    final Color chipBg = const Color(0xFFEFF6FF);
+    final Color chipText = const Color(0xFF1D4ED8);
+    final String chipLabel = booking.readableStatus;
 
     return Container(
       decoration: _cardDecoration(),
@@ -435,7 +508,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.service,
+                        booking.service?.name ?? 'Service',
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -444,7 +517,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'Technician: ${booking.technician}',
+                        'Technician: $technicianName',
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: const Color(0xFF6B7280),
@@ -467,12 +540,15 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     children: [
                       Icon(Icons.access_time, size: 14.sp, color: chipText),
                       SizedBox(width: 4.w),
-                      Text(
-                        chipLabel,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w500,
-                          color: chipText,
+                      Flexible(
+                        child: Text(
+                          chipLabel,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w500,
+                            color: chipText,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -493,7 +569,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                 SizedBox(width: 6.w),
                 Expanded(
                   child: Text(
-                    booking.date,
+                    _formatDate(booking.scheduledAt),
                     style: TextStyle(
                       fontSize: 13.sp,
                       color: const Color(0xFF4B5563),
@@ -505,48 +581,48 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             SizedBox(height: 4.h),
 
             // Location
-            if (booking.location != null) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 16.sp,
-                    color: const Color(0xFF9CA3AF),
-                  ),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Text(
-                      booking.location!,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: const Color(0xFF4B5563),
-                      ),
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 16.sp,
+                  color: const Color(0xFF9CA3AF),
+                ),
+                SizedBox(width: 6.w),
+                Expanded(
+                  child: Text(
+                    booking.address,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: const Color(0xFF4B5563),
                     ),
                   ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-            ],
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
 
             // Buttons
             Row(
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _call(booking.phone),
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: const Color(0xFFF3F4F6),
-                      foregroundColor: const Color(0xFF4B5563),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
+                if (hasTechnician && technicianPhone != null) ...[
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _call(technicianPhone),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: const Color(0xFFF3F4F6),
+                        foregroundColor: const Color(0xFF4B5563),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
                       ),
+                      icon: Icon(Icons.phone, size: 16.sp),
+                      label: Text('call'.tr(), style: TextStyle(fontSize: 13.sp)),
                     ),
-                    icon: Icon(Icons.phone, size: 16.sp),
-                    label: Text('call'.tr(), style: TextStyle(fontSize: 13.sp)),
                   ),
-                ),
-                SizedBox(width: 8.w),
+                  SizedBox(width: 8.w),
+                ],
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => _openBookingDetails(booking),
@@ -576,7 +652,9 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   }
 
   /// COMPLETED TAB – pixel perfect to screenshot
-  Widget _buildCompletedCard(Booking booking) {
+  Widget _buildCompletedCard(CustomerBookingModel booking) {
+    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+
     return Container(
       decoration: _cardDecoration(),
       child: Padding(
@@ -593,7 +671,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.service,
+                        booking.service?.name ?? 'Service',
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -602,7 +680,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'Technician: ${booking.technician}',
+                        'Technician: $technicianName',
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: const Color(0xFF6B7280),
@@ -642,7 +720,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                 SizedBox(width: 6.w),
                 Expanded(
                   child: Text(
-                    booking.date,
+                    _formatDateOnly(booking.updatedAt),
                     style: TextStyle(
                       fontSize: 13.sp,
                       color: const Color(0xFF4B5563),
@@ -653,28 +731,26 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             ),
 
             // Location
-            if (booking.location != null) ...[
-              SizedBox(height: 4.h),
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 16.sp,
-                    color: const Color(0xFF9CA3AF),
-                  ),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Text(
-                      booking.location!,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: const Color(0xFF4B5563),
-                      ),
+            SizedBox(height: 4.h),
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 16.sp,
+                  color: const Color(0xFF9CA3AF),
+                ),
+                SizedBox(width: 6.w),
+                Expanded(
+                  child: Text(
+                    booking.address,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: const Color(0xFF4B5563),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
             SizedBox(height: 12.h),
 
             // Book Again pill button
@@ -682,9 +758,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               width: double.infinity,
               height: 40.h,
               child: OutlinedButton(
-                onPressed: () {
-                  _showSnack('Booking ${booking.service} again...');
-                },
+                onPressed: () => _handleBookAgain(booking.srId),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: const Color(0xFFF5F5F5),
                   side: const BorderSide(color: Color(0xFFF5F5F5)),
@@ -707,7 +781,9 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
     );
   }
 
-  Widget _buildCancelledCard(Booking booking) {
+  Widget _buildCancelledCard(CustomerBookingModel booking) {
+    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+
     return Container(
       decoration: _cardDecoration(),
       child: Padding(
@@ -724,7 +800,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.service,
+                        booking.service?.name ?? 'Service',
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -733,7 +809,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        booking.technician,
+                        technicianName,
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: const Color(0xFF6B7280),
@@ -757,7 +833,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                 SizedBox(width: 6.w),
                 Expanded(
                   child: Text(
-                    booking.date,
+                    _formatDateOnly(booking.updatedAt),
                     style: TextStyle(
                       fontSize: 13.sp,
                       color: const Color(0xFF4B5563),
@@ -766,24 +842,12 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                 ),
               ],
             ),
-            if (booking.reason != null) ...[
-              SizedBox(height: 4.h),
-              Text(
-                'Reason: ${booking.reason}',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: const Color(0xFF6B7280),
-                ),
-              ),
-            ],
             SizedBox(height: 12.h),
             SizedBox(
               width: double.infinity,
               height: 40.h,
               child: OutlinedButton(
-                onPressed: () {
-                  _showSnack('Rebooking ${booking.service} ...');
-                },
+                onPressed: () => _handleRebook(booking.srId),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFE5E7EB)),
                   shape: RoundedRectangleBorder(
@@ -809,7 +873,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
 // ------------------ Header (red gradient) ------------------
 
 class _BookingsHeader extends StatelessWidget {
-  const _BookingsHeader({super.key});
+  const _BookingsHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -859,35 +923,77 @@ class _BookingsHeader extends StatelessWidget {
     );
   }
 }
-
 // ------------------ Booking detail bottom sheet ------------------
 
 class _BookingDetailSheet extends StatelessWidget {
   const _BookingDetailSheet({required this.booking, required this.onCall});
 
-  final Booking booking;
-  final void Function(String?) onCall;
+  final CustomerBookingModel booking;
+  final Future<void> Function(String?) onCall;
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'Not scheduled';
+    try {
+      final date = DateTime.parse(dateString);
+      return DateFormat('MMM d, yyyy, h:mm a').format(date);
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return '';
+    final parts = name.split(' ');
+    return parts.map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase();
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: const Color(0xFF9CA3AF),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: const Color(0xFF111827),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bool isInProgress = booking.status == BookingStatus.inProgress;
-    final bool isScheduled = booking.status == BookingStatus.scheduled;
-
-    final Color chipBg = isInProgress
+    final bool isActive = booking.status == 'ACTIVE';
+    final Color chipBg = isActive
         ? const Color(0xFFEFF6FF)
-        : const Color(0xFFFEF3C7);
-    final Color chipText = isInProgress
+        : booking.status == 'COMPLETED'
+            ? const Color(0xFFD1FAE5)
+            : const Color(0xFFFEE2E2);
+    final Color chipText = isActive
         ? const Color(0xFF1D4ED8)
-        : const Color(0xFF92400E);
-    final String chipLabel = isInProgress
-        ? 'in_progress'.tr()
-        : (isScheduled ? 'scheduled'.tr() : '');
+        : booking.status == 'COMPLETED'
+            ? const Color(0xFF065F46)
+            : const Color(0xFF991B1B);
+    final String chipLabel = booking.readableStatus;
 
-    String initials = '';
-    if (booking.technician.isNotEmpty) {
-      final parts = booking.technician.split(' ');
-      initials = parts.map((e) => e.isNotEmpty ? e[0] : '').take(2).join();
-    }
+    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+    final String? technicianPhone = booking.assignedTechnician?.phone;
+    final String initials = _getInitials(technicianName);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -931,36 +1037,46 @@ class _BookingDetailSheet extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
 
-              if (chipLabel.isNotEmpty)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: chipBg,
-                      borderRadius: BorderRadius.circular(999.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.access_time, size: 16.sp, color: chipText),
-                        SizedBox(width: 6.w),
-                        Text(
-                          chipLabel,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w500,
-                            color: chipText,
-                          ),
+              // Status chip
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: chipBg,
+                    borderRadius: BorderRadius.circular(999.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.info_outline, size: 16.sp, color: chipText),
+                      SizedBox(width: 6.w),
+                      Text(
+                        chipLabel,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w500,
+                          color: chipText,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
 
+              SizedBox(height: 16.h),
+
+              // SR Number
+              _buildDetailRow('SR Number', booking.srNumber),
+              SizedBox(height: 8.h),
+              _buildDetailRow('Status', booking.status),
+              SizedBox(height: 8.h),
+              _buildDetailRow('Internal Status', booking.internalStatus),
+              SizedBox(height: 8.h),
+              _buildDetailRow('Priority', booking.priority),
               SizedBox(height: 16.h),
 
               // Service info card
@@ -984,7 +1100,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        booking.service,
+                        booking.service?.name ?? 'N/A',
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -1002,14 +1118,24 @@ class _BookingDetailSheet extends StatelessWidget {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          booking.category!,
+                          booking.category!.name,
                           style: TextStyle(fontSize: 13.sp, color: kPrimaryRed),
                         ),
+                        if (booking.category!.description.isNotEmpty) ...[
+                          SizedBox(height: 4.h),
+                          Text(
+                            booking.category!.description,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
                       ],
-                      if (booking.description != null) ...[
+                      if (booking.subservice != null) ...[
                         SizedBox(height: 12.h),
                         Text(
-                          'description'.tr(),
+                          'Subservice',
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1017,13 +1143,26 @@ class _BookingDetailSheet extends StatelessWidget {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          booking.description!,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: const Color(0xFF4B5563),
-                          ),
+                          booking.subservice!.name,
+                          style: TextStyle(fontSize: 13.sp, color: kPrimaryRed),
                         ),
                       ],
+                      SizedBox(height: 12.h),
+                      Text(
+                        'description'.tr(),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: const Color(0xFF9CA3AF),
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        booking.description,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: const Color(0xFF4B5563),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1056,25 +1195,38 @@ class _BookingDetailSheet extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 12.w),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'scheduled'.tr(),
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: const Color(0xFF9CA3AF),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'scheduled'.tr(),
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: const Color(0xFF9CA3AF),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            booking.date,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: const Color(0xFF111827),
+                            SizedBox(height: 4.h),
+                            Text(
+                              _formatDate(booking.scheduledAt),
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: const Color(0xFF111827),
+                              ),
                             ),
-                          ),
-                        ],
+                            if (booking.preferredAppointmentDate != null ||
+                                booking.preferredAppointmentTime != null) ...[
+                              SizedBox(height: 4.h),
+                              Text(
+                                'Preferred: ${booking.preferredAppointmentDate ?? ''} ${booking.preferredAppointmentTime ?? ''}',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1084,32 +1236,32 @@ class _BookingDetailSheet extends StatelessWidget {
               SizedBox(height: 12.h),
 
               // Location card
-              if (booking.location != null)
-                Card(
-                  elevation: 2,
-                  margin: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18.r),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(16.w),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40.w,
-                          height: 40.w,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFEEEE),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Icon(
-                            Icons.location_on_outlined,
-                            color: kPrimaryRed,
-                            size: 22.sp,
-                          ),
+              Card(
+                elevation: 2,
+                margin: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18.r),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40.w,
+                        height: 40.w,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFEEEE),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                        SizedBox(width: 12.w),
-                        Column(
+                        child: Icon(
+                          Icons.location_on_outlined,
+                          color: kPrimaryRed,
+                          size: 22.sp,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
@@ -1121,7 +1273,7 @@ class _BookingDetailSheet extends StatelessWidget {
                             ),
                             SizedBox(height: 4.h),
                             Text(
-                              booking.location!,
+                              booking.address,
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 color: const Color(0xFF111827),
@@ -1129,104 +1281,202 @@ class _BookingDetailSheet extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-
-              SizedBox(height: 12.h),
-
-              // Technician card
-              Card(
-                elevation: 2,
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18.r),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'assigned_technician'.tr(),
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: const Color(0xFF9CA3AF),
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 44.w,
-                                height: 44.w,
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [kPrimaryRed, kPrimaryRedDark],
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  initials.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    booking.technician,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF111827),
-                                    ),
-                                  ),
-                                  if (booking.phone != null) ...[
-                                    SizedBox(height: 2.h),
-                                    Text(
-                                      booking.phone!,
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
-                          ),
-                          if (booking.phone != null)
-                            SizedBox(
-                              height: 36.h,
-                              child: ElevatedButton(
-                                onPressed: () => onCall(booking.phone),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: kPrimaryRed,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14.r),
-                                  ),
-                                ),
-                                child: Icon(Icons.phone, size: 18.sp),
-                              ),
-                            ),
-                        ],
                       ),
                     ],
                   ),
                 ),
               ),
+
+              SizedBox(height: 12.h),
+
+              // Technician card
+              if (booking.assignedTechnician != null)
+                Card(
+                  elevation: 2,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'assigned_technician'.tr(),
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 44.w,
+                                  height: 44.w,
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [kPrimaryRed, kPrimaryRedDark],
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    initials,
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      technicianName,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF111827),
+                                      ),
+                                    ),
+                                    if (technicianPhone != null) ...[
+                                      SizedBox(height: 2.h),
+                                      Text(
+                                        technicianPhone,
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: const Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+                            if (technicianPhone != null)
+                              SizedBox(
+                                height: 36.h,
+                                child: ElevatedButton(
+                                  onPressed: () => onCall(technicianPhone),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kPrimaryRed,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14.r),
+                                    ),
+                                  ),
+                                  child: Icon(Icons.phone, size: 18.sp),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Payment Summary
+              if (booking.paymentSummary != null) ...[
+                SizedBox(height: 12.h),
+                Card(
+                  elevation: 2,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Payment Summary',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildDetailRow('Total Amount',
+                            '\$${booking.paymentSummary!.totalAmount.toStringAsFixed(2)}'),
+                        SizedBox(height: 4.h),
+                        _buildDetailRow('Payment Status',
+                            booking.paymentSummary!.paymentStatus),
+                        if (booking.paymentSummary!.paymentMethod != null) ...[
+                          SizedBox(height: 4.h),
+                          _buildDetailRow('Payment Method',
+                              booking.paymentSummary!.paymentMethod!),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              // Technician Rating
+              if (booking.technicianRating != null) ...[
+                SizedBox(height: 12.h),
+                Card(
+                  elevation: 2,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Technician Rating',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            ...List.generate(
+                              5,
+                              (index) => Icon(
+                                index < booking.technicianRating!.rating
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: Colors.amber,
+                                size: 20.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (booking.technicianRating!.comment != null) ...[
+                          SizedBox(height: 8.h),
+                          Text(
+                            booking.technicianRating!.comment!,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: const Color(0xFF4B5563),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              // Dates
+              SizedBox(height: 12.h),
+              _buildDetailRow('Created At', _formatDate(booking.createdAt)),
+              SizedBox(height: 4.h),
+              _buildDetailRow('Updated At', _formatDate(booking.updatedAt)),
 
               SizedBox(height: 16.h),
 
@@ -1248,29 +1498,6 @@ class _BookingDetailSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (isScheduled) ...[
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Reschedule feature coming soon!'),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPrimaryRed,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18.r),
-                          ),
-                        ),
-                        child:  Text('reprogrammer'.tr()),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ],
@@ -1280,3 +1507,4 @@ class _BookingDetailSheet extends StatelessWidget {
     );
   }
 }
+
