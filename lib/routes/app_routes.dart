@@ -8,6 +8,7 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
+import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
 import 'package:workpleis/features/customer/screen/profile/screen/customer_profile_screen.dart';
 import 'package:workpleis/features/erning/screen/freelancer_earnings_screen.dart';
@@ -253,6 +254,12 @@ class AppRouter {
         path: FreelancerEditProfile.routeName,
         name: FreelancerEditProfile.routeName,
         builder: (context, state) => const FreelancerEditProfile(),
+      ),
+
+      GoRoute(
+        path: CustomerEditProfile.routeName,
+        name: CustomerEditProfile.routeName,
+        builder: (context, state) => const CustomerEditProfile(),
       ),
 
 

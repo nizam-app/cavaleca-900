@@ -41,7 +41,8 @@ class GuestHomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'hello_guest'.tr(),
+                          "Hello",
+                         // 'hello_guest'.tr(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,

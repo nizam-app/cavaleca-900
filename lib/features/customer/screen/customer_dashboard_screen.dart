@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:workpleis/features/customer/screen/service/data/service_data.dart';
 import 'package:workpleis/features/customer/screen/service/model/create_sr_model.dart';
 import 'package:workpleis/features/customer/widget/book_a_getagory.dart';
-
 import 'package:intl/intl.dart';
 import 'package:easy_localization/easy_localization.dart';
-
 import 'package:workpleis/features/customer/widget/genarel_maintenance.dart';
 import 'package:workpleis/features/customer/widget/repairs_&_fixes.dart';
 import 'package:workpleis/features/customer/widget/service_details.dart';
 import 'package:workpleis/features/customer/model/customer_booking_model.dart';
 import 'package:workpleis/features/customer/logic/customer_booking_logic.dart';
 import 'package:url_launcher/url_launcher.dart';
+<<<<<<< HEAD
+import 'service/model/create_sr_model.dart';
+=======
+>>>>>>> 0e295764f7e7e62fcae2d348811629d320cda0d2
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -250,7 +251,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${'hello_guest'.tr()} $_displayName',
+                      '${'hello'.tr()} $_displayName',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
