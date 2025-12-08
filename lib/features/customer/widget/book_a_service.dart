@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -58,7 +59,7 @@ class BookServiceDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Book a Service',
+                          'book_a_service'.tr(),
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w600,
@@ -67,7 +68,7 @@ class BookServiceDialog extends StatelessWidget {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          'Select your service in 3 simple steps',
+                          'select_service_in_steps'.tr(),
                           style: TextStyle(
                             fontSize: 13.sp,
                             color: Color(0xFF6B7280),

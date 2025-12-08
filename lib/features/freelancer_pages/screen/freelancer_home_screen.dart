@@ -1,4 +1,4 @@
-// freelancer_home_screen.dart
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +7,8 @@ import 'package:workpleis/features/internal_technician/screen/job/logic/internal
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
+
+import 'package:easy_localization/easy_localization.dart';
 
 /// ------------------------------------------------------
 ///  Colors
@@ -134,7 +136,7 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
                 _HeaderSection(
                   monthlyCommission: _monthlyCommission,
                   completedJobsThisMonth: completedCount,
-                  userName: 'Freelancer Tech',
+                  userName: 'freelancer_tech'.tr(),
                 ),
                 SizedBox(height: 12.h),
                 _StatsRow(
@@ -221,7 +223,7 @@ class _HeaderSection extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Ready to earn today?',
+                      'ready_earn_today'.tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: Colors.black.withOpacity(0.9),
@@ -541,7 +543,7 @@ class _ActiveJobsSection extends StatelessWidget {
     if (inProgressJobs.isEmpty && acceptedJobs.isEmpty) {
       return Center(
         child: Text(
-          'No active jobs right now',
+          'no_completed_jobs_yet'.tr(),
           style: TextStyle(fontSize: 13.sp, color: kTextMuted),
         ),
       );
@@ -551,16 +553,19 @@ class _ActiveJobsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (inProgressJobs.isNotEmpty) ...[
-          const _SectionTitle(icon: Icons.access_time, label: 'In Progress'),
+          _SectionTitle(
+            icon: Icons.access_time,
+            label: 'in_progress'.tr(),
+          ),
           SizedBox(height: 6.h),
           for (final job in inProgressJobs)
             _JobCard(job: job, isInProgressCard: true),
           SizedBox(height: 16.h),
         ],
         if (acceptedJobs.isNotEmpty) ...[
-          const _SectionTitle(
+          _SectionTitle(
             icon: Icons.work_outline,
-            label: 'Ready to Start',
+            label: 'ready_start'.tr(),
           ),
           SizedBox(height: 6.h),
           for (final job in acceptedJobs)
@@ -824,7 +829,7 @@ class _CompletedJobsSection extends StatelessWidget {
     if (completedJobs.isEmpty) {
       return Center(
         child: Text(
-          'No completed jobs yet',
+          'no_completed_jobs_yet'.tr(),
           style: TextStyle(fontSize: 14.sp, color: kTextMuted),
         ),
       );
@@ -911,8 +916,11 @@ class _CompletedJobsSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Commission Earned',
-                          style: TextStyle(fontSize: 11.sp, color: kTextMuted),
+                          'commission_earned '.tr(),
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: kTextMuted,
+                          ),
                         ),
                         SizedBox(height: 2.h),
                         Text(
@@ -1001,7 +1009,7 @@ class _TopPerformerCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Top Performer',
+                    'top_performer'.tr(),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -1010,8 +1018,11 @@ class _TopPerformerCard extends StatelessWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    'Keep up the great work!',
-                    style: TextStyle(fontSize: 12.sp, color: kTextMuted),
+                    'keep_up_great_work'.tr(),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: kTextMuted,
+                    ),
                   ),
                 ],
               ),

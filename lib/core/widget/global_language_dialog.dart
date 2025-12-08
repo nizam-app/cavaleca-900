@@ -20,15 +20,15 @@ class LanguageDialog extends StatelessWidget {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(
-        // JSON key: language.select_title
-        'language.select_title'.tr(), // e.g. "Select Language"
+        // JSON key: language_select_title
+        'language_select_title'.tr(), // e.g. "Select Language"
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            // JSON key: language.select_subtitle
-            'language.select_subtitle'.tr(),
+            // JSON key: language_select_subtitle
+            'language_select_subtitle'.tr(),
             style: const TextStyle(fontSize: 13),
           ),
           const SizedBox(height: 16),

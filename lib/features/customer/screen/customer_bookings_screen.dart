@@ -1092,7 +1092,7 @@ class _BookingDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Service',
+                        'service'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: const Color(0xFF9CA3AF),

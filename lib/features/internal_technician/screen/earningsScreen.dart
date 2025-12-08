@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class Earningsscreen extends StatelessWidget {
   const Earningsscreen({super.key});
@@ -85,7 +86,7 @@ class Earningsscreen extends StatelessWidget {
           Row(
             children: [
               Text(
-                "Earnings",
+                "earnings_menu".tr(),
                 style: TextStyle(
                   fontSize: 22.sp,
                   fontWeight: FontWeight.w700,
@@ -105,7 +106,7 @@ class Earningsscreen extends StatelessWidget {
                         color: Colors.white70, size: 16.sp),
                     SizedBox(width: 6.w),
                     Text(
-                      "Export",
+                      "export".tr(),
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 13.sp,
@@ -120,7 +121,7 @@ class Earningsscreen extends StatelessWidget {
           SizedBox(height: 6.h),
 
           Text(
-            "Track your bonus earnings",
+            "track_bonus".tr(),
             style: TextStyle(
               fontSize: 12.sp,
               color: Colors.white70,
@@ -140,7 +141,7 @@ class Earningsscreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  "Total Bonuses (All Time)",
+                  "track_bonus".tr(),
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 14.sp,
@@ -157,7 +158,7 @@ class Earningsscreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "+8.5% from last month",
+                  "+_from_last_month".tr(),
                   style: TextStyle(
                     color: Color(0xFF05DF72),
                     fontSize: 14.sp,
@@ -179,7 +180,7 @@ class Earningsscreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _statBox(
-          title: "Today",
+          title: "today".tr(),
           value: "\$16.50",
           icon: Icons.attach_money,
           bgColor: const Color(0xFFE8FEEA),
@@ -187,7 +188,7 @@ class Earningsscreen extends StatelessWidget {
           iconColor: const Color(0xFF4CAF50), // green
         ),
         _statBox(
-          title: "This Week (5%)",
+          title: "this_week".tr(),
           value: "\$37.25",
           icon: Icons.trending_up,
           bgColor: const Color(0xFFEAF3FF),
@@ -195,7 +196,7 @@ class Earningsscreen extends StatelessWidget {
           iconColor: const Color(0xFF2979FF), // blue
         ),
         _statBox(
-          title: "This Month",
+          title: "this_month".tr(),
           value: "\$142",
           icon: Icons.calendar_month,
           bgColor: const Color(0xFFF5E8FF),
@@ -309,7 +310,7 @@ class Earningsscreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Available Bonus",
+                    "available_bonus".tr(),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -318,7 +319,7 @@ class Earningsscreen extends StatelessWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    "This week’s earnings",
+                    "this_week_earnings".tr(),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: Colors.white.withOpacity(0.8),
@@ -344,7 +345,7 @@ class Earningsscreen extends StatelessWidget {
           SizedBox(height: 4.h),
 
           Text(
-            "5 jobs × 5% bonus",
+            "5_jobs_5%_bonus".tr(),
             style: TextStyle(
               fontSize: 12.sp,
               color: Colors.white.withOpacity(0.85),
@@ -361,7 +362,7 @@ class Earningsscreen extends StatelessWidget {
           // ---- Regular Payout Info ----
           Center(
             child: Text(
-              "Regular payout: Every Monday",
+              "regular_payout_every_monday".tr(),
               style: TextStyle(
                 fontSize: 11.sp,
                 color: Colors.white.withOpacity(0.85),
@@ -390,7 +391,7 @@ class Earningsscreen extends StatelessWidget {
           ),
           SizedBox(width: 8.w),
           Text(
-            "Request Early Payout",
+            "request_payout".tr(),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
@@ -435,7 +436,7 @@ class Earningsscreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Current Bonus Rate",
+                    "current_bonus_rate".tr(),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 14.sp,
@@ -444,7 +445,7 @@ class Earningsscreen extends StatelessWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    "For internal employees",
+                    "for_internal_employees".tr(),
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 11.sp,
@@ -479,7 +480,7 @@ class Earningsscreen extends StatelessWidget {
               ),
               SizedBox(width: 6.w),
               Text(
-                "per job",
+                "five_percent_rate".tr(),
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 14.sp,
@@ -505,7 +506,7 @@ class Earningsscreen extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    "Earn 5% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.",
+                    "bonus_desc".tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: Colors.white70,
@@ -546,7 +547,7 @@ class Earningsscreen extends StatelessWidget {
 
           /// Title
           Text(
-            "Monthly Salary",
+            "monthly_salary".tr(),
             style: TextStyle(
               fontSize: 15.sp,
               color: Colors.white,
@@ -600,7 +601,7 @@ class Earningsscreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      "Base Salary",
+            "base_salary".tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: Colors.white70,
@@ -620,7 +621,7 @@ class Earningsscreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      "This Month Bonus",
+                      "this_month_bonus".tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: Colors.white70,
@@ -654,7 +655,7 @@ class Earningsscreen extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            "Recent Bonuses",
+            "recent_bonuses".tr(),
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w700,
@@ -663,7 +664,7 @@ class Earningsscreen extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            "View All",
+            "view_all".tr(),
             style: TextStyle(
               fontSize: 14.sp,
               color: Color(0xFF364153),

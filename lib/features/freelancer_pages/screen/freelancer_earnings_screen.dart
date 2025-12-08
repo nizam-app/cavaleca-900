@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// ------------------------------------------------------
 ///  COLORS
@@ -221,7 +222,7 @@ class _HeaderSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Earnings',
+                    'earnings_label'.tr(),
                     style: TextStyle(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w700,
@@ -230,7 +231,7 @@ class _HeaderSection extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Track your commission',
+                    'track_commission'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: kEarningsTextMain.withOpacity(0.85),
@@ -252,7 +253,7 @@ class _HeaderSection extends StatelessWidget {
                 ),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                     SnackBar(
                       content: Text('Export coming soon…'),
                     ),
                   );
@@ -262,7 +263,7 @@ class _HeaderSection extends StatelessWidget {
                   size: 16.sp,
                 ),
                 label: Text(
-                  'Export',
+                  'export'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
@@ -296,7 +297,7 @@ class _HeaderSection extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Total Earnings (All Time)',
+                    'total_earnings_all_time'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: kEarningsTextMain.withOpacity(0.85),
@@ -347,7 +348,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.attach_money_rounded,
             iconBg: const Color(0xFFE8FFF3),
             iconColor: kEarningsGreen,
-            label: 'Today',
+            label: 'today'.tr(),
             value: '\$${data.todayEarnings.toStringAsFixed(2)}',
           ),
         ),
@@ -367,7 +368,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.calendar_month_rounded,
             iconBg: const Color(0xFFF3E8FF),
             iconColor: const Color(0xFF7C3AED),
-            label: 'This Month',
+            label: 'this_month'.tr(),
             value: '\$${data.thisMonthEarnings.toStringAsFixed(0)}',
           ),
         ),
@@ -501,7 +502,7 @@ class _AvailableBalanceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Available Balance',
+                      'available_balance'.tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -585,7 +586,7 @@ class _AvailableBalanceCard extends StatelessWidget {
                     ),
                     SizedBox(width: 6.w),
                     Text(
-                      'Request Early Payout',
+                      'request_payout'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -598,7 +599,7 @@ class _AvailableBalanceCard extends StatelessWidget {
             SizedBox(height: 8.h),
             Center(
               child: Text(
-                'Regular payout: Every Monday',
+                'regular_payout'.tr(),
                 style: TextStyle(
                   fontSize: 11.sp,
                   color: Colors.white.withOpacity(0.9),
@@ -664,7 +665,7 @@ class _CommissionRateCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Current Commission',
+                      'current_commission'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -673,7 +674,7 @@ class _CommissionRateCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Your earnings per job',
+                      'earnings_per_job'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: kEarningsTextMain.withOpacity(0.85),
@@ -706,7 +707,7 @@ class _CommissionRateCard extends StatelessWidget {
                 ),
                 SizedBox(width: 6.w),
                 Text(
-                  'per job',
+                  'five_percent_rate'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: kEarningsTextMain.withOpacity(0.9),
@@ -752,7 +753,7 @@ class _MonthBreakdownCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'This Month Breakdown',
+              'this_month_breakdown'.tr(),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
@@ -762,14 +763,14 @@ class _MonthBreakdownCard extends StatelessWidget {
             SizedBox(height: 12.h),
             _BreakdownRow(
               icon: '💼',
-              title: 'Jobs Completed',
+              title: 'jobs_completed_amount'.tr(),
               subtitle: '${data.monthJobsCompleted} jobs',
               amount: '\$${data.monthJobsAmount.toStringAsFixed(0)}',
             ),
             SizedBox(height: 10.h),
             _BreakdownRow(
               icon: '💰',
-              title: 'Commission',
+              title: 'commission_earnings_rate'.tr(),
               subtitle: 'Earnings rate',
               amount: '\$${data.monthCommission.toStringAsFixed(0)}',
             ),
@@ -780,7 +781,7 @@ class _MonthBreakdownCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total',
+                  'total'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -889,7 +890,7 @@ class _RecentTransactions extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Recent Transactions',
+              'recent_transactions'.tr(),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
@@ -901,7 +902,7 @@ class _RecentTransactions extends StatelessWidget {
                 // TODO: view-all route
               },
               child: Text(
-                'View All',
+                'view_all'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: kEarningsYellow,
@@ -1041,7 +1042,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                     // Center title
                     Center(
                       child: Text(
-                        'Request Early Payout',
+                        'request_payout'.tr(),
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -1063,7 +1064,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
               ),
               SizedBox(height: 4.h),
               Text(
-                'Request to receive your weekly earnings before the regular Monday payout.',
+                'early_payout_description'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: kEarningsTextMuted,
@@ -1087,7 +1088,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        'Amount Available',
+                        'amount_available'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: kEarningsTextMuted,
@@ -1107,7 +1108,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Jobs completed:',
+                            'jobs_completed'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: kEarningsTextMuted,
@@ -1128,7 +1129,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Commission rate:',
+                            'commission_rate'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: kEarningsTextMuted,
@@ -1173,11 +1174,11 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _infoText('Payment will be processed within 24 hours'),
+                            _infoText('payment_processing_time'.tr()),
                             _infoText(
-                                'Funds will be sent to your linked bank account'),
+                                'sent_to_bank'.tr()),
                             _infoText(
-                                'Regular Monday payout schedule resumes next week'),
+                                'regular_payout_next_week'.tr()),
                           ],
                         ),
                       ),
@@ -1190,7 +1191,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
 
               /// payment method
               Text(
-                'Payment Method',
+                'payment_method'.tr(),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: kEarningsTextMuted,
@@ -1225,7 +1226,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Bank Account',
+                            'bank_account'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -1277,7 +1278,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                       ),
                       SizedBox(width: 6.w),
                       Text(
-                        'Confirm Payout Request',
+                        'confirm_payout_request'.tr(),
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -1299,7 +1300,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                     ),
                   ),
                   child: Text(
-                    'Cancel',
+                    'cancel'.tr(),
                     style: TextStyle(
                       fontSize: 13.sp,
                       color: kEarningsTextMain,

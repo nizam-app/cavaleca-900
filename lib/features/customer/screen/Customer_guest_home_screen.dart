@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 const Color kPrimaryRed = Color(0xFFE32021);
 const Color kPrimaryRedDark = Color(0xFFB01016);
@@ -40,7 +41,7 @@ class GuestHomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hello, Guest',
+                          'hello_guest'.tr(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -48,7 +49,7 @@ class GuestHomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Booking as guest',
+                          'booking_as_guest'.tr(),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.white.withOpacity(0.85),
                             fontSize: 12,
@@ -102,7 +103,7 @@ class GuestHomeScreen extends StatelessWidget {
                     const Icon(Icons.add, color: Colors.black87, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'Book New Service',
+                      'book_new_service_plus'.tr(),
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: Colors.black87,
                         fontWeight: FontWeight.w600,
@@ -128,7 +129,7 @@ class GuestHomeScreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Service Categories',
+                      'service_categories'.tr(),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
@@ -173,7 +174,7 @@ class GuestHomeScreen extends StatelessWidget {
                     border: Border.all(color: const Color(0xFFFFE0A9)),
                   ),
                   child: Text(
-                    "You're browsing as a guest. Create an account to view booking history and track your requests.",
+                    "guest_browsing_notice".tr(),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF8C5C11),

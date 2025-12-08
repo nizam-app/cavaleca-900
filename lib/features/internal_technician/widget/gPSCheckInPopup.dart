@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 /// ---------------- COLORS ----------------
 const kDialogBg = Color(0xFFF4F4F4);
 const kCardBg = Colors.white;
@@ -31,7 +33,7 @@ class Gpscheckinpopup extends StatelessWidget {
           children: [
             // ----------- TITLE -----------
             Text(
-              "GPS Check-In Required",
+              "gps_check_equired".tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w700,
@@ -41,7 +43,7 @@ class Gpscheckinpopup extends StatelessWidget {
             SizedBox(height: 6.h),
 
             Text(
-              "Verify your location at the job site to start working",
+              "verify_your_location_at_job_site_start_working".tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12.sp,
@@ -71,7 +73,7 @@ class Gpscheckinpopup extends StatelessWidget {
             SizedBox(height: 16.h),
 
             Text(
-              "Click below to verify your location",
+              "job_location".tr(),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
@@ -104,7 +106,7 @@ class Gpscheckinpopup extends StatelessWidget {
                       Icon(Icons.location_on, size: 18.sp, color: Colors.red),
                       SizedBox(width: 6.w),
                       Text(
-                        "Job Location",
+                        "job_location".tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: kTextMuted,
@@ -150,7 +152,7 @@ class Gpscheckinpopup extends StatelessWidget {
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      "Verify Location",
+                      "verify_location".tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
