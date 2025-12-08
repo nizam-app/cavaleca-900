@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:workpleis/features/customer/screen/service/data/service_data.dart';
+import 'package:workpleis/features/customer/widget/book_a_getagory.dart';
+import 'package:workpleis/features/customer/widget/custom_booking_details.dart';
+
 import 'package:intl/intl.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/features/customer/widget/book_a_service.dart';
+
 import 'package:workpleis/features/customer/widget/genarel_maintenance.dart';
 import 'package:workpleis/features/customer/widget/repairs_&_fixes.dart';
 import 'package:workpleis/features/customer/widget/service_details.dart';
 import 'package:workpleis/features/customer/model/customer_booking_model.dart';
 import 'package:workpleis/features/customer/logic/customer_booking_logic.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'service/model/create_sr_model.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -268,68 +276,74 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
             width: double.infinity,
             height: 52.h,
             child: ElevatedButton(
-              onPressed: () {
-                showBookServiceDialog(
-                  context,
-                  onServiceSelected: (service) {
-                    showServiceTypeDialog(
-                      context,
-                      title: 'general_maintenance'.tr(),
-                      stepText: 'step_2_select_service_type'.tr(),
-                      options: [
-                        ServiceTypeOption(
-                          title: 'repairs_and_fixes'.tr(),
-                          subtitle: '4 services available',
-                        ),
-                        ServiceTypeOption(
-                          title: 'installation'.tr(),
-                          subtitle: '3 services available',
-                        ),
-                        ServiceTypeOption(
-                          title: 'inspection'.tr(),
-                          subtitle: '2 services available',
-                        ),
-                      ],
-                      onSelect: (option) {
-                        showSpecificServiceDialog(
-                          context,
-                          title:'repairs_and_fixes'.tr(),
-                          stepText: 'step_3_select_specific_service'.tr(),
-                          options: [
-                            SpecificServiceOption(
-                              title: 'door_repair'.tr(),
-                              priceRange: 'Est. \$50–80',
-                            ),
-                            SpecificServiceOption(
-                              title: 'window_repair'.tr(),
-                              priceRange: 'Est. \$40–70',
-                            ),
-                            SpecificServiceOption(
-                              title: 'wall_patching'.tr(),
-                              priceRange: 'Est. \$60–100',
-                            ),
-                            SpecificServiceOption(
-                              title: 'floor_repair'.tr(),
-                              priceRange: 'Est. \$80–150',
-                            ),
-                          ],
-                          onSelect: (opt) {
-                            // ekhane tumi go_router diye ager step e jete / confirmation screen e nite paro
-                            // context.goNamed('bookingSummary', extra: opt.title);
-                            showServiceDetailsDialog(
-                              context,
-                              selectedService: 'window_repair'.tr(),
-                              categoryPath:
-                                  'general_maintenance_repairs_fixes'.tr(),
-                            );
-                          },
-                        );
+              onPressed: () async {
+                try {
+                  // 1) category+services+subservices load from API
+                  final categories = await FsmCustomerApi.fetchCategories();
 
-                        debugPrint('Selected: ${option.title}');
-                      },
-                    );
-                  },
-                );
+                  if (!context.mounted) return;
+
+                  // 2) Step-1 dialog: Category select
+                  await showBookCatagoryDialog(
+                    context,
+                    categories: categories,
+                    onCategorySelected: (FsmCategory cat) {
+                      // 3) Step-2 dialog: Service (category.services)
+                      showServiceTypeDialog(
+                        context,
+                        title: cat.name,
+                        stepText: 'Step 2 of 3 - Select service type',
+                        options: [
+                          for (final svc in cat.services)
+                            ServiceTypeOption(
+                              id: svc.id,
+                              title: svc.name,
+                              subtitle: svc.description ?? '',
+                              service: svc,
+                            ),
+                        ],
+                        onSelect: (ServiceTypeOption svcOpt) {
+                          final svc = svcOpt.service;
+
+                          // 4) Step-3 dialog: Subservice (svc.subservices)
+                          showSubServiceDialog(
+                            context,
+                            title: svc.name,
+                            stepText: 'Step 3 of 3 - Select specific service',
+                            options: [
+                              for (final sub in svc.subservices)
+                                SpecificServiceOption(
+                                  id: sub.id,
+                                  title: sub.name,
+                                  priceRange:
+                                      "Est. ${sub.baseRate.toString()}" ?? '',
+                                  subservice: sub,
+                                ),
+                            ],
+                            onSelect: (SpecificServiceOption subOpt) {
+                              final sub = subOpt.subservice;
+
+                              // 5) Final details dialog + POST /api/sr
+                              showServiceDetailsDialog(
+                                context,
+                                selectedService: sub.name,
+                                categoryPath: '${cat.name} → ${svc.name}',
+                                categoryId: cat.id,
+                                serviceId: svc.id,
+                                subserviceId: sub.id,
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to load services: $e')),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kAccentYellow,

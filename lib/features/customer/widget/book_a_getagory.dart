@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:workpleis/features/customer/screen/service/model/create_sr_model.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
 
-Future<void> showBookServiceDialog(
+Future<void> showBookCatagoryDialog(
   BuildContext context, {
-  void Function(_ServiceItem service)? onServiceSelected,
+  required List<FsmCategory> categories,
+  required void Function(FsmCategory category) onCategorySelected,
 }) {
   return showDialog(
     context: context,
@@ -17,21 +19,27 @@ Future<void> showBookServiceDialog(
       return Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
         backgroundColor: Colors.transparent,
-        child: BookServiceDialog(onServiceSelected: onServiceSelected),
+        child: BookServiceDialog(
+          categories: categories,
+          onCategorySelected: onCategorySelected,
+        ),
       );
     },
   );
 }
 
 class BookServiceDialog extends StatelessWidget {
-  const BookServiceDialog({super.key, this.onServiceSelected});
+  const BookServiceDialog({
+    super.key,
+    required this.categories,
+    required this.onCategorySelected,
+  });
 
-  final void Function(_ServiceItem service)? onServiceSelected;
+  final List<FsmCategory> categories;
+  final void Function(FsmCategory category) onCategorySelected;
 
   @override
   Widget build(BuildContext context) {
-    final services = _serviceList;
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -97,14 +105,17 @@ class BookServiceDialog extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 child: Column(
                   children: [
-                    for (final service in services)
+                    for (final cat in categories)
                       Padding(
                         padding: EdgeInsets.only(bottom: 12.h),
                         child: _ServiceCard(
-                          service: service,
+                          title: cat.name,
+                          description: cat.description ?? '',
+                          icon: Icons
+                              .handyman_outlined, // চাইলে dynamic করতে পারো
                           onTap: () {
                             Navigator.of(context).pop();
-                            onServiceSelected?.call(service);
+                            onCategorySelected(cat);
                           },
                         ),
                       ),
@@ -167,9 +178,16 @@ const List<_ServiceItem> _serviceList = [
 ];
 
 class _ServiceCard extends StatelessWidget {
-  const _ServiceCard({required this.service, required this.onTap});
+  const _ServiceCard({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.onTap,
+  });
 
-  final _ServiceItem service;
+  final String title;
+  final String description;
+  final IconData icon;
   final VoidCallback onTap;
 
   @override
@@ -203,7 +221,7 @@ class _ServiceCard extends StatelessWidget {
                     color: kPrimaryRed,
                     borderRadius: BorderRadius.circular(16.r),
                   ),
-                  child: Icon(service.icon, color: Colors.white, size: 26.r),
+                  child: Icon(icon, color: Colors.white, size: 26.r),
                 ),
                 SizedBox(width: 14.w),
                 // title + subtitle
@@ -212,7 +230,7 @@ class _ServiceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        service.title,
+                        title,
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -221,7 +239,7 @@ class _ServiceCard extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        service.description,
+                        description,
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: Color(0xFF6B7280),

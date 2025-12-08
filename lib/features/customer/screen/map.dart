@@ -1,11 +1,37 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:http/http.dart' as http;
 import '../model/map_local_data_map.dart';
+
+/// যদি অন্য কোথাও already define করা থাকে তবে এটা remove করে দিতে পারো
+const Color kPrimaryRed = Color(0xFFC20001);
+
+/// Google Places API key (Places Autocomplete + Details)
+const String kGooglePlacesApiKey = 'AIzaSyCf5-pQ5-HPiojINTuJKf3EU0wJViRJ-Ck';
+
+/// Simple place prediction model
+class _PlacePrediction {
+  final String placeId;
+  final String description;
+
+  _PlacePrediction({required this.placeId, required this.description});
+
+  factory _PlacePrediction.fromJson(Map<String, dynamic> json) {
+    return _PlacePrediction(
+      placeId: json['place_id'] as String,
+      description: json['description'] as String,
+    );
+  }
+}
 
 class MapAddressPickerScreen extends StatefulWidget {
   const MapAddressPickerScreen({super.key, this.initialLocation});
+
   static const String routeName = '/map-address-picker';
 
   final LocationData? initialLocation;
@@ -22,10 +48,16 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
   double _zoom = 15;
 
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+
+  List<_PlacePrediction> _predictions = [];
+  bool _isLoadingPredictions = false;
 
   // Nouakchott default
-
   static const LatLng _defaultLatLng = LatLng(18.0735, -15.9582);
+  // static const LatLng _dhakaLatLng = LatLng(23.8103, 90.4125);
+
+  LatLng get _selectedLatLng => LatLng(_selected.latitude, _selected.longitude);
 
   @override
   void initState() {
@@ -44,15 +76,14 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _mapController?.dispose();
     super.dispose();
   }
 
-  LatLng get _selectedLatLng => LatLng(_selected.latitude, _selected.longitude);
-
   // ----------------------------------------------------------------------
-  //  handlers
+  //  Map handlers
   // ----------------------------------------------------------------------
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
@@ -69,7 +100,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
   void _onCameraIdle() async {
     if (_mapController == null) return;
     final center = await _mapController!.getLatLng(
-      const ScreenCoordinate(x: 200, y: 400), // center-ish
+      const ScreenCoordinate(x: 200, y: 400), // roughly center
     );
 
     setState(() {
@@ -83,29 +114,22 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       );
     });
 
-    // TODO: ekhane reverse-geocoding (geocoding package / Places API) korte paro
+    // TODO: চাইলে এখানে reverse-geocoding add করতে পারো (Places / geocoding package)
   }
 
   Future<void> _zoomIn() async {
     if (_mapController == null) return;
-    final double newZoom = (_zoom + 1).clamp(3.0, 20.0) as double;
+    final double newZoom = (_zoom + 1).clamp(3.0, 20.0);
     await _mapController!.animateCamera(CameraUpdate.zoomTo(newZoom));
     setState(() => _zoom = newZoom);
   }
 
   Future<void> _zoomOut() async {
     if (_mapController == null) return;
-    final double newZoom = (_zoom - 1).clamp(3.0, 20.0) as double;
+    final double newZoom = (_zoom - 1).clamp(3.0, 20.0);
     await _mapController!.animateCamera(CameraUpdate.zoomTo(newZoom));
     setState(() => _zoom = newZoom);
   }
-  //
-  // Future<void> _zoomOut() async {
-  //   if (_mapController == null) return;
-  //   final newZoom = (_zoom - 1).clamp(3, 20);
-  //   await _mapController!.animateCamera(CameraUpdate.zoomTo(newZoom));
-  //   setState(() => _zoom = newZoom);
-  // }
 
   Future<void> _goToCurrentLocation() async {
     try {
@@ -162,42 +186,131 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
     }
   }
 
-  Future<void> _handleSearch() async {
-    final q = _searchController.text.trim().toLowerCase();
-    if (q.isEmpty) return;
+  // ----------------------------------------------------------------------
+  //  Places autocomplete
+  // ----------------------------------------------------------------------
 
-    // very simple demo search – tui pore Google Places / geocoding add korte parbi
-    LatLng? result;
-    String? label;
-    if (q.contains('nouakchott')) {
-      result = _defaultLatLng;
-      label = 'Nouakchott';
-    }
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    if (result == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location not found (try: Nouakchott)')),
-      );
-      return;
-    }
-
-    _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(CameraPosition(target: result, zoom: 16)),
-    );
-    setState(() {
-      _selected = LocationData(
-        latitude: result!.latitude,
-        longitude: result.longitude,
-        address: '$label, Mauritania',
-        placeName: label,
-      );
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      final input = value.trim();
+      if (input.isEmpty) {
+        setState(() {
+          _predictions = [];
+        });
+        return;
+      }
+      _fetchAutocomplete(input);
     });
+  }
+
+  Future<void> _fetchAutocomplete(String input) async {
+    setState(() {
+      _isLoadingPredictions = true;
+    });
+
+    final uri = Uri.https(
+      'maps.googleapis.com',
+      '/maps/api/place/autocomplete/json',
+      {
+        'input': input,
+        'key': kGooglePlacesApiKey,
+        'language': 'en',
+        // চাইলে শুধু Mauritania limit করতে পারো:
+        // 'components': 'country:mr',
+      },
+    );
+
+    try {
+      final res = await http.get(uri);
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+
+      final preds = (data['predictions'] as List<dynamic>? ?? [])
+          .map((e) => _PlacePrediction.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _predictions = preds;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not fetch suggestions')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingPredictions = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _selectPrediction(_PlacePrediction p) async {
+    FocusScope.of(context).unfocus();
+
+    final uri = Uri.https(
+      'maps.googleapis.com',
+      '/maps/api/place/details/json',
+      {'place_id': p.placeId, 'key': kGooglePlacesApiKey, 'language': 'en'},
+    );
+
+    try {
+      final res = await http.get(uri);
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final result = data['result'] as Map<String, dynamic>;
+
+      final geometry = result['geometry'] as Map<String, dynamic>;
+      final loc = geometry['location'] as Map<String, dynamic>;
+      final lat = (loc['lat'] as num).toDouble();
+      final lng = (loc['lng'] as num).toDouble();
+
+      final name = (result['name'] as String?) ?? p.description;
+      final formatted =
+          (result['formatted_address'] as String?) ?? p.description;
+
+      final latLng = LatLng(lat, lng);
+
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: latLng, zoom: 16),
+        ),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _selected = LocationData(
+          latitude: lat,
+          longitude: lng,
+          address: formatted,
+          placeName: name,
+        );
+        _searchController.text = p.description;
+        _predictions = [];
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not load place details')),
+      );
+    }
+  }
+
+  Future<void> _handleSearchSubmit() async {
+    final q = _searchController.text.trim();
+    if (q.isEmpty) return;
+    await _fetchAutocomplete(q);
   }
 
   void _confirm() {
     Navigator.of(context).pop<LocationData>(_selected);
   }
 
+  // ----------------------------------------------------------------------
+  //  UI
   // ----------------------------------------------------------------------
 
   @override
@@ -208,6 +321,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
         child: Column(
           children: [
             _buildHeader(),
+            if (_predictions.isNotEmpty) _buildSuggestionsList(),
             if (_selected.placeName != null) _buildSelectedCard(),
             Expanded(child: _buildMapArea()),
             _buildConfirmBar(),
@@ -216,8 +330,6 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       ),
     );
   }
-
-  // ---------------- UI parts ----------------
 
   Widget _buildHeader() {
     return Container(
@@ -242,7 +354,8 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
           Expanded(
             child: TextField(
               controller: _searchController,
-              onSubmitted: (_) => _handleSearch(),
+              onChanged: _onSearchChanged,
+              onSubmitted: (_) => _handleSearchSubmit(),
               decoration: InputDecoration(
                 hintText: _gpsAvailable
                     ? 'Search for your address or landmark'
@@ -251,11 +364,25 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.close, size: 18),
-                        onPressed: () => setState(() {
-                          _searchController.clear();
-                        }),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _predictions = [];
+                          });
+                        },
                       )
-                    : null,
+                    : (_isLoadingPredictions
+                          ? const Padding(
+                              padding: EdgeInsets.all(10),
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : null),
                 isDense: true,
                 filled: true,
                 fillColor: const Color(0xFFF3F4F6),
@@ -276,6 +403,38 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsList() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      constraints: const BoxConstraints(maxHeight: 260),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        itemCount: _predictions.length,
+        itemBuilder: (context, index) {
+          final p = _predictions[index];
+          return ListTile(
+            dense: true,
+            leading: const Icon(Icons.location_on_outlined, size: 20),
+            title: Text(p.description, style: const TextStyle(fontSize: 14)),
+            onTap: () => _selectPrediction(p),
+          );
+        },
+        separatorBuilder: (_, __) => const Divider(height: 1),
       ),
     );
   }

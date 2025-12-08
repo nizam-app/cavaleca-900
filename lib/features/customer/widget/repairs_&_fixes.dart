@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workpleis/features/customer/screen/service/model/create_sr_model.dart';
 
 const _kDialogShadow = BoxShadow(
   color: Color(0x22000000),
@@ -7,10 +8,17 @@ const _kDialogShadow = BoxShadow(
 );
 
 class SpecificServiceOption {
+  final int id;
   final String title;
-  final String priceRange; // e.g. "Est. \$50–80"
+  final String priceRange;
+  final FsmSubservice subservice; // NEW
 
-  SpecificServiceOption({required this.title, required this.priceRange});
+  SpecificServiceOption({
+    required this.id,
+    required this.title,
+    required this.priceRange,
+    required this.subservice,
+  });
 }
 
 /// Step-3 dialog: "Repairs & Fixes"
@@ -30,7 +38,7 @@ class SpecificServiceOption {
 ///     // TODO: handle selection, go_router / API etc.
 ///   },
 /// );
-Future<void> showSpecificServiceDialog(
+Future<void> showSubServiceDialog(
   BuildContext context, {
   required String title,
   required String stepText,
@@ -111,7 +119,7 @@ class _SpecificServiceDialog extends StatelessWidget {
                           final opt = options[index];
                           return _SpecificServiceTile(
                             title: opt.title,
-                            priceRange: opt.priceRange,
+                            subtitle: opt.priceRange,
                             onTap: () {
                               Navigator.of(context).pop();
                               onSelect?.call(opt);
@@ -181,12 +189,12 @@ class _SpecificServiceDialog extends StatelessWidget {
 class _SpecificServiceTile extends StatelessWidget {
   const _SpecificServiceTile({
     required this.title,
-    required this.priceRange,
+    required this.subtitle,
     this.onTap,
   });
 
   final String title;
-  final String priceRange;
+  final String subtitle;
   final VoidCallback? onTap;
 
   @override
@@ -226,7 +234,7 @@ class _SpecificServiceTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      priceRange,
+                      subtitle,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFFF97316), // orange

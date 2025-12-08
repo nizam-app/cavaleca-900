@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workpleis/features/freelancer_pages/screen/freelancer_earnings_screen.dart';
+import 'package:workpleis/features/erning/screen/freelancer_earnings_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
 
