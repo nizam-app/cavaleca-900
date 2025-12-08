@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/global_language_dialog.dart';
+import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
@@ -251,12 +253,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ],
             ),
             if (!isGuest) ...[
-              const SizedBox(height: 16),
+               const SizedBox(height: 16),
+
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () {
-                    _showToast('Edit profile tapped');
+                    // _showToast('Edit profile tapped');
+                 context.push(CustomerEditProfile.routeName);
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFFE5E5),
@@ -265,8 +269,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: const Text(
-                    'Edit Profile',
+                  child:  Text(
+                    'edit_profile'.tr(),
                     style: TextStyle(
                       color: Color(0xFFC20001),
                       fontSize: 13,
@@ -275,7 +279,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                 ),
               ),
-            ],
+    ],
           ],
         ),
       ),

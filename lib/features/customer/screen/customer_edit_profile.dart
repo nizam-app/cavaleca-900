@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -285,7 +286,7 @@ class _CustomerEditProfileState
                   SizedBox(width: 16.w),
                   Expanded(
                     child: Text(
-                      'Edit Profile',
+                      'edit_profile'.tr(),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontSize: 16.sp,
