@@ -929,6 +929,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/auth/logic/registration_logic.dart';
 import 'package:workpleis/features/auth/screens/customer/logic/customer_login_logic.dart';
 import 'package:workpleis/features/customer/logic/custom_logic.dart';
 
@@ -955,6 +956,11 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
   bool _isSendingLoginOtp = false;
   bool _isVerifyingLoginOtp = false;
 
+  // 🔵 নতুন registration flags
+  bool _isSendingSignupOtp = false;
+  bool _isVerifyingSignupOtp = false;
+  bool _isCompletingSignup = false;
+  String? _signupTempToken;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -1070,44 +1076,121 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
     }
   }
 
-  void _handleSignupSubmit() {
-    if (_nameController.text.trim().isEmpty ||
-        _phoneController.text.trim().isEmpty) {
+  Future<void> _handleSignupSubmit() async {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty) {
       _showToast('Please fill all fields', success: false);
       return;
     }
-    setState(() => _mode = AuthMode.signupOtp);
+    if (_isSendingSignupOtp) return;
 
-    _showToast('otp_sent_to_your_phone'.tr());
+    try {
+      setState(() => _isSendingSignupOtp = true);
+
+      final res = await RegistrationApi.sendRegistrationOtp(
+        phone: phone,
+        name: name,
+        role: 'CUSTOMER',
+      );
+
+      debugPrint('REG OTP (customer) => ${res.code}');
+
+      _signupTempToken = res.tempToken;
+
+      setState(() => _mode = AuthMode.signupOtp);
+      _showToast(res.message);
+    } catch (e) {
+      _showToast(e.toString(), success: false);
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingSignupOtp = false);
+      }
+    }
   }
 
-  void _handleSignupOtpVerify() {
-    if (_otpController.text.trim().length != 6) {
+  Future<void> _handleSignupOtpVerify() async {
+    final code = _otpController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (code.length != 6) {
       _showToast('Please enter a valid 6-digit OTP', success: false);
       return;
     }
-    _showToast('Phone number verified!');
-    setState(() => _mode = AuthMode.setPassword);
+    if (_signupTempToken == null) {
+      _showToast('Missing temp token, please resend OTP', success: false);
+      return;
+    }
+    if (_isVerifyingSignupOtp) return;
+
+    try {
+      setState(() => _isVerifyingSignupOtp = true);
+
+      final res = await RegistrationApi.verifyRegistrationOtp(
+        phone: phone,
+        code: code,
+        tempToken: _signupTempToken!,
+      );
+
+      if (!res.verified) {
+        _showToast('OTP verification failed', success: false);
+        return;
+      }
+
+      // backend theke new tempToken pele update করে নিলাম
+      _signupTempToken = res.tempToken;
+
+      _showToast(res.message);
+      setState(() => _mode = AuthMode.setPassword);
+    } catch (e) {
+      _showToast(e.toString(), success: false);
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifyingSignupOtp = false);
+      }
+    }
   }
 
-  void _handleSetPassword() {
-    if (_passwordController.text.trim().length < 6) {
+  Future<void> _handleSetPassword() async {
+    final password = _passwordController.text.trim();
+    final phone = _phoneController.text.trim();
+    final name = _nameController.text.trim();
+
+    if (password.length < 6) {
       _showToast('Password must be at least 6 characters', success: false);
       return;
     }
+    if (_signupTempToken == null) {
+      _showToast('Missing temp token, please restart signup', success: false);
+      return;
+    }
+    if (_isCompletingSignup) return;
 
-    /// এখানে চাইলে CustomerAuthApi.completeSignup(...) করে
-    /// password + phone + name পাঠাতে পারো
+    try {
+      setState(() => _isCompletingSignup = true);
 
-    _showToast('Account created successfully!');
+      final res = await RegistrationApi.setPassword(
+        phone: phone,
+        password: password,
+        tempToken: _signupTempToken!,
+        role: 'CUSTOMER',
+        // extra data লাগলে এখানে পাঠাও
+      );
 
-    ref
-        .read(customerAppControllerProvider.notifier)
-        .authComplete(
-          isGuest: false,
-          name: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-        );
+      _showToast(res.message);
+
+      // AuthLocalStorage already set হয়েছে RegistrationApi ভেতরে
+      ref
+          .read(customerAppControllerProvider.notifier)
+          .authComplete(isGuest: false, name: name, phone: phone);
+    } catch (e) {
+      _showToast(e.toString(), success: false);
+    } finally {
+      if (mounted) {
+        setState(() => _isCompletingSignup = false);
+      }
+    }
   }
 
   // ----------------- BACK ACTION -----------------
@@ -1266,7 +1349,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
               SizedBox(width: 8.w),
               Text(
                 _mode == AuthMode.welcome
-                    ? 'back_to_role_selection'.tr()
+                    ? 'back_to_role_selection'.tr().substring(0, 8)
                     : 'back'.tr(),
                 style: TextStyle(
                   fontSize: 14.sp,

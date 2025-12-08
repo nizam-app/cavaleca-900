@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:workpleis/features/internal_technician/screen/earningsScreen.dart';
-import 'package:workpleis/features/internal_technician/screen/job/screen/internal_jobs.dart';
+import 'package:workpleis/features/erning/screen/earningsScreen.dart';
 import 'package:workpleis/features/internal_technician/screen/internal_technician_home.dart';
+import 'package:workpleis/features/internal_technician/screen/job/screen/internal_jobs.dart';
 import 'package:workpleis/features/internal_technician/screen/profile/screen/internal_job_profile.dart';
 
 import '../logic/botton_nav_index_logic.dart';
