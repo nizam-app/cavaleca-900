@@ -3,11 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:workpleis/features/customer/screen/service/data/service_data.dart';
 import 'package:workpleis/features/customer/widget/book_a_getagory.dart';
-import 'package:workpleis/features/customer/widget/custom_booking_details.dart';
 
 import 'package:intl/intl.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:workpleis/features/customer/widget/book_a_service.dart';
 
 import 'package:workpleis/features/customer/widget/genarel_maintenance.dart';
 import 'package:workpleis/features/customer/widget/repairs_&_fixes.dart';
