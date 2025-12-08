@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/log_out_utton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
+import 'package:workpleis/features/freelancer_pages/screen/freelancer_edit_profile.dart';
 import 'package:workpleis/features/freelancer_pages/screen/profile/data/freelancer_profile_data.dart';
 
 /// ---------------------------------------------------------------------------
@@ -277,7 +278,7 @@ class _FreelancerProfileScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child:  Text('cancel'.tr()),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -449,8 +450,18 @@ class _ProfileInfoCard extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           GestureDetector(
-            onTap: () {
-              // Edit profile screen navigate করো
+            onTap: ()async {
+              final updatedProfile = await context.push<FreelancerProfileData>(
+                FreelancerEditProfile.routeName,
+                extra: context, // optional, jodi profile data pass korte caao
+              );
+
+              if (updatedProfile != null) {
+                // user save kore screen close korle ekhane pabe updated data
+                // setState(() {
+                //   currentProfileData = updatedProfile;
+                // });
+              }
             },
             child: Container(
               width: double.infinity,
