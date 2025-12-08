@@ -7,6 +7,8 @@ import 'package:workpleis/features/internal_technician/screen/job/logic/internal
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
+import 'package:workpleis/features/internal_technician/screen/dashboard/logic/technician_dashboard_api.dart';
+import 'package:workpleis/features/internal_technician/screen/dashboard/model/technician_dashboard_model.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 
@@ -48,6 +50,7 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
 
   List<InternalJob> _activeJobs = [];
   List<InternalJob> _completedJobs = [];
+  TechnicianDashboardModel? _dashboardData;
 
   @override
   void initState() {
@@ -62,11 +65,15 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
     });
 
     try {
+      // Dashboard data fetch
+      final dashboardData = await TechnicianDashboardApi.fetchDashboard();
+      
       // same backend function
       final active = await TechnicianJobsApi.fetchJobs('active');
       final done = await TechnicianJobsApi.fetchJobs('done');
 
       setState(() {
+        _dashboardData = dashboardData;
         _activeJobs = active;
         _completedJobs = done;
       });
@@ -100,8 +107,11 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
         .where((j) => j.status == JobStatus.assigned)
         .toList();
 
-    final completedCount = _completedJobs.length;
-    final activeCount = inProgressJobs.length + acceptedJobs.length;
+    // Use API data if available, otherwise fallback to calculated values
+    final completedCount = _dashboardData?.completedThisMonth ?? _completedJobs.length;
+    final activeCount = _dashboardData?.activeJobs ?? (inProgressJobs.length + acceptedJobs.length);
+    final inProgressCount = _dashboardData?.inProgress ?? inProgressJobs.length;
+    final readyToStartCount = _dashboardData?.readyToStart ?? acceptedJobs.length;
 
     if (_isLoading) {
       return const Scaffold(
@@ -134,14 +144,14 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _HeaderSection(
-                  monthlyCommission: _monthlyCommission,
+                  monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0).toDouble(),
                   completedJobsThisMonth: completedCount,
                   userName: 'freelancer_tech'.tr(),
                 ),
                 SizedBox(height: 12.h),
                 _StatsRow(
-                  active: activeCount,
-                  inProgress: inProgressJobs.length,
+                  active: readyToStartCount,
+                  inProgress: inProgressCount,
                   completedThisMonth: completedCount,
                 ),
                 SizedBox(height: 16.h),
@@ -753,7 +763,10 @@ class _JobCard extends ConsumerWidget {
                         showDialog(
                           context: context,
                           barrierDismissible: true,
-                          builder: (_) => Viewjobdetails(),
+                          builder: (_) => Viewjobdetails(
+                            job: job,
+                            bonusRate: 5.0,
+                          ),
                         );
                       }
                     },

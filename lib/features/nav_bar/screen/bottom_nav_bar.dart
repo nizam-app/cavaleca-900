@@ -10,6 +10,7 @@ import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
 import 'package:workpleis/features/customer/screen/profile/screen/customer_profile_screen.dart';
 import 'package:workpleis/features/notification/customer_notifications_screen.dart';
+import 'package:workpleis/features/notification/data/notificaion_data.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kNavInactive = Color(0xFF9CA3AF);
@@ -59,7 +60,9 @@ class CustomerAppScreen extends ConsumerWidget {
       bottomNavigationBar: _CustomerBottomNavBar(
         activeIndex: state.activeIndex,
         isGuest: isGuest,
-        unreadNotifications: 3, // TODO: backend
+        unreadNotifications: isGuest
+            ? 0
+            : ref.watch(unreadNotificationsProvider).value ?? 0,
         onTap: controller.selectTab,
       ),
     );
