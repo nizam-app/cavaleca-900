@@ -21,6 +21,7 @@ import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/splashScreen/screen/splashScreen.dart';
 
+import '../features/freelancer_pages/screen/freelancer_edit_profile.dart';
 import '../features/internal_technician/screen/internal_technician_home.dart';
 import '../features/nav_bar/screen/internal_bottom_nav_bar.dart';
 import 'error_screen.dart';
@@ -209,6 +210,7 @@ class AppRouter {
           );
         },
       ),
+
       GoRoute(
         path: CustomerProfileScreen.routeName,
         name: CustomerProfileScreen.routeName,
@@ -246,6 +248,14 @@ class AppRouter {
           );
         },
       ),
+
+      GoRoute(
+        path: FreelancerEditProfile.routeName,
+        name: FreelancerEditProfile.routeName,
+        builder: (context, state) => const FreelancerEditProfile(),
+      ),
+
+
       GoRoute(
         path: CustomerAppScreen.routeName, // '/customerApp'
         name: CustomerAppScreen.routeName,
