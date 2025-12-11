@@ -463,7 +463,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
         ),
         const SizedBox(height: 16),
          Text(
-          'join_our_network_of_skilled'.tr(),
+          'join_our_network_skilled_technicians'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), height: 1.4),
         ),
@@ -637,7 +637,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           ),
           const SizedBox(height: 4),
            Text(
-            'step_1_of_3'.tr(),
+            's_tep_1_of_3'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
