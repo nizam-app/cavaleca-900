@@ -32,7 +32,7 @@ class InternalJobProfile extends ConsumerWidget {
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) =>
-            Center(child: Text('Failed to load profile\n$err')),
+            Center(child: Text('${'failed_to_load_profile'.tr()}\n$err')),
         data: (profile) {
           final tech = profile.technicianProfile;
 
@@ -69,18 +69,18 @@ class InternalJobProfile extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Confirm'),
-          content: const Text('Are you sure you want to sign out?'),
+          title: Text('confirm'.tr()),
+          content: Text('are_you_sure_you_want_to_sign_out'.tr()),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text('cancel'.tr()),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Yes',
-                style: TextStyle(color: Color(0xFFC20001)),
+              child: Text(
+                'yes'.tr(),
+                style: const TextStyle(color: Color(0xFFC20001)),
               ),
             ),
           ],
@@ -94,14 +94,14 @@ class InternalJobProfile extends ConsumerWidget {
       await CustomerLogOut.logout(); // 👈 same logic as CustomerProfileScreen
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Logout successful')));
+      ).showSnackBar(SnackBar(content: Text('logout_successful'.tr())));
       context.go(
         RoleSelectionScreen.routeName,
       ); // stack clear kore role selection e
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Logout failed: $e')));
+      ).showSnackBar(SnackBar(content: Text('${'logout_failed'.tr()}: $e')));
     }
   }
 
@@ -123,7 +123,7 @@ class InternalJobProfile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Profile",
+            "profile".tr(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 24.sp,
@@ -132,7 +132,7 @@ class InternalJobProfile extends ConsumerWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            "Manage your account information",
+            "manage_account_info".tr(),
             style: TextStyle(color: Colors.white70, fontSize: 13.sp),
           ),
         ],
@@ -145,7 +145,7 @@ class InternalJobProfile extends ConsumerWidget {
   // ----------------------------------------------------
   Widget _profileCard(BuildContext context, InternalProfile profile, TechnicianProfile? tech) {
     final initials = _getInitials(profile.name);
-    final roleLabel = tech?.position ?? "Internal Technician";
+    final roleLabel = tech?.position ?? "internal_technician".tr();
     final employeeId = 'TECH-${profile.id}';
 
     return Container(
@@ -177,7 +177,7 @@ class InternalJobProfile extends ConsumerWidget {
                       style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                     ),
                     Text(
-                      "Employee ID: $employeeId",
+                      "${'employee_id'.tr()}: $employeeId",
                       style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                     ),
                   ],
@@ -186,7 +186,7 @@ class InternalJobProfile extends ConsumerWidget {
             ],
           ),
           SizedBox(height: 16.h),
-          _simpleButton(context, "Edit Profile"),
+          _simpleButton(context, "edit_profile".tr()),
         ],
       ),
     );
@@ -260,7 +260,7 @@ class InternalJobProfile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Employment Details",
+            "employment_details".tr(),
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w700,
@@ -268,11 +268,11 @@ class InternalJobProfile extends ConsumerWidget {
             ),
           ),
           SizedBox(height: 14.h),
-          _rowItem("Department", tech.department ?? "N/A"),
+          _rowItem("department".tr(), tech.department ?? "n_a".tr()),
           SizedBox(height: 10.h),
-          _rowItem("Join Date", joinDateStr),
+          _rowItem("join_date".tr(), joinDateStr),
           SizedBox(height: 10.h),
-          _rowItem("Position", tech.position ?? "N/A"),
+          _rowItem("position".tr(), tech.position ?? "n_a".tr()),
         ],
       ),
     );
@@ -323,7 +323,7 @@ class InternalJobProfile extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Specializations",
+            "specializations".tr(),
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w700,
@@ -333,7 +333,7 @@ class InternalJobProfile extends ConsumerWidget {
           SizedBox(height: 14.h),
           if (items.isEmpty)
             Text(
-              'No specializations added',
+              'no_specializations_added'.tr(),
               style: TextStyle(fontSize: 12.sp, color: kTextMuted),
             )
           else
@@ -383,29 +383,29 @@ class InternalJobProfile extends ConsumerWidget {
       children: [
         _listItem(
           Icons.calendar_month,
-          "Time Off Requests",
-          "2 pending", // static for now
+          "time_off_requests".tr(),
+          "pending_two".tr(), // static for now
           const Color(0xFFE8F0FF),
           const Color(0xFF2563EB),
         ),
         _listItem(
           Icons.workspace_premium,
-          "Certifications",
-          "$certificationsCount active",
+          "certifications".tr(),
+          "$certificationsCount ${'active'.tr()}",
           const Color(0xFFFFF4D9),
           Colors.orange,
         ),
         _listItem(
           Icons.work_history_rounded,
-          "Work History",
-          "View",
+          "work_history".tr(),
+          "view".tr(),
           const Color(0xFFF3E8FF),
           Colors.purple,
         ),
         // 🔥 Language row: opens LanguageDialog
         _listItem(
           Icons.language,
-          "Language",
+          "language".tr(),
           currentLanguage, // English / Français
           const Color(0xFFE8FFF4),
           Colors.green,
@@ -413,7 +413,7 @@ class InternalJobProfile extends ConsumerWidget {
         ),
         _listItem(
           Icons.support_agent,
-          "Support",
+          "support".tr(),
           "",
           const Color(0xFFFFF0E0),
           Colors.deepOrange,
@@ -439,7 +439,7 @@ class InternalJobProfile extends ConsumerWidget {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Language updated to $newName')));
+      ).showSnackBar(SnackBar(content: Text('${'language_updated_to'.tr()} $newName')));
     }
   }
 

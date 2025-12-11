@@ -112,13 +112,13 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
 
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Job started successfully!')),
+                SnackBar(content: Text('job_started_successfully'.tr())),
               );
             }
           } catch (e) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to start job: $e')),
+                SnackBar(content: Text('${'failed_to_start_job'.tr()}: $e')),
               );
             }
           }
@@ -321,7 +321,7 @@ class _HeaderSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Monthly Commission (15%)',
+                        'monthly_commission_label'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Colors.black.withOpacity(0.9),
@@ -343,7 +343,7 @@ class _HeaderSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'November 2025',
+                      'current_month_year'.tr(),
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: Colors.brown.shade900.withOpacity(0.9),
@@ -351,7 +351,7 @@ class _HeaderSection extends StatelessWidget {
                     ),
                     SizedBox(height: 6.h),
                     Text(
-                      '$completedJobsThisMonth jobs completed',
+                      '$completedJobsThisMonth ${'jobs_completed'.tr()}',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -395,7 +395,7 @@ class _StatsRow extends StatelessWidget {
               iconBg: const Color(0xFFFFF4D7),
               iconColor: const Color(0xFFE6A400),
               value: active.toString(),
-              label: 'Ready to start',
+              label: 'ready_to_start_label'.tr(),
             ),
           ),
           SizedBox(width: 8.w),
@@ -405,7 +405,7 @@ class _StatsRow extends StatelessWidget {
               iconBg: const Color(0xFFE5F1FF),
               iconColor: kPrimaryBlue,
               value: inProgress.toString(),
-              label: 'Active now',
+              label: 'active_now'.tr(),
             ),
           ),
           SizedBox(width: 8.w),
@@ -415,7 +415,7 @@ class _StatsRow extends StatelessWidget {
               iconBg: const Color(0xFFE7F9ED),
               iconColor: const Color(0xFF16A34A),
               value: completedThisMonth.toString(),
-              label: 'This month',
+              label: 'this_month'.tr(),
             ),
           ),
         ],
@@ -457,6 +457,7 @@ class _StatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             height: 32.w,
@@ -475,11 +476,16 @@ class _StatCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: kTextMain,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: 2.h),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12.sp, color: kTextMuted),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12.sp, color: kTextMuted),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
           ),
         ],
       ),
@@ -519,7 +525,7 @@ class _TabSwitcher extends ConsumerWidget {
           children: [
             Expanded(
               child: _TabChip(
-                label: 'Active ($activeCount)',
+                label: '${'active'.tr()} ($activeCount)',
                 selected: tab == JobsTab.active,
                 onTap: () =>
                     ref.read(jobsTabProvider.notifier).state = JobsTab.active,
@@ -527,7 +533,7 @@ class _TabSwitcher extends ConsumerWidget {
             ),
             Expanded(
               child: _TabChip(
-                label: 'Completed ($completedCount)',
+                label: '${'completed'.tr()} ($completedCount)',
                 selected: tab == JobsTab.completed,
                 onTap: () => ref.read(jobsTabProvider.notifier).state =
                     JobsTab.completed,
@@ -696,7 +702,7 @@ class _JobCard extends ConsumerWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    'Earn ${job.bonus}',
+                    '${'earn_label'.tr()} ${job.bonus}',
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w500,
@@ -742,7 +748,7 @@ class _JobCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _StatusBadge(
-                label: isInProgressCard ? 'In Progress' : 'Ready to Start',
+                label: isInProgressCard ? 'in_progress'.tr() : 'ready_to_start'.tr(),
                 color: isInProgressCard
                     ? const Color(0xFF2563EB)
                     : const Color(0xFFE6A400),
@@ -794,8 +800,8 @@ class _JobCard extends ConsumerWidget {
                     ),
                     child: Text(
                       isInProgressCard
-                          ? 'Continue'
-                          : (job.status == JobStatus.assigned ? 'Start Job' : 'View Details'),
+                          ? 'continue'.tr()
+                          : (job.status == JobStatus.assigned ? 'start_job_short'.tr() : 'view_details'.tr()),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
@@ -900,7 +906,7 @@ class _CompletedJobsSection extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Customer: ${job.customer}',
+                  '${'customer_label'.tr()} ${job.customer}',
                   style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                 ),
                 SizedBox(height: 6.h),
@@ -944,7 +950,7 @@ class _CompletedJobsSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'commission_earned '.tr(),
+                          'earned'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: kTextMuted,
@@ -972,7 +978,7 @@ class _CompletedJobsSection extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       child: Text(
-                        'Paid',
+                        'paid'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: const Color(0xFF16A34A),

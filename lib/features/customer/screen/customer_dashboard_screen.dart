@@ -356,7 +356,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to load services: $e')),
+                    SnackBar(content: Text('${'failed_to_load_services'.tr()}: $e')),
                   );
                 }
               },

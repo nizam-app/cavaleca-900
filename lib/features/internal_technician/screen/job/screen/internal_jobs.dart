@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 
@@ -114,8 +115,8 @@ class _InternalJobsState extends State<InternalJobs> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Work order accepted! Moving to Active Jobs.'),
+        SnackBar(
+          content: Text('work_order_accepted'.tr()),
         ),
       );
 
@@ -127,7 +128,7 @@ class _InternalJobsState extends State<InternalJobs> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to accept job: $e')));
+      ).showSnackBar(SnackBar(content: Text('${'failed_to_accept_job'.tr()}: $e')));
     }
   }
 
@@ -140,7 +141,7 @@ class _InternalJobsState extends State<InternalJobs> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Work order declined.')));
+      ).showSnackBar(SnackBar(content: Text('work_order_declined'.tr())));
 
       setState(() {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
@@ -148,7 +149,7 @@ class _InternalJobsState extends State<InternalJobs> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to decline job: $e')));
+      ).showSnackBar(SnackBar(content: Text('${'failed_to_decline_job'.tr()}: $e')));
     }
   }
 
@@ -1051,15 +1052,15 @@ class _InternalJobsState extends State<InternalJobs> {
                                   
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Job started successfully!'),
+                                      SnackBar(
+                                        content: Text('job_started_successfully'.tr()),
                                       ),
                                     );
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Failed to start job: $e')),
+                                      SnackBar(content: Text('${'failed_to_start_job'.tr()}: $e')),
                                     );
                                   }
                                 }
@@ -1346,7 +1347,7 @@ class InternalWorkflowOverlay extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: onClose,
-                      child: const Text('Close'),
+                      child: Text('close'.tr()),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -1355,7 +1356,7 @@ class InternalWorkflowOverlay extends StatelessWidget {
                       onPressed: () {
                         onJobUpdate(job.copyWith(status: JobStatus.completed));
                       },
-                      child: const Text('Mark Completed'),
+                      child: Text('mark_completed'.tr()),
                     ),
                   ),
                 ],

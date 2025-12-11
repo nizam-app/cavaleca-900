@@ -160,7 +160,7 @@ class _HeaderSection extends StatelessWidget {
                 ),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Export coming soon…')),
+                    SnackBar(content: Text('export_coming_soon'.tr())),
                   );
                 },
                 icon: Icon(Icons.download_rounded, size: 16.sp),
@@ -788,19 +788,19 @@ class _RecentTransactions extends StatelessWidget {
                 color: kEarningsTextMain,
               ),
             ),
-            TextButton(
-              onPressed: () {
-                // TODO: view-all route
-              },
-              child: Text(
-                'view_all'.tr(),
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: kEarningsYellow,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+            // TextButton(
+            //   onPressed: () {
+            //     // TODO: view-all route
+            //   },
+            //   child: Text(
+            //     'view_all'.tr(),
+            //     style: TextStyle(
+            //       fontSize: 12.sp,
+            //       color: kEarningsYellow,
+            //       fontWeight: FontWeight.w500,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         SizedBox(height: 8.h),
@@ -861,12 +861,41 @@ class _RecentTransactions extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: 4.h),
-                        Text(
-                          tx.date,
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: kEarningsTextMuted,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              tx.formattedDate,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: kEarningsTextMuted,
+                              ),
+                            ),
+                            if (tx.status.isNotEmpty) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: tx.status == 'PAID'
+                                      ? kEarningsGreen.withOpacity(0.1)
+                                      : Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Text(
+                                  tx.status,
+                                  style: TextStyle(
+                                    fontSize: 9.sp,
+                                    color: tx.status == 'PAID'
+                                        ? kEarningsGreenDark
+                                        : Colors.orange,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),

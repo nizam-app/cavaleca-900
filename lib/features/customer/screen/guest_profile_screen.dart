@@ -210,7 +210,7 @@ class GuestProfileScreen extends StatelessWidget {
                   icon: Icons.language,
                   iconBg: const Color(0xFFF5F5F5),
                   title: 'language'.tr(),
-                  subtitle: 'English',
+                  subtitle: context.locale.languageCode == 'en' ? 'english'.tr() : 'french'.tr(),
                   onTap: () {
                     // TODO: language selection
                   },

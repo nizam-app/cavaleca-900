@@ -1,19 +1,60 @@
 import 'package:workpleis/features/erning/model/erninig_model.dart';
+import 'package:intl/intl.dart';
 
 class FreelancerTransaction {
   final int id;
-  final String job;
-  final String customer;
-  final String date;
-  final String amount;
+  final String jobName;
+  final String customerName;
+  final DateTime date;
+  final double jobPayment;
+  final double bonus;
+  final String status;
+  final String woNumber;
 
   const FreelancerTransaction({
     required this.id,
-    required this.job,
-    required this.customer,
+    required this.jobName,
+    required this.customerName,
     required this.date,
-    required this.amount,
+    required this.jobPayment,
+    required this.bonus,
+    required this.status,
+    required this.woNumber,
   });
+
+  // Helper getters for backward compatibility with UI
+  String get job => jobName;
+  String get customer => customerName;
+  String get amount => '\$${bonus.toStringAsFixed(2)}';
+  
+  String get formattedDate {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final transactionDate = DateTime(date.year, date.month, date.day);
+    
+    if (transactionDate == today) {
+      return 'Today, ${DateFormat('h:mm a').format(date)}';
+    } else if (transactionDate == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday, ${DateFormat('h:mm a').format(date)}';
+    } else {
+      return DateFormat('MMM d, y').format(date);
+    }
+  }
+
+  factory FreelancerTransaction.fromJson(Map<String, dynamic> json) {
+    return FreelancerTransaction(
+      id: (json['id'] ?? 0).toInt(),
+      jobName: (json['jobName'] ?? '') as String,
+      customerName: (json['customerName'] ?? '') as String,
+      date: json['date'] != null
+          ? DateTime.parse(json['date'] as String)
+          : DateTime.now(),
+      jobPayment: (json['jobPayment'] ?? 0).toDouble(),
+      bonus: (json['bonus'] ?? 0).toDouble(),
+      status: (json['status'] ?? '') as String,
+      woNumber: (json['woNumber'] ?? '') as String,
+    );
+  }
 }
 
 class FreelancerEarningsData {
@@ -73,7 +114,9 @@ class FreelancerEarningsData {
       monthJobsCompleted: avail.jobsCount, // আপাতত same
       monthJobsAmount: breakdown.thisMonth, // full month amount
       monthCommission: monthCommission, // derived
-      recentTransactions: const [], // backend এখন খালি দিচ্ছে
+      recentTransactions: summary.recentTransactions
+          .map((tx) => FreelancerTransaction.fromJson(tx))
+          .toList(),
     );
   }
 }

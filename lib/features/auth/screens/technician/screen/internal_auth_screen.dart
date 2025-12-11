@@ -834,7 +834,7 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
           obscureText: !_showPassword,
           decoration:
               _inputDecoration(
-                hintText: 'Create a password (min. 6 characters)',
+                hintText: 'create_password_hint'.tr(),
                 prefixIcon: Icons.lock_outline,
               ).copyWith(
                 suffixIcon: IconButton(

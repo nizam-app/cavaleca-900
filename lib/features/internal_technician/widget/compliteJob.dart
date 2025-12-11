@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 
@@ -67,7 +68,7 @@ class _ComplitejobState extends State<Complitejob> {
             children: [
               ListTile(
                 leading: Icon(Icons.photo_library, color: kPrimaryGreen),
-                title: Text('Gallery'),
+                title: Text('gallery'.tr()),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImagesFromGallery();
@@ -75,7 +76,7 @@ class _ComplitejobState extends State<Complitejob> {
               ),
               ListTile(
                 leading: Icon(Icons.camera_alt, color: kPrimaryGreen),
-                title: Text('Camera'),
+                title: Text('camera'.tr()),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImageFromCamera();
@@ -118,8 +119,8 @@ class _ComplitejobState extends State<Complitejob> {
       if (status.isDenied || status.isPermanentlyDenied) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Camera permission is required to take photos'),
+            SnackBar(
+              content: Text('camera_permission_required'.tr()),
             ),
           );
         }
@@ -136,8 +137,8 @@ class _ComplitejobState extends State<Complitejob> {
       if (!hasPermission) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Storage permission is required to select images'),
+            SnackBar(
+              content: Text('storage_permission_required'.tr()),
             ),
           );
         }
@@ -153,7 +154,7 @@ class _ComplitejobState extends State<Complitejob> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick images: $e')),
+          SnackBar(content: Text('${'failed_to_pick_images'.tr()}: $e')),
         );
       }
     }
@@ -177,7 +178,7 @@ class _ComplitejobState extends State<Complitejob> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to take photo: $e')),
+          SnackBar(content: Text('${'failed_to_take_photo'.tr()}: $e')),
         );
       }
     }
@@ -192,7 +193,7 @@ class _ComplitejobState extends State<Complitejob> {
   Future<void> _submitCompletion() async {
     if (_selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload at least 1 photo')),
+        SnackBar(content: Text('please_upload_at_least_one_photo'.tr())),
       );
       return;
     }
@@ -218,15 +219,15 @@ class _ComplitejobState extends State<Complitejob> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Job completed successfully'),
+          SnackBar(
+            content: Text('job_completed_successfully'.tr()),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to complete job: $e')),
+          SnackBar(content: Text('${'failed_to_complete_job'.tr()}: $e')),
         );
       }
     } finally {
@@ -287,7 +288,7 @@ class _ComplitejobState extends State<Complitejob> {
             SizedBox(width: 24.w),
             Expanded(
               child: Text(
-                'Complete Job',
+                'complete_job'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18.sp,
@@ -308,7 +309,7 @@ class _ComplitejobState extends State<Complitejob> {
         ),
         SizedBox(height: 4.h),
         Text(
-          'Upload photos and add notes about the\ncompleted work',
+          'upload_photos_and_add_notes'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12.sp,
@@ -327,7 +328,7 @@ class _ComplitejobState extends State<Complitejob> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Work Photos *',
+          'work_photos'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
@@ -417,7 +418,7 @@ class _ComplitejobState extends State<Complitejob> {
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  _selectedImages.isEmpty ? 'Tap to upload photos' : 'Add more photos',
+                  _selectedImages.isEmpty ? 'tap_to_upload_photos'.tr() : 'add_more_photos'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -426,7 +427,7 @@ class _ComplitejobState extends State<Complitejob> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'At least 1 photo required',
+                  'one_photo_required'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w400,
@@ -447,7 +448,7 @@ class _ComplitejobState extends State<Complitejob> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Work Notes (Optional)',
+          'work_notes'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
@@ -467,7 +468,7 @@ class _ComplitejobState extends State<Complitejob> {
               fontSize: 12.sp,
             ),
             decoration: InputDecoration(
-              hintText: 'Add any notes about the work completed',
+              hintText: 'add_notes'.tr(),
               hintStyle: TextStyle(fontSize: 12.sp, color: kTextMuted),
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
@@ -508,7 +509,7 @@ class _ComplitejobState extends State<Complitejob> {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  'Bonus Calculation',
+                  'bonus_calculation'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
@@ -523,7 +524,7 @@ class _ComplitejobState extends State<Complitejob> {
             children: [
               Expanded(
                 child: Text(
-                  'Job Payment:',
+                  'job_payment'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: kPrimaryGreen,
@@ -546,7 +547,7 @@ class _ComplitejobState extends State<Complitejob> {
             children: [
               Expanded(
                 child: Text(
-                  'Bonus Rate:',
+                  'bonus_rate'.tr(),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: kPrimaryGreen,
@@ -572,7 +573,7 @@ class _ComplitejobState extends State<Complitejob> {
             children: [
               Expanded(
                 child: Text(
-                  'Your Bonus:',
+                  'your_bonus'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
@@ -592,7 +593,7 @@ class _ComplitejobState extends State<Complitejob> {
           ),
           SizedBox(height: 6.h),
           Text(
-            'Paid every Monday with your weekly bonuses',
+            'paid_every_monday'.tr(),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w400,
@@ -622,7 +623,7 @@ class _ComplitejobState extends State<Complitejob> {
               ),
               child: Center(
                 child: Text(
-                  'Cancel',
+                  'cancel'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
@@ -665,7 +666,7 @@ class _ComplitejobState extends State<Complitejob> {
                     ),
                   SizedBox(width: 8.w),
                   Text(
-                    _isSubmitting ? 'Completing...' : 'Complete Job',
+                    _isSubmitting ? 'completing'.tr() : 'complete_job'.tr(),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,

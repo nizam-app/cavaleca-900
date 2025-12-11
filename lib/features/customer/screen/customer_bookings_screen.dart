@@ -53,7 +53,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
         _errorMessage = e.toString();
         _isLoading = false;
       });
-      _showSnack('Failed to load bookings: ${e.toString()}');
+      _showSnack('${'failed_to_load_bookings'.tr()}: ${e.toString()}');
     }
   }
 
@@ -70,7 +70,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   }
 
   String _formatDate(String? dateString) {
-    if (dateString == null) return 'Not scheduled';
+    if (dateString == null) return 'not_scheduled'.tr();
     try {
       final date = DateTime.parse(dateString);
       final now = DateTime.now();
@@ -78,9 +78,9 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
       final dateOnly = DateTime(date.year, date.month, date.day);
 
       if (dateOnly == today) {
-        return 'Today, ${DateFormat('h:mm a').format(date)}';
+        return '${'today'.tr()}, ${DateFormat('h:mm a').format(date)}';
       } else if (dateOnly == today.add(const Duration(days: 1))) {
-        return 'Tomorrow, ${DateFormat('h:mm a').format(date)}';
+        return '${'tomorrow'.tr()}, ${DateFormat('h:mm a').format(date)}';
       } else {
         return DateFormat('MMM d, yyyy, h:mm a').format(date);
       }
@@ -90,7 +90,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   }
 
   String _formatDateOnly(String? dateString) {
-    if (dateString == null) return 'N/A';
+    if (dateString == null) return 'n_a'.tr();
     try {
       final date = DateTime.parse(dateString);
       return DateFormat('MMM d, yyyy').format(date);
@@ -109,7 +109,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
 
   Future<void> _call(String? phone) async {
     if (phone == null || phone.isEmpty) {
-      _showSnack('Phone number not available');
+      _showSnack('phone_number_not_available'.tr());
       return;
     }
 
@@ -118,10 +118,10 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showSnack('Cannot make phone call');
+        _showSnack('cannot_make_phone_call'.tr());
       }
     } catch (e) {
-      _showSnack('Error calling: ${e.toString()}');
+      _showSnack('${'error_calling'.tr()}: ${e.toString()}');
     }
   }
 
@@ -142,20 +142,20 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   Future<void> _handleBookAgain(int srId) async {
     try {
       await CustomerBookingLogic.bookAgain(srId);
-      _showSnack('Service booked again successfully');
+      _showSnack('service_booked_again_successfully'.tr());
       _loadBookings(); // Refresh the list
     } catch (e) {
-      _showSnack('Failed to book again: ${e.toString()}');
+      _showSnack('${'failed_to_book_again'.tr()}: ${e.toString()}');
     }
   }
 
   Future<void> _handleRebook(int srId) async {
     try {
       await CustomerBookingLogic.rebook(srId);
-      _showSnack('Service rebooked successfully');
+      _showSnack('service_rebooked_successfully'.tr());
       _loadBookings(); // Refresh the list
     } catch (e) {
-      _showSnack('Failed to rebook: ${e.toString()}');
+      _showSnack('${'failed_to_rebook'.tr()}: ${e.toString()}');
     }
   }
 
@@ -318,6 +318,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                         indicatorSize: TabBarIndicatorSize.tab,
                         labelColor: Colors.white,
                         unselectedLabelColor: const Color(0xFF6B7280),
+                        dividerColor: Colors.transparent,
                         labelStyle: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
@@ -367,11 +368,11 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: $_errorMessage'),
+            Text('${'error'.tr()}: $_errorMessage'),
             SizedBox(height: 16.h),
             ElevatedButton(
               onPressed: _loadBookings,
-              child: const Text('Retry'),
+              child: Text('retry'.tr()),
             ),
           ],
         ),
@@ -407,11 +408,11 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: $_errorMessage'),
+            Text('${'error'.tr()}: $_errorMessage'),
             SizedBox(height: 16.h),
             ElevatedButton(
               onPressed: _loadBookings,
-              child: const Text('Retry'),
+              child: Text('retry'.tr()),
             ),
           ],
         ),
@@ -447,11 +448,11 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: $_errorMessage'),
+            Text('${'error'.tr()}: $_errorMessage'),
             SizedBox(height: 16.h),
             ElevatedButton(
               onPressed: _loadBookings,
-              child: const Text('Retry'),
+              child: Text('retry'.tr()),
             ),
           ],
         ),
@@ -483,7 +484,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
     final bool hasTechnician = booking.assignedTechnician != null;
     final String technicianName = hasTechnician
         ? booking.assignedTechnician!.name
-        : 'Not Assigned';
+        : 'not_assigned'.tr();
     final String? technicianPhone = hasTechnician
         ? booking.assignedTechnician!.phone
         : null;
@@ -508,7 +509,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.service?.name ?? 'Service',
+                        booking.service?.name ?? 'service'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -517,7 +518,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'Technician: $technicianName',
+                        '${'technician_label'.tr()} $technicianName',
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: const Color(0xFF6B7280),
@@ -653,7 +654,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
 
   /// COMPLETED TAB – pixel perfect to screenshot
   Widget _buildCompletedCard(CustomerBookingModel booking) {
-    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
 
     return Container(
       decoration: _cardDecoration(),
@@ -671,7 +672,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.service?.name ?? 'Service',
+                        booking.service?.name ?? 'service'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -680,7 +681,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'Technician: $technicianName',
+                        '${'technician_label'.tr()} $technicianName',
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: const Color(0xFF6B7280),
@@ -782,7 +783,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   }
 
   Widget _buildCancelledCard(CustomerBookingModel booking) {
-    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
 
     return Container(
       decoration: _cardDecoration(),
@@ -800,7 +801,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.service?.name ?? 'Service',
+                        booking.service?.name ?? 'service'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -932,7 +933,7 @@ class _BookingDetailSheet extends StatelessWidget {
   final Future<void> Function(String?) onCall;
 
   String _formatDate(String? dateString) {
-    if (dateString == null) return 'Not scheduled';
+    if (dateString == null) return 'not_scheduled'.tr();
     try {
       final date = DateTime.parse(dateString);
       return DateFormat('MMM d, yyyy, h:mm a').format(date);
@@ -991,7 +992,7 @@ class _BookingDetailSheet extends StatelessWidget {
             : const Color(0xFF991B1B);
     final String chipLabel = booking.readableStatus;
 
-    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
     final String? technicianPhone = booking.assignedTechnician?.phone;
     final String initials = _getInitials(technicianName);
 
@@ -1070,13 +1071,13 @@ class _BookingDetailSheet extends StatelessWidget {
               SizedBox(height: 16.h),
 
               // SR Number
-              _buildDetailRow('SR Number', booking.srNumber),
+              _buildDetailRow('sr_number'.tr(), booking.srNumber),
               SizedBox(height: 8.h),
-              _buildDetailRow('Status', booking.status),
+              _buildDetailRow('status'.tr(), booking.status),
               SizedBox(height: 8.h),
-              _buildDetailRow('Internal Status', booking.internalStatus),
+              _buildDetailRow('internal_status'.tr(), booking.internalStatus),
               SizedBox(height: 8.h),
-              _buildDetailRow('Priority', booking.priority),
+              _buildDetailRow('priority'.tr(), booking.priority),
               SizedBox(height: 16.h),
 
               // Service info card
@@ -1100,7 +1101,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        booking.service?.name ?? 'N/A',
+                        booking.service?.name ?? 'n_a'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -1135,7 +1136,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       if (booking.subservice != null) ...[
                         SizedBox(height: 12.h),
                         Text(
-                          'Subservice',
+                          'subservice'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1218,7 +1219,7 @@ class _BookingDetailSheet extends StatelessWidget {
                                 booking.preferredAppointmentTime != null) ...[
                               SizedBox(height: 4.h),
                               Text(
-                                'Preferred: ${booking.preferredAppointmentDate ?? ''} ${booking.preferredAppointmentTime ?? ''}',
+                                '${'preferred'.tr()} ${booking.preferredAppointmentDate ?? ''} ${booking.preferredAppointmentTime ?? ''}',
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: const Color(0xFF6B7280),
@@ -1397,21 +1398,21 @@ class _BookingDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Payment Summary',
+                          'payment_summary'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        _buildDetailRow('Total Amount',
+                        _buildDetailRow('total_amount'.tr(),
                             '\$${booking.paymentSummary!.totalAmount.toStringAsFixed(2)}'),
                         SizedBox(height: 4.h),
-                        _buildDetailRow('Payment Status',
+                        _buildDetailRow('payment_status'.tr(),
                             booking.paymentSummary!.paymentStatus),
                         if (booking.paymentSummary!.paymentMethod != null) ...[
                           SizedBox(height: 4.h),
-                          _buildDetailRow('Payment Method',
+                          _buildDetailRow('payment_method'.tr(),
                               booking.paymentSummary!.paymentMethod!),
                         ],
                       ],
@@ -1435,7 +1436,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Technician Rating',
+                          'technician_rating'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1474,9 +1475,9 @@ class _BookingDetailSheet extends StatelessWidget {
 
               // Dates
               SizedBox(height: 12.h),
-              _buildDetailRow('Created At', _formatDate(booking.createdAt)),
+              _buildDetailRow('created_at'.tr(), _formatDate(booking.createdAt)),
               SizedBox(height: 4.h),
-              _buildDetailRow('Updated At', _formatDate(booking.updatedAt)),
+              _buildDetailRow('updated_at'.tr(), _formatDate(booking.updatedAt)),
 
               SizedBox(height: 16.h),
 

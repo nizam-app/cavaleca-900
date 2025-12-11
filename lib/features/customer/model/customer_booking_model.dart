@@ -44,13 +44,13 @@ class CustomerBookingModel {
   factory CustomerBookingModel.fromJson(Map<String, dynamic> json) {
     return CustomerBookingModel(
       srId: json['srId'] as int,
-      srNumber: json['srNumber'] as String,
-      status: json['status'] as String,
-      readableStatus: json['readableStatus'] as String,
-      internalStatus: json['internalStatus'] as String,
-      description: json['description'] as String,
-      priority: json['priority'] as String,
-      address: json['address'] as String,
+      srNumber: (json['srNumber'] ?? '') as String,
+      status: (json['status'] ?? '') as String,
+      readableStatus: (json['readableStatus'] ?? '') as String,
+      internalStatus: (json['internalStatus'] ?? '') as String,
+      description: (json['description'] ?? '') as String,
+      priority: (json['priority'] ?? '') as String,
+      address: (json['address'] ?? '') as String,
       preferredAppointmentDate: json['preferredAppointmentDate'] as String?,
       preferredAppointmentTime: json['preferredAppointmentTime'] as String?,
       scheduledAt: json['scheduledAt'] as String?,
@@ -75,8 +75,8 @@ class CustomerBookingModel {
           ? null
           : PaymentSummary.fromJson(
               json['paymentSummary'] as Map<String, dynamic>),
-      createdAt: json['createdAt'] as String,
-      updatedAt: json['updatedAt'] as String,
+      createdAt: (json['createdAt'] ?? '') as String,
+      updatedAt: (json['updatedAt'] ?? '') as String,
     );
   }
 
@@ -107,11 +107,11 @@ class Category {
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id'] as int,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      isActive: json['isActive'] as bool,
-      createdAt: json['createdAt'] as String,
-      updatedAt: json['updatedAt'] as String,
+      name: (json['name'] ?? '') as String,
+      description: (json['description'] ?? '') as String,
+      isActive: (json['isActive'] ?? false) as bool,
+      createdAt: (json['createdAt'] ?? '') as String,
+      updatedAt: (json['updatedAt'] ?? '') as String,
     );
   }
 }
@@ -137,10 +137,10 @@ class Subservice {
     return Subservice(
       id: json['id'] as int,
       categoryId: json['categoryId'] as int,
-      name: json['name'] as String,
+      name: (json['name'] ?? '') as String,
       description: json['description'] as String?,
-      createdAt: json['createdAt'] as String,
-      updatedAt: json['updatedAt'] as String,
+      createdAt: (json['createdAt'] ?? '') as String,
+      updatedAt: (json['updatedAt'] ?? '') as String,
     );
   }
 }
@@ -166,10 +166,10 @@ class Service {
     return Service(
       id: json['id'] as int,
       categoryId: json['categoryId'] as int,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      createdAt: json['createdAt'] as String,
-      updatedAt: json['updatedAt'] as String,
+      name: (json['name'] ?? '') as String,
+      description: (json['description'] ?? '') as String,
+      createdAt: (json['createdAt'] ?? '') as String,
+      updatedAt: (json['updatedAt'] ?? '') as String,
     );
   }
 }
@@ -188,8 +188,8 @@ class AssignedTechnician {
   factory AssignedTechnician.fromJson(Map<String, dynamic> json) {
     return AssignedTechnician(
       id: json['id'] as int,
-      name: json['name'] as String,
-      phone: json['phone'] as String,
+      name: (json['name'] ?? '') as String,
+      phone: (json['phone'] ?? '') as String,
     );
   }
 }
@@ -224,8 +224,10 @@ class PaymentSummary {
 
   factory PaymentSummary.fromJson(Map<String, dynamic> json) {
     return PaymentSummary(
-      totalAmount: (json['totalAmount'] as num).toDouble(),
-      paymentStatus: json['paymentStatus'] as String,
+      totalAmount: json['totalAmount'] == null
+          ? 0.0
+          : (json['totalAmount'] as num).toDouble(),
+      paymentStatus: (json['paymentStatus'] ?? '') as String,
       paymentMethod: json['paymentMethod'] as String?,
     );
   }
