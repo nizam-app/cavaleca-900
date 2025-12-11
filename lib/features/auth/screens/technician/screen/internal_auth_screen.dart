@@ -440,8 +440,9 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child:  Text(
-              'register_as_employee'.tr(),
+            child: Text(
+
+             'register_as_employee'.tr(),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -594,7 +595,7 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
       children: [
  Center(
           child: Text(
-            'employee_registration'.tr(),
+            'register_as_employee'.tr(),
             style: TextStyle(
               fontSize: 20,
               color: Color(0xFF111827),
@@ -605,7 +606,7 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
         const SizedBox(height: 6),
          Center(
           child: Text(
-            'step_1_of_3'.tr(),
+            's_tep_1_of_3'.tr(),
             style: TextStyle(fontSize: 14, color: Color(0xFF4B5563)),
           ),
         ),

@@ -146,7 +146,7 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
                 _HeaderSection(
                   monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0).toDouble(),
                   completedJobsThisMonth: completedCount,
-                  userName: 'freelancer_tech'.tr(),
+                  userName:'freelancer_tech'.tr(),
                 ),
                 SizedBox(height: 12.h),
                 _StatsRow(
