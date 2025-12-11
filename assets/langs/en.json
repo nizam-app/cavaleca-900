@@ -1,9 +1,22 @@
-
 {
+  "business_hours": "Business Hours",
+  "monday_friday": "Monday - Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday",
+  "join_as_freelancer": "Join as Freelancer",
+  "s_tep_1_of_3": "Step 1 of 3: Enter your details",
+  "already_have_an_account": "Already have an account?",
+  "top_performer": "Top Performer",
+  "keep_up_great_work": "Keep up the great work!",
+  "no_available_jobs": "No available jobs",
+  "no_active_jobs_right_now": "No active jobs right now",
+
+
   "field_service_management_platform": "Field Service Management Platform",
   "select_your_role": "Select Your Role",
   "customer": "Customer",
-  "freelancer_technician": "Freelancer Technician",
+  "freelancer_tech": "Freelancer Tech",
+  "ready_earn_today": "Ready to earn today?",
   "internal_technician": "Internal Technician",
   "book_and_manage_service_requests": "Book and manage service requests",
   "accept_jobs_and_earn_commissions" : "Accept jobs and earn commissions",
@@ -30,12 +43,12 @@
   "call_us": "Call Us",
   "call" : "Call",
   "email_support": "Email Support",
-  "business_hours": "Business Hours",
-  "monday_friday": "Monday - Friday",
+
+
   "monday_friday_time": "8:00 AM - 8:00 PM",
-  "saturday": "Saturday",
+
   "saturday_time": "9:00 AM - 6:00 PM",
-  "sunday": "Sunday",
+
   "sunday_time": "10:00 AM - 4:00 PM",
   "active": "Active",
   "available": "Available",
@@ -185,6 +198,7 @@
   "jobs_label": "Jobs",
   "earnings_label": "Earnings",
   "job_details": "Job Details",
+  "start_earning_on_your_schedule": "Start earning on your schedule",
   "job_in_progress_title": "Job in progress",
   "performance_bonus": "$ Performance Bonus (5%)",
   "bonus_from_job": "$7.50 from $150 job",
@@ -217,6 +231,7 @@
   "regular_payout": "Regular payout: Every Monday",
   "bonus_rate_info": "Current Bonus Rate For internal employees",
   "five_percent_rate": "5% per job",
+  "join_our_network_skilled_technicians": "Join our network of skilled technicians and earn commission on every job.",
   "bonus_desc": "Earn 5% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.",
   "monthly_salary": "Monthly Salary",
   "base_salary": "Base Salary",

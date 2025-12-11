@@ -268,7 +268,7 @@ class GuestProfileScreen extends StatelessWidget {
 
               // ---------- BUSINESS HOURS CARD ----------
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -289,7 +289,8 @@ class GuestProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'business_hours'.tr(),
+
+                      'business_hours'.tr(),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
