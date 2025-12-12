@@ -43,7 +43,7 @@ class CustomerBookingModel {
 
   factory CustomerBookingModel.fromJson(Map<String, dynamic> json) {
     return CustomerBookingModel(
-      srId: json['srId'] as int,
+      srId: (json['srId'] as int?) ?? 0,
       srNumber: (json['srNumber'] ?? '') as String,
       status: (json['status'] ?? '') as String,
       readableStatus: (json['readableStatus'] ?? '') as String,
@@ -106,7 +106,7 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-      id: json['id'] as int,
+      id: (json['id'] as int?) ?? 0,
       name: (json['name'] ?? '') as String,
       description: (json['description'] ?? '') as String,
       isActive: (json['isActive'] ?? false) as bool,
@@ -135,8 +135,8 @@ class Subservice {
 
   factory Subservice.fromJson(Map<String, dynamic> json) {
     return Subservice(
-      id: json['id'] as int,
-      categoryId: json['categoryId'] as int,
+      id: (json['id'] as int?) ?? 0,
+      categoryId: (json['categoryId'] as int?) ?? 0,
       name: (json['name'] ?? '') as String,
       description: json['description'] as String?,
       createdAt: (json['createdAt'] ?? '') as String,
@@ -164,8 +164,8 @@ class Service {
 
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(
-      id: json['id'] as int,
-      categoryId: json['categoryId'] as int,
+      id: (json['id'] as int?) ?? 0,
+      categoryId: (json['categoryId'] as int?) ?? 0,
       name: (json['name'] ?? '') as String,
       description: (json['description'] ?? '') as String,
       createdAt: (json['createdAt'] ?? '') as String,
@@ -187,7 +187,7 @@ class AssignedTechnician {
 
   factory AssignedTechnician.fromJson(Map<String, dynamic> json) {
     return AssignedTechnician(
-      id: json['id'] as int,
+      id: (json['id'] as int?) ?? 0,
       name: (json['name'] ?? '') as String,
       phone: (json['phone'] ?? '') as String,
     );
@@ -205,7 +205,7 @@ class TechnicianRating {
 
   factory TechnicianRating.fromJson(Map<String, dynamic> json) {
     return TechnicianRating(
-      rating: json['rating'] as int,
+      rating: (json['rating'] as int?) ?? 0,
       comment: json['comment'] as String?,
     );
   }

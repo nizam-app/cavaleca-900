@@ -280,7 +280,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
 
   Widget _buildAuthedView(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F8F8),
         body: SafeArea(
@@ -324,6 +324,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                           fontWeight: FontWeight.w500,
                         ),
                         tabs:  [
+                          Tab(text: 'all'.tr()),
                           Tab(text: 'active'.tr()),
                           Tab(text: 'completed'.tr()),
                           Tab(text: 'cancelled'.tr()),
@@ -340,6 +341,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                       padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 0),
                       child: TabBarView(
                         children: [
+                          _buildAllList(),
                           _buildActiveList(),
                           _buildCompletedList(),
                           _buildCancelledList(),
@@ -357,6 +359,55 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   }
 
   // ------------------ List builders ------------------
+
+  Widget _buildAllList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('${'error'.tr()}: $_errorMessage'),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: _loadBookings,
+              child: Text('retry'.tr()),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_allBookings.isEmpty) {
+      return Center(child: Text('no_bookings'.tr()));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadBookings,
+      child: ListView.separated(
+        padding: EdgeInsets.only(bottom: 24.h),
+        itemCount: _allBookings.length,
+        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        itemBuilder: (context, index) {
+          final booking = _allBookings[index];
+          // Show appropriate card based on status
+          if (booking.status == 'ACTIVE') {
+            return _buildActiveCard(booking);
+          } else if (booking.status == 'COMPLETED') {
+            return _buildCompletedCard(booking);
+          } else if (booking.status == 'CANCELLED') {
+            return _buildCancelledCard(booking);
+          } else {
+            // Fallback to active card for unknown statuses
+            return _buildActiveCard(booking);
+          }
+        },
+      ),
+    );
+  }
 
   Widget _buildActiveList() {
     if (_isLoading) {
