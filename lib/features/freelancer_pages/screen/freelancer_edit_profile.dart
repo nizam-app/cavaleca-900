@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 const Color kPrimaryYellow = Color(0xFFFFB111);
 const Color kPrimaryYellowDark = Color(0xFFE69F0F);
@@ -150,7 +151,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
         formData.phone.isEmpty ||
         formData.email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please fill all required fields')));
+          SnackBar(content: Text('please_fill_all_required_fields'.tr())));
       return;
     }
 
@@ -160,7 +161,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
     setState(() => isSaving = false);
 
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Profile saved')));
+        .showSnackBar(SnackBar(content: Text('profile_saved'.tr())));
     context.pop(formData);
   }
 
@@ -191,12 +192,12 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined),
-                title: const Text('Camera'),
+                title: Text('camera'.tr()),
                 onTap: () => Navigator.of(ctx).pop('camera'),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Gallery'),
+                title: Text('gallery'.tr()),
                 onTap: () => Navigator.of(ctx).pop('gallery'),
               ),
               SizedBox(height: 8.h),
@@ -226,11 +227,11 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
       setState(() => _avatarImagePath = picked.path);
       // TODO: upload to server here if needed and replace _avatarImagePath with uploaded URL
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Avatar updated')),
+        SnackBar(content: Text('avatar_updated'.tr())),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image pick failed: $e')),
+        SnackBar(content: Text('${'image_pick_failed'.tr()}: $e')),
       );
     }
   }
@@ -285,7 +286,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                     SizedBox(width: 16.w),
                     Expanded(
                       child: Text(
-                        'Edit Profile',
+                        'edit_profile'.tr(),
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
@@ -381,7 +382,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                               ),
                               SizedBox(height: 12.h),
                               Text(
-                                'Tap to change photo',
+                                'tap_to_change_photo'.tr(),
                                 style: TextStyle(
                                   color: Colors.grey[500],
                                   fontSize: 12.sp,
@@ -422,13 +423,13 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                                 SizedBox(width: 12.w),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
+                                  children: [
                                     Text(
-                                      'Availability Status',
+                                      'availability_status'.tr(),
                                       style: TextStyle(fontWeight: FontWeight.w500),
                                     ),
                                     Text(
-                                      'Accept new job requests',
+                                      'accept_new_jobs'.tr(),
                                       style: TextStyle(fontSize: 12, color: Colors.grey),
                                     ),
                                   ],
@@ -474,7 +475,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                     SizedBox(height: 16.h),
 
                     // Address
-                    Text('Address'),
+                    Text('address'.tr()),
                     SizedBox(height: 4.h),
                     InkWell(
                       onTap: _openMapPicker,
@@ -490,7 +491,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                             const Icon(Icons.location_on_outlined, color: Colors.grey),
                             SizedBox(width: 8.w),
                             Expanded(
-                              child: Text(formData.address.isEmpty ? 'Tap to select location' : formData.address),
+                              child: Text(formData.address.isEmpty ? 'tap_to_select_location'.tr() : formData.address),
                             ),
                             Container(
                               width: 32.w,
@@ -520,7 +521,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                     SizedBox(height: 16.h),
 
                     // Skills Section
-                    Text('Skills & Expertise *'),
+                    Text('skills_expertise'.tr()),
                     SizedBox(height: 8.h),
                     Card(
                       elevation: 2,
@@ -592,15 +593,15 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                     SizedBox(height: 16.h),
 
                     // Payment Info
-                    Text('Payment Information'),
+                    Text('payment_information'.tr()),
                     _buildTextField(
-                      label: 'Bank Name',
+                      label: 'bank_name'.tr(),
                       controller: _bankController,
                       onChanged: (val) => formData.bankName = val,
                       icon: Icons.credit_card,
                     ),
                     _buildTextField(
-                      label: 'Account Number',
+                      label: 'account_number'.tr(),
                       controller: _accountController,
                       onChanged: (val) => formData.accountNumber = val,
                       icon: Icons.credit_card,
@@ -617,14 +618,14 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                         padding: EdgeInsets.all(16.w),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
                               '💡 Commission Rate: 15% of job payment',
                               style: TextStyle(color: Colors.blue),
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Your earnings will be deposited to this account after job completion',
+                              'your_earnings_will_be_deposited'.tr(),
                               style: TextStyle(color: Colors.blueAccent, fontSize: 12),
                             )
                           ],
@@ -647,7 +648,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                                 borderRadius: BorderRadius.circular(16.r),
                               ),
                             ),
-                            child: const Text('Cancel'),
+                            child: Text('cancel'.tr()),
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -662,7 +663,7 @@ class _FreelancerEditProfileState extends ConsumerState<FreelancerEditProfile> {
                               backgroundColor: kPrimaryYellow,
                               foregroundColor: Colors.black87,
                             ),
-                            child: Text(isSaving ? 'Saving...' : 'Save Changes'),
+                            child: Text(isSaving ? 'saving'.tr() : 'save_changes'.tr()),
                           ),
                         )
                       ],

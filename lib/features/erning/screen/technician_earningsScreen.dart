@@ -49,8 +49,8 @@ class Earningsscreen extends ConsumerWidget {
                 monthlySalaryCard(summary),
                 SizedBox(height: 22.h),
                 _recentBonusesHeader(),
-                if (summary.monthlySalary.isFreelancer == false &&
-                    summary.availableBonus.jobsCount == 0)
+                SizedBox(height: 8.h),
+                if (summary.recentBonuses.isEmpty)
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Align(
@@ -63,8 +63,16 @@ class Earningsscreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                  )
+                else
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    child: Column(
+                      children: summary.recentBonuses
+                          .map((bonus) => _bonusCard(bonus))
+                          .toList(),
+                    ),
                   ),
-                // যদি backend পরে recentBonuses পাঠায়, এখানে list map করে দেখাবে
               ],
             ),
           ),
@@ -633,5 +641,159 @@ class Earningsscreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  // ------------------------------------------------------------------
+  // BONUS CARD
+  // ------------------------------------------------------------------
+  Widget _bonusCard(Map<String, dynamic> bonus) {
+    final jobName = (bonus['jobName'] ?? '') as String;
+    final customerName = (bonus['customerName'] ?? '') as String;
+    final dateStr = (bonus['date'] ?? '') as String;
+    final bonusAmount = ((bonus['bonus'] ?? 0) as num).toDouble();
+    final status = (bonus['status'] ?? '') as String;
+
+    DateTime? date;
+    if (dateStr.isNotEmpty) {
+      try {
+        date = DateTime.parse(dateStr);
+      } catch (e) {
+        date = DateTime.now();
+      }
+    } else {
+      date = DateTime.now();
+    }
+
+    String formattedDate;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final bonusDate = DateTime(date.year, date.month, date.day);
+
+    if (bonusDate == today) {
+      formattedDate = 'Today, ${_formatTime(date)}';
+    } else if (bonusDate == today.subtract(const Duration(days: 1))) {
+      formattedDate = 'Yesterday, ${_formatTime(date)}';
+    } else {
+      formattedDate = _formatDate(date);
+    }
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      jobName,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      customerName,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '\$${bonusAmount.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0CCE6B),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              Text(
+                formattedDate,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.black54,
+                ),
+              ),
+              if (status.isNotEmpty) ...[
+                SizedBox(width: 8.w),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 6.w,
+                    vertical: 2.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: status == 'PAID'
+                        ? const Color(0xFF0CCE6B).withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 9.sp,
+                      color: status == 'PAID'
+                          ? const Color(0xFF0CCE6B)
+                          : Colors.orange,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime date) {
+    final hour = date.hour;
+    final minute = date.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    return '${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }

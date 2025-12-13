@@ -136,7 +136,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location service disabled')),
+          SnackBar(content: Text('location_service_disabled'.tr())),
         );
         setState(() => _gpsAvailable = false);
         return;
@@ -149,8 +149,8 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location permission denied, use search instead'),
+          SnackBar(
+            content: Text('location_permission_denied'.tr()),
           ),
         );
         setState(() => _gpsAvailable = false);
@@ -180,7 +180,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       });
     } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not get current location')),
+        SnackBar(content: Text('could_not_get_current_location'.tr())),
       );
       setState(() => _gpsAvailable = false);
     }
@@ -237,7 +237,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not fetch suggestions')),
+        SnackBar(content: Text('could_not_fetch_suggestions'.tr())),
       );
     } finally {
       if (mounted) {
@@ -294,7 +294,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load place details')),
+        SnackBar(content: Text('could_not_load_place_details'.tr())),
       );
     }
   }

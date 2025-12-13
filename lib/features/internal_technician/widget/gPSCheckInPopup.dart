@@ -30,7 +30,7 @@ class Gpscheckinpopup extends StatefulWidget {
   State<Gpscheckinpopup> createState() => _GpscheckinpopupState();
 }
 
-class _GpscheckinpopupState extends State<Gpscheckinpopup> {
+class _GpscheckinpopupState extends State<Gpscheckinpopup> with WidgetsBindingObserver {
   bool _isLoadingLocation = true;
   double? _currentLat;
   double? _currentLng;
@@ -39,7 +39,23 @@ class _GpscheckinpopupState extends State<Gpscheckinpopup> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When user returns from settings, check location again
+    if (state == AppLifecycleState.resumed && _locationError != null) {
+      _getCurrentLocation();
+    }
   }
 
   Future<void> _getCurrentLocation() async {
@@ -53,8 +69,10 @@ class _GpscheckinpopupState extends State<Gpscheckinpopup> {
       if (!serviceEnabled) {
         setState(() {
           _isLoadingLocation = false;
-          _locationError = 'Location service disabled';
+          _locationError = 'location_service_disabled'.tr();
         });
+        // Automatically open location settings
+        await _openLocationSettings();
         return;
       }
 
@@ -66,8 +84,10 @@ class _GpscheckinpopupState extends State<Gpscheckinpopup> {
           permission == LocationPermission.deniedForever) {
         setState(() {
           _isLoadingLocation = false;
-          _locationError = 'Location permission denied';
+          _locationError = 'location_permission_denied'.tr();
         });
+        // Automatically open app settings for permission
+        await _openAppSettings();
         return;
       }
 
@@ -83,8 +103,28 @@ class _GpscheckinpopupState extends State<Gpscheckinpopup> {
     } catch (e) {
       setState(() {
         _isLoadingLocation = false;
-        _locationError = 'Could not get location: $e';
+        _locationError = '${'could_not_get_current_location'.tr()}: $e';
       });
+    }
+  }
+
+  Future<void> _openLocationSettings() async {
+    await Geolocator.openLocationSettings();
+    // The lifecycle observer will handle retry when user returns from settings
+    // Also retry after a delay as backup
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      _getCurrentLocation();
+    }
+  }
+
+  Future<void> _openAppSettings() async {
+    await Geolocator.openAppSettings();
+    // The lifecycle observer will handle retry when user returns from settings
+    // Also retry after a delay as backup
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      _getCurrentLocation();
     }
   }
 
@@ -105,7 +145,7 @@ class _GpscheckinpopupState extends State<Gpscheckinpopup> {
           children: [
             // ----------- TITLE -----------
             Text(
-              "gps_check_equired".tr(),
+              "gps_check_required".tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w700,
@@ -210,12 +250,54 @@ class _GpscheckinpopupState extends State<Gpscheckinpopup> {
                       ],
                     )
                   else if (_locationError != null)
-                    Text(
-                      _locationError!,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.red,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _locationError!,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.red,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        GestureDetector(
+                          onTap: () async {
+                            final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+                            if (!serviceEnabled) {
+                              await _openLocationSettings();
+                            } else {
+                              final permission = await Geolocator.checkPermission();
+                              if (permission == LocationPermission.denied ||
+                                  permission == LocationPermission.deniedForever) {
+                                await _openAppSettings();
+                              }
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            decoration: BoxDecoration(
+                              color: kPrimaryBlue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.settings, size: 14.sp, color: kPrimaryBlue),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  'open_location_settings'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: kPrimaryBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     )
                   else if (_currentLat != null && _currentLng != null)
                     Column(

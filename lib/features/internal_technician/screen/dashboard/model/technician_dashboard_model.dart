@@ -21,14 +21,14 @@ class TechnicianDashboardModel {
 
   factory TechnicianDashboardModel.fromJson(Map<String, dynamic> json) {
     return TechnicianDashboardModel(
-      thisWeekBonus: json['thisWeekBonus'] ?? 0,
-      jobsToday: json['jobsToday'] ?? 0,
-      thisWeekEarned: json['thisWeekEarned'] ?? 0,
-      totalEarned: json['totalEarned'] ?? 0,
-      activeJobs: json['activeJobs'] ?? 0,
-      completedThisMonth: json['completedThisMonth'] ?? 0,
-      inProgress: json['inProgress'] ?? 0,
-      readyToStart: json['readyToStart'] ?? 0,
+      thisWeekBonus: (json['thisWeekBonus'] as num?)?.toInt() ?? 0,
+      jobsToday: (json['jobsToday'] as num?)?.toInt() ?? 0,
+      thisWeekEarned: (json['thisWeekEarned'] as num?)?.toInt() ?? 0,
+      totalEarned: (json['totalEarned'] as num?)?.toInt() ?? 0,
+      activeJobs: (json['activeJobs'] as num?)?.toInt() ?? 0,
+      completedThisMonth: (json['completedThisMonth'] as num?)?.toInt() ?? 0,
+      inProgress: (json['inProgress'] as num?)?.toInt() ?? 0,
+      readyToStart: (json['readyToStart'] as num?)?.toInt() ?? 0,
     );
   }
 

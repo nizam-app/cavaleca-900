@@ -390,7 +390,7 @@ class _CustomerEditProfileState
                               ),
                               SizedBox(height: 12.h),
                               Text(
-                                'Tap to change photo',
+                                'tap_to_change_photo'.tr(),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: Colors.grey[500],
                                   fontSize: 14.sp,
@@ -407,7 +407,7 @@ class _CustomerEditProfileState
 
                     // Personal Information title
                     Text(
-                      'Personal Information',
+                      'personal_information'.tr(),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.grey[900],
                         fontWeight: FontWeight.w600,
@@ -418,10 +418,10 @@ class _CustomerEditProfileState
 
                     // Name
                     _buildLabeledField(
-                      label: 'Full Name *',
+                      label: 'full_name'.tr(),
                       icon: Icons.person_outline_rounded,
                       controller: _nameController,
-                      hintText: 'Enter your full name',
+                      hintText: 'enter_your_full_name'.tr(),
                       keyboardType: TextInputType.name,
 
                     ),
@@ -429,19 +429,19 @@ class _CustomerEditProfileState
 
                     // Phone
                     _buildLabeledField(
-                      label: 'Phone Number *',
+                      label: 'phone_number'.tr() + ' *',
                       icon: Icons.phone_outlined,
                       controller: _phoneController,
-                      hintText: 'Enter your phone number',
+                      hintText: 'enter_your_phone_number'.tr(),
                       keyboardType: TextInputType.phone,
                     ),
                     SizedBox(height: 16.h),
                     // Email
                     _buildLabeledField(
-                      label: 'Email Address *',
+                      label: 'email_address'.tr() + ' *',
                       icon: Icons.mail_outline_rounded,
                       controller: _emailController,
-                      hintText: 'Enter your email address',
+                      hintText: 'enter_your_email_address'.tr(),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     SizedBox(height: 16.h),
@@ -511,7 +511,7 @@ class _CustomerEditProfileState
                                 ],
                               )
                                   : Text(
-                                'Tap to select location from map',
+                                'tap_to_select_location_from_map'.tr(),
                                 style: theme.textTheme.bodyMedium
                                     ?.copyWith(
                                   color: Colors.grey[400],
@@ -554,7 +554,7 @@ class _CustomerEditProfileState
                                 borderRadius: BorderRadius.circular(16.r),
                               ),
                             ),
-                            child: const Text('Cancel'),
+                            child: Text('cancel'.tr()),
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -571,7 +571,7 @@ class _CustomerEditProfileState
                               foregroundColor: Colors.white,
                             ),
                             child: Text(
-                              _isSaving ? 'Saving...' : 'Save Changes',
+                              _isSaving ? 'saving'.tr() : 'save_changes'.tr(),
                             ),
                           ),
                         ),

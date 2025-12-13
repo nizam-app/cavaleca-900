@@ -363,15 +363,15 @@ class Viewjobdetails extends StatelessWidget {
                 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Job started successfully!'),
+                    SnackBar(
+                      content: Text('job_started_successfully'.tr()),
                     ),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to start job: $e')),
+                    SnackBar(content: Text('${'failed_to_start_job'.tr()}: $e')),
                   );
                 }
               }

@@ -99,14 +99,14 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Job accepted and moved to Active.')),
+          SnackBar(content: Text('job_accepted_and_moved_to_active'.tr())),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to accept job: $e')));
+        ).showSnackBar(SnackBar(content: Text('${'failed_to_accept_job'.tr()}: $e')));
       }
     }
   }
@@ -138,7 +138,7 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to start job: $e')));
+        ).showSnackBar(SnackBar(content: Text('${'failed_to_start_job'.tr()}: $e')));
       }
     }
   }

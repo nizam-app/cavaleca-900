@@ -79,8 +79,13 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
     result.when(
       data: (data) {
         if (data != null) {
-          _showToast('Login successful!');
-          context.push(InternalBottomNavBar.routeName);
+         if (data.user.role == 'TECH_INTERNAL') {
+            _showToast('Login successful!');
+            context.push(InternalBottomNavBar.routeName);
+          } else {
+            _showToast('You are not authorized');
+            // context.push(FreelancerBottomNavBar.routeName);
+          }
         }
       },
       loading: () {},
@@ -834,7 +839,7 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
           obscureText: !_showPassword,
           decoration:
               _inputDecoration(
-                hintText: 'Create a password (min. 6 characters)',
+                hintText: 'create_password_hint'.tr(),
                 prefixIcon: Icons.lock_outline,
               ).copyWith(
                 suffixIcon: IconButton(

@@ -651,7 +651,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           TextField(
             controller: _nameController,
             decoration: _inputDecoration(
-              hintText: 'Enter your full name',
+              hintText: 'enter_your_full_name'.tr(),
               icon: Icons.person_outline,
             ),
           ),
@@ -825,7 +825,7 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           controller: _passwordController,
           obscureText: !_showPassword,
           decoration: _inputDecoration(
-            hintText: 'Create a password (min. 6 characters)',
+            hintText: 'create_password_hint'.tr(),
             icon: Icons.lock_outline,
             suffix: IconButton(
               onPressed: () {

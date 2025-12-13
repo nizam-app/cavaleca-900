@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
 import 'package:workpleis/features/shared/profile_update_service.dart';
@@ -124,7 +125,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading profile: $e')),
+          SnackBar(content: Text('${'failed_to_load_profile'.tr()}: $e')),
         );
       }
     } finally {
@@ -175,7 +176,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final url = _certUrlController.text.trim();
 
     if (name.isEmpty || url.isEmpty) {
-      _showToast('Please enter both name and URL');
+      _showToast('please_fill_all_fields'.tr());
       return;
     }
 
@@ -194,7 +195,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _handleSubmit() async {
     if (_nameController.text.trim().isEmpty) {
-      _showToast('Please enter your name');
+      _showToast('please_enter_your_name'.tr());
       return;
     }
 
@@ -447,7 +448,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   SizedBox(width: 16.w),
                   Expanded(
                     child: Text(
-                      'Edit Profile',
+                      'edit_profile'.tr(),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18.sp,
@@ -471,7 +472,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   children: [
                     // Personal Information Section
                     Text(
-                      'Personal Information',
+                      'personal_information'.tr(),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -481,10 +482,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     SizedBox(height: 16.h),
 
                     _buildLabeledField(
-                      label: 'Name',
+                      label: 'full_name'.tr().replaceAll(' *', ''),
                       icon: Icons.person_outline_rounded,
                       controller: _nameController,
-                      hintText: 'Enter your name',
+                      hintText: 'enter_your_full_name'.tr(),
                       isRequired: true,
                     ),
                     SizedBox(height: 16.h),
@@ -493,7 +494,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     if (_userRole == 'TECH_INTERNAL' ||
                         _userRole == 'TECH_FREELANCER') ...[
                       _buildDropdownField(
-                        label: 'Status',
+                        label: 'status'.tr(),
                         value: _selectedStatus,
                         items: _statusOptions,
                         onChanged: (value) {
@@ -506,7 +507,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                       // Skills Section
                       Text(
-                        'Skills',
+                        'skills_specializations'.tr().split(' & ')[0],
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -522,7 +523,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           child: TextField(
                             controller: _skillInputController,
                             decoration: InputDecoration(
-                              hintText: 'Add a skill (e.g., HVAC)',
+                              hintText: 'add_a_skill'.tr(),
                               filled: true,
                               fillColor: Colors.white,
                               contentPadding: EdgeInsets.symmetric(
@@ -582,7 +583,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                       // Certifications Section
                       Text(
-                        'Certifications',
+                        'certifications'.tr(),
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -604,7 +605,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           TextField(
                             controller: _certNameController,
                             decoration: InputDecoration(
-                              hintText: 'Certification Name',
+                              hintText: 'certification_name'.tr(),
                               filled: true,
                               fillColor: Colors.grey[50],
                               contentPadding: EdgeInsets.symmetric(
@@ -622,7 +623,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           TextField(
                             controller: _certUrlController,
                             decoration: InputDecoration(
-                              hintText: 'Certificate URL/File',
+                              hintText: 'certificate_url_file'.tr(),
                               filled: true,
                               fillColor: Colors.grey[50],
                               contentPadding: EdgeInsets.symmetric(
@@ -648,7 +649,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   borderRadius: BorderRadius.circular(8.r),
                                 ),
                               ),
-                              child: const Text('Add Certification'),
+                              child: Text('add_certification'.tr()),
                             ),
                           ),
                         ],
@@ -719,7 +720,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 borderRadius: BorderRadius.circular(16.r),
                               ),
                             ),
-                            child: const Text('Cancel'),
+                            child: Text('cancel'.tr()),
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -735,7 +736,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               foregroundColor: Colors.white,
                             ),
                             child: Text(
-                              _isLoading ? 'Saving...' : 'Save Changes',
+                              _isLoading ? 'saving'.tr() : 'save_changes'.tr(),
                             ),
                           ),
                         ),
