@@ -1,17 +1,14 @@
-
-
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
-import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
-import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
-import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
-import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 import 'package:workpleis/features/internal_technician/screen/dashboard/logic/technician_dashboard_api.dart';
 import 'package:workpleis/features/internal_technician/screen/dashboard/model/technician_dashboard_model.dart';
-
-import 'package:easy_localization/easy_localization.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
+import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
+import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
+import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
+import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 
 /// ------------------------------------------------------
 ///  Colors
@@ -49,6 +46,7 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  List<InternalJob> _incomingJobs = [];
   List<InternalJob> _activeJobs = [];
   List<InternalJob> _completedJobs = [];
   TechnicianDashboardModel? _dashboardData;
@@ -59,6 +57,15 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
     _loadJobs();
   }
 
+  String _statusName(InternalJob j) => j.status.toString().split('.').last;
+
+  bool _isInProgress(InternalJob j) => _statusName(j) == 'inProgress';
+
+  bool _isReadyToStart(InternalJob j) {
+    final s = _statusName(j);
+    return s == 'assigned' || s == 'accepted';
+  }
+
   Future<void> _loadJobs() async {
     setState(() {
       _isLoading = true;
@@ -66,15 +73,15 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
     });
 
     try {
-      // Dashboard data fetch
       final dashboardData = await TechnicianDashboardApi.fetchDashboard();
-      
-      // Fetch active and completed jobs
+
+      final incoming = await TechnicianJobsApi.fetchJobs('incoming');
       final active = await TechnicianJobsApi.fetchJobs('active');
       final done = await TechnicianJobsApi.fetchJobs('done');
 
       setState(() {
         _dashboardData = dashboardData;
+        _incomingJobs = incoming;
         _activeJobs = active;
         _completedJobs = done;
       });
@@ -83,14 +90,37 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
         _errorMessage = e.toString();
       });
     } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleAcceptJob(InternalJob job) async {
+    try {
+      final updated = await TechnicianJobsApi.respondToWorkOrder(
+        woId: job.id,
+        action: 'ACCEPT',
+      );
+
+      setState(() {
+        _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
+        _activeJobs = [..._activeJobs, updated];
+      });
+
       if (mounted) {
-        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('job_accepted_and_moved_to_active'.tr())),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'failed_to_accept_job'.tr()}: $e')),
+        );
       }
     }
   }
 
   Future<void> _handleStartJob(InternalJob job) async {
-    // GPS popup dekhao + start API
     await showDialog(
       context: context,
       barrierDismissible: true,
@@ -131,27 +161,37 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
   Widget build(BuildContext context) {
     final tab = ref.watch(jobsTabProvider);
 
-    // Filter only truly active jobs (assigned or inProgress, exclude completed and incoming)
-    // Same logic as FreelancerJobsTab screen
-    final trulyActiveJobs = _activeJobs
-        .where((j) => j.status == JobStatus.assigned || j.status == JobStatus.inProgress)
-        .toList();
-    
-    // Calculate stats for display
-    final inProgressJobs = trulyActiveJobs
-        .where((j) => j.status == JobStatus.inProgress)
-        .toList();
-    final acceptedJobs = trulyActiveJobs
-        .where((j) => j.status == JobStatus.assigned)
-        .toList();
+    // ✅ Active tab এ incoming + active একসাথে দেখাবে
+    final incomingIds = _incomingJobs.map((j) => j.id).toSet();
 
-    // Use API data if available, otherwise fallback to calculated values
-    // activeCount should match what we show in the active tab (trulyActiveJobs)
-    final completedCount = _dashboardData?.completedThisMonth ?? _completedJobs.length;
-    // Always use trulyActiveJobs.length to match what's shown in the tab
-    final activeCount = trulyActiveJobs.length;
-    final inProgressCount = _dashboardData?.inProgress ?? inProgressJobs.length;
-    final readyToStartCount = _dashboardData?.readyToStart ?? acceptedJobs.length;
+    // merge & dedupe by id (incoming first; active overrides if same id)
+    final Map<String, InternalJob> byId = {};
+    for (final j in _incomingJobs) {
+      byId[j.id.toString()] = j;
+    }
+    for (final j in _activeJobs) {
+      byId[j.id.toString()] = j;
+    }
+
+    final homeActiveJobs = byId.values.toList();
+
+    // incoming আগে দেখাতে sort
+    homeActiveJobs.sort((a, b) {
+      final aInc = incomingIds.contains(a.id);
+      final bInc = incomingIds.contains(b.id);
+      if (aInc == bInc) return 0;
+      return aInc ? -1 : 1;
+    });
+
+    // counts
+    final activeCount = homeActiveJobs.length;
+
+    // Stats: activeJobs থেকেই logically count (incoming বাদ)
+    final inProgressCount = _activeJobs.where(_isInProgress).length;
+    final readyToStartCount = _activeJobs.where(_isReadyToStart).length;
+
+    final completedCount =
+        _dashboardData?.completedThisMonth ?? _completedJobs.length;
 
     if (_isLoading) {
       return const Scaffold(
@@ -184,9 +224,10 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _HeaderSection(
-                  monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0).toDouble(),
+                  monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0)
+                      .toDouble(),
                   completedJobsThisMonth: completedCount,
-                  userName:'freelancer_tech'.tr(),
+                  userName: 'freelancer_tech'.tr(),
                 ),
                 SizedBox(height: 12.h),
                 _StatsRow(
@@ -204,8 +245,10 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: tab == JobsTab.active
                       ? _ActiveJobsSection(
-                          activeJobs: trulyActiveJobs,
+                          activeJobs: homeActiveJobs,
+                          incomingIds: incomingIds,
                           onStartJob: _handleStartJob,
+                          onAcceptJob: _handleAcceptJob,
                         )
                       : _CompletedJobsSection(completedJobs: _completedJobs),
                 ),
@@ -457,7 +500,6 @@ class _StatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             height: 32.w,
@@ -583,15 +625,19 @@ class _TabChip extends StatelessWidget {
 }
 
 /// ------------------------------------------------------
-///  Active Jobs Section
+///  Active Jobs Section (incoming + active merged)
 /// ------------------------------------------------------
 class _ActiveJobsSection extends StatelessWidget {
   final List<InternalJob> activeJobs;
+  final Set<dynamic> incomingIds;
   final Future<void> Function(InternalJob job)? onStartJob;
+  final Future<void> Function(InternalJob job)? onAcceptJob;
 
   const _ActiveJobsSection({
     required this.activeJobs,
+    required this.incomingIds,
     this.onStartJob,
+    this.onAcceptJob,
   });
 
   @override
@@ -605,15 +651,14 @@ class _ActiveJobsSection extends StatelessWidget {
       );
     }
 
-    // Show only active jobs from API (assigned + inProgress)
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final job in activeJobs)
           _JobCard(
             job: job,
-            isInProgressCard: job.status == JobStatus.inProgress,
+            isIncomingCard: incomingIds.contains(job.id),
             onStartJob: onStartJob,
+            onAcceptJob: onAcceptJob,
           ),
       ],
     );
@@ -621,29 +666,74 @@ class _ActiveJobsSection extends StatelessWidget {
 }
 
 /// ------------------------------------------------------
-///  Single Job Card (InternalJob based)
+///  Single Job Card
+///  - incoming: Details + Accept
+///  - active: Start/Continue/View
 /// ------------------------------------------------------
 class _JobCard extends ConsumerWidget {
   final InternalJob job;
-  final bool isInProgressCard;
+  final bool isIncomingCard;
   final Future<void> Function(InternalJob job)? onStartJob;
+  final Future<void> Function(InternalJob job)? onAcceptJob;
 
   const _JobCard({
     required this.job,
-    required this.isInProgressCard,
+    required this.isIncomingCard,
     this.onStartJob,
+    this.onAcceptJob,
   });
+
+  String _statusName() => job.status.toString().split('.').last;
+
+  bool _isInProgress() => _statusName() == 'inProgress';
+
+  bool _isReadyToStart() {
+    final s = _statusName();
+    return s == 'assigned' || s == 'accepted';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bgColor = isInProgressCard ? kInProgressBg : kCard;
-    final borderColor = isInProgressCard
+    final isInProgress = _isInProgress();
+
+    final bgColor = isInProgress ? kInProgressBg : kCard;
+    final borderColor = isInProgress
         ? kPrimaryBlue.withOpacity(0.3)
         : Colors.transparent;
-    final isInProgress = job.status == JobStatus.inProgress;
 
     final address = job.address ?? job.location;
     final dateLabel = '${job.date}${job.time != null ? ' at ${job.time}' : ''}';
+
+    Future<void> openDetails() async {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => Viewjobdetails(job: job, bonusRate: 5.0),
+      );
+    }
+
+    Future<void> doPrimaryAction() async {
+      if (isIncomingCard) {
+        if (onAcceptJob != null) await onAcceptJob!(job);
+        return;
+      }
+
+      if (isInProgress) {
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (_) => Jobdetails(job: job),
+        );
+        return;
+      }
+
+      if (_isReadyToStart() && onStartJob != null) {
+        await onStartJob!(job);
+        return;
+      }
+
+      await openDetails();
+    }
 
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
@@ -651,10 +741,7 @@ class _JobCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: borderColor,
-          width: isInProgressCard ? 1.5 : 0,
-        ),
+        border: Border.all(color: borderColor, width: isInProgress ? 1.5 : 0),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -670,23 +757,13 @@ class _JobCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      job.title,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                        color: kTextMain,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      job.category ?? '',
-                      style: TextStyle(fontSize: 12.sp, color: kTextMuted),
-                    ),
-                  ],
+                child: Text(
+                  job.title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: kTextMain,
+                  ),
                 ),
               ),
               Column(
@@ -715,7 +792,7 @@ class _JobCard extends ConsumerWidget {
           ),
           SizedBox(height: 10.h),
 
-          // address & time
+          // address
           Row(
             children: [
               Icon(Icons.location_on_outlined, size: 14.sp, color: kTextMuted),
@@ -729,6 +806,8 @@ class _JobCard extends ConsumerWidget {
             ],
           ),
           SizedBox(height: 4.h),
+
+          // date/time
           Row(
             children: [
               Icon(
@@ -743,76 +822,109 @@ class _JobCard extends ConsumerWidget {
               ),
             ],
           ),
-          SizedBox(height: 10.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _StatusBadge(
-                label: isInProgressCard ? 'in_progress'.tr() : 'ready_to_start'.tr(),
-                color: isInProgressCard
-                    ? const Color(0xFF2563EB)
-                    : const Color(0xFFE6A400),
-                bgColor: isInProgressCard
-                    ? const Color(0xFFE5F1FF)
-                    : const Color(0xFFFFF4D7),
-              ),
-              SizedBox(
-                height: 32.h,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: isInProgressCard
-                        ? const Color(0xFF2563EB)
-                        : kPrimaryYellow,
-                    borderRadius: BorderRadius.circular(18.r),
+          SizedBox(height: 12.h),
+
+          // bottom area
+          if (isIncomingCard) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: openDetails,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.grey, width: 1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.r),
+                      ),
+                    ),
+                    child: Text(
+                      'details'.tr(),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: kTextMain,
+                      ),
+                    ),
                   ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
                   child: ElevatedButton(
-                    onPressed: () async {
-                      if (isInProgress) {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          builder: (_) => Jobdetails(job: job),
-                        );
-                      } else {
-                        // If assigned status, start the job (same as FreelancerJobsTab)
-                        if (job.status == JobStatus.assigned && onStartJob != null) {
-                          await onStartJob!(job);
-                        } else {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: true,
-                            builder: (_) => Viewjobdetails(
-                              job: job,
-                              bonusRate: 5.0,
-                            ),
-                          );
-                        }
-                      }
-                    },
+                    onPressed: doPrimaryAction, // accept
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      backgroundColor: kPrimaryYellow,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18.r),
                       ),
                     ),
                     child: Text(
-                      isInProgressCard
-                          ? 'continue'.tr()
-                          : (job.status == JobStatus.assigned ? 'start_job_short'.tr() : 'view_details'.tr()),
+                      'accept_job'.tr(),
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ] else ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _StatusBadge(
+                  label: isInProgress
+                      ? 'in_progress'.tr()
+                      : (_isReadyToStart()
+                            ? 'ready_to_start'.tr()
+                            : 'view_details'.tr()),
+                  color: isInProgress
+                      ? const Color(0xFF2563EB)
+                      : const Color(0xFFE6A400),
+                  bgColor: isInProgress
+                      ? const Color(0xFFE5F1FF)
+                      : const Color(0xFFFFF4D7),
+                ),
+                SizedBox(
+                  height: 32.h,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: isInProgress
+                          ? const Color(0xFF2563EB)
+                          : kPrimaryYellow,
+                      borderRadius: BorderRadius.circular(18.r),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: doPrimaryAction,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.symmetric(horizontal: 18.w),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.r),
+                        ),
+                      ),
+                      child: Text(
+                        isInProgress
+                            ? 'continue'.tr()
+                            : (_isReadyToStart()
+                                  ? 'start_job_short'.tr()
+                                  : 'view_details'.tr()),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -951,10 +1063,7 @@ class _CompletedJobsSection extends StatelessWidget {
                       children: [
                         Text(
                           'earned'.tr(),
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: kTextMuted,
-                          ),
+                          style: TextStyle(fontSize: 11.sp, color: kTextMuted),
                         ),
                         SizedBox(height: 2.h),
                         Text(
@@ -1053,10 +1162,7 @@ class _TopPerformerCard extends StatelessWidget {
                   SizedBox(height: 2.h),
                   Text(
                     'keep_up_great_work'.tr(),
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: kTextMuted,
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: kTextMuted),
                   ),
                 ],
               ),
