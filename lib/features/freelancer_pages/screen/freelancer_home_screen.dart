@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/internal_technician/screen/dashboard/logic/technician_dashboard_api.dart';
 import 'package:workpleis/features/internal_technician/screen/dashboard/model/technician_dashboard_model.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
@@ -211,6 +212,15 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
         ),
       );
     }
+    final profileAsync = ref.watch(freelancerProfileProvider);
+
+    final headerUserName = profileAsync.maybeWhen(
+      data: (FreelancerProfileData p) {
+        final name = p.fullName.trim();
+        return name.isEmpty ? 'freelancer_tech'.tr() : name;
+      },
+      orElse: () => 'freelancer_tech'.tr(),
+    );
 
     return Scaffold(
       backgroundColor: kBg,
@@ -227,7 +237,7 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
                   monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0)
                       .toDouble(),
                   completedJobsThisMonth: completedCount,
-                  userName: 'freelancer_tech'.tr(),
+                  userName: headerUserName,
                 ),
                 SizedBox(height: 12.h),
                 _StatsRow(

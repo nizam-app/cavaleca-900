@@ -79,8 +79,13 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
     result.when(
       data: (data) {
         if (data != null) {
-          _showToast('Login successful!');
-          context.push(InternalBottomNavBar.routeName);
+         if (data.user.role == 'TECH_INTERNAL') {
+            _showToast('Login successful!');
+            context.push(InternalBottomNavBar.routeName);
+          } else {
+            _showToast('You are not authorized');
+            // context.push(FreelancerBottomNavBar.routeName);
+          }
         }
       },
       loading: () {},

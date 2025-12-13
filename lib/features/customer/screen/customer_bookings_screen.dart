@@ -1,10 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
-import 'package:workpleis/features/customer/model/customer_booking_model.dart';
 import 'package:workpleis/features/customer/logic/customer_booking_logic.dart';
+import 'package:workpleis/features/customer/model/customer_booking_model.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -102,9 +101,9 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   // ------------------ Helpers ------------------
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _call(String? phone) async {
@@ -320,10 +319,10 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                         unselectedLabelColor: const Color(0xFF6B7280),
                         dividerColor: Colors.transparent,
                         labelStyle: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.w500,
                         ),
-                        tabs:  [
+                        tabs: [
                           Tab(text: 'all'.tr()),
                           Tab(text: 'active'.tr()),
                           Tab(text: 'completed'.tr()),
@@ -372,10 +371,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
           children: [
             Text('${'error'.tr()}: $_errorMessage'),
             SizedBox(height: 16.h),
-            ElevatedButton(
-              onPressed: _loadBookings,
-              child: Text('retry'.tr()),
-            ),
+            ElevatedButton(onPressed: _loadBookings, child: Text('retry'.tr())),
           ],
         ),
       );
@@ -421,10 +417,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
           children: [
             Text('${'error'.tr()}: $_errorMessage'),
             SizedBox(height: 16.h),
-            ElevatedButton(
-              onPressed: _loadBookings,
-              child: Text('retry'.tr()),
-            ),
+            ElevatedButton(onPressed: _loadBookings, child: Text('retry'.tr())),
           ],
         ),
       );
@@ -461,10 +454,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
           children: [
             Text('${'error'.tr()}: $_errorMessage'),
             SizedBox(height: 16.h),
-            ElevatedButton(
-              onPressed: _loadBookings,
-              child: Text('retry'.tr()),
-            ),
+            ElevatedButton(onPressed: _loadBookings, child: Text('retry'.tr())),
           ],
         ),
       );
@@ -501,10 +491,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
           children: [
             Text('${'error'.tr()}: $_errorMessage'),
             SizedBox(height: 16.h),
-            ElevatedButton(
-              onPressed: _loadBookings,
-              child: Text('retry'.tr()),
-            ),
+            ElevatedButton(onPressed: _loadBookings, child: Text('retry'.tr())),
           ],
         ),
       );
@@ -670,7 +657,10 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
                         ),
                       ),
                       icon: Icon(Icons.phone, size: 16.sp),
-                      label: Text('call'.tr(), style: TextStyle(fontSize: 13.sp)),
+                      label: Text(
+                        'call'.tr(),
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -705,7 +695,8 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
 
   /// COMPLETED TAB – pixel perfect to screenshot
   Widget _buildCompletedCard(CustomerBookingModel booking) {
-    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
+    final String technicianName =
+        booking.assignedTechnician?.name ?? 'not_assigned'.tr();
 
     return Container(
       decoration: _cardDecoration(),
@@ -834,7 +825,8 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
   }
 
   Widget _buildCancelledCard(CustomerBookingModel booking) {
-    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
+    final String technicianName =
+        booking.assignedTechnician?.name ?? 'not_assigned'.tr();
 
     return Container(
       decoration: _cardDecoration(),
@@ -996,7 +988,11 @@ class _BookingDetailSheet extends StatelessWidget {
   String _getInitials(String name) {
     if (name.isEmpty) return '';
     final parts = name.split(' ');
-    return parts.map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase();
+    return parts
+        .map((e) => e.isNotEmpty ? e[0] : '')
+        .take(2)
+        .join()
+        .toUpperCase();
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -1018,10 +1014,7 @@ class _BookingDetailSheet extends StatelessWidget {
           flex: 3,
           child: Text(
             value,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: const Color(0xFF111827),
-            ),
+            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF111827)),
           ),
         ),
       ],
@@ -1034,16 +1027,17 @@ class _BookingDetailSheet extends StatelessWidget {
     final Color chipBg = isActive
         ? const Color(0xFFEFF6FF)
         : booking.status == 'COMPLETED'
-            ? const Color(0xFFD1FAE5)
-            : const Color(0xFFFEE2E2);
+        ? const Color(0xFFD1FAE5)
+        : const Color(0xFFFEE2E2);
     final Color chipText = isActive
         ? const Color(0xFF1D4ED8)
         : booking.status == 'COMPLETED'
-            ? const Color(0xFF065F46)
-            : const Color(0xFF991B1B);
+        ? const Color(0xFF065F46)
+        : const Color(0xFF991B1B);
     final String chipLabel = booking.readableStatus;
 
-    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
+    final String technicianName =
+        booking.assignedTechnician?.name ?? 'not_assigned'.tr();
     final String? technicianPhone = booking.assignedTechnician?.phone;
     final String initials = _getInitials(technicianName);
 
@@ -1456,15 +1450,21 @@ class _BookingDetailSheet extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        _buildDetailRow('total_amount'.tr(),
-                            '\$${booking.paymentSummary!.totalAmount.toStringAsFixed(2)}'),
+                        _buildDetailRow(
+                          'total_amount'.tr(),
+                          '\$${booking.paymentSummary!.totalAmount.toStringAsFixed(2)}',
+                        ),
                         SizedBox(height: 4.h),
-                        _buildDetailRow('payment_status'.tr(),
-                            booking.paymentSummary!.paymentStatus),
+                        _buildDetailRow(
+                          'payment_status'.tr(),
+                          booking.paymentSummary!.paymentStatus,
+                        ),
                         if (booking.paymentSummary!.paymentMethod != null) ...[
                           SizedBox(height: 4.h),
-                          _buildDetailRow('payment_method'.tr(),
-                              booking.paymentSummary!.paymentMethod!),
+                          _buildDetailRow(
+                            'payment_method'.tr(),
+                            booking.paymentSummary!.paymentMethod!,
+                          ),
                         ],
                       ],
                     ),
@@ -1526,9 +1526,15 @@ class _BookingDetailSheet extends StatelessWidget {
 
               // Dates
               SizedBox(height: 12.h),
-              _buildDetailRow('created_at'.tr(), _formatDate(booking.createdAt)),
+              _buildDetailRow(
+                'created_at'.tr(),
+                _formatDate(booking.createdAt),
+              ),
               SizedBox(height: 4.h),
-              _buildDetailRow('updated_at'.tr(), _formatDate(booking.updatedAt)),
+              _buildDetailRow(
+                'updated_at'.tr(),
+                _formatDate(booking.updatedAt),
+              ),
 
               SizedBox(height: 16.h),
 
@@ -1559,4 +1565,3 @@ class _BookingDetailSheet extends StatelessWidget {
     );
   }
 }
-
