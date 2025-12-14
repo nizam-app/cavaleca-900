@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/core/utils/app_permission_service.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
@@ -22,6 +23,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeApp();
+  }
+
+  /// Initialize app - request permissions and then check auth
+  Future<void> _initializeApp() async {
+    // Request all permissions when app starts
+    await AppPermissionService.requestAllPermissions();
+    
+    // Then proceed with auth check and navigation
     _checkAuthAndRedirect();
   }
 

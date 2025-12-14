@@ -143,6 +143,19 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
     }
   }
 
+  Future<void> _handleJobCompleted(InternalJob completedJob) async {
+    // Remove from active jobs and add to completed jobs
+    setState(() {
+      _activeJobs = _activeJobs.where((j) => j.id != completedJob.id).toList();
+      if (!_completedJobs.any((j) => j.id == completedJob.id)) {
+        _completedJobs = [..._completedJobs, completedJob];
+      }
+    });
+
+    // Refresh all job lists to get latest data from server
+    await _loadAllJobs();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tab = ref.watch(freelancerJobsTabProvider);
@@ -198,6 +211,7 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
                           return _ActiveJobsList(
                             jobs: _activeJobs,
                             onStartJob: _handleStartJob,
+                            onJobCompleted: _handleJobCompleted,
                           );
                         case FreelancerJobsTab.active:
                           return _AvailableJobsList(
@@ -370,8 +384,13 @@ class _TabChip extends StatelessWidget {
 class _ActiveJobsList extends StatelessWidget {
   final List<InternalJob> jobs;
   final Future<void> Function(InternalJob job) onStartJob;
+  final Future<void> Function(InternalJob job) onJobCompleted;
 
-  const _ActiveJobsList({required this.jobs, required this.onStartJob});
+  const _ActiveJobsList({
+    required this.jobs,
+    required this.onStartJob,
+    required this.onJobCompleted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -387,22 +406,31 @@ class _ActiveJobsList extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        for (final job in jobs) ...[
-          _ActiveJobCard(job: job, onStartJob: onStartJob),
-          SizedBox(height: 12.h),
+      return Column(
+        children: [
+          for (final job in jobs) ...[
+            _ActiveJobCard(
+              job: job,
+              onStartJob: onStartJob,
+              onJobCompleted: onJobCompleted,
+            ),
+            SizedBox(height: 12.h),
+          ],
         ],
-      ],
-    );
+      );
   }
 }
 
 class _ActiveJobCard extends StatelessWidget {
   final InternalJob job;
   final Future<void> Function(InternalJob job) onStartJob;
+  final Future<void> Function(InternalJob job) onJobCompleted;
 
-  const _ActiveJobCard({required this.job, required this.onStartJob});
+  const _ActiveJobCard({
+    required this.job,
+    required this.onStartJob,
+    required this.onJobCompleted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -571,7 +599,10 @@ class _ActiveJobCard extends StatelessWidget {
                     await showDialog(
                       context: context,
                       barrierDismissible: true,
-                      builder: (_) => Jobdetails(job: job),
+                      builder: (_) => Jobdetails(
+                        job: job,
+                        onJobCompleted: onJobCompleted,
+                      ),
                     );
                   } else {
                     await onStartJob(job);

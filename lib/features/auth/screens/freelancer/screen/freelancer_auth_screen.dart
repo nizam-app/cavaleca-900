@@ -112,9 +112,13 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
       data: (InternalLoginResponse? res) {
         if (res != null) {
           // backend theke asha user object use korbo
-
+          if (res.user.role == 'TECH_FREELANCER') {
           _showToast('Login successful!');
-          context.push(FreelancerBottomNavBar.routeName);
+            context.push(FreelancerBottomNavBar.routeName);
+          } else {
+            _showToast('You are not authorized');
+            // context.push(FreelancerBottomNavBar.routeName);
+          }
           final user = res.user;
 
           widget.onAuthComplete(
