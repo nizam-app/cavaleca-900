@@ -61,5 +61,44 @@ class ProfileUpdateService {
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
+
+  /// Update location using PATCH /api/auth/profile
+  /// Sends only latitude and longitude
+  static Future<Map<String, dynamic>> updateLocation({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final token = await AuthLocalStorage.getToken();
+
+    if (token == null) {
+      throw Exception('No auth token found');
+    }
+
+    final Map<String, dynamic> body = {
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+
+    final url = Uri.parse(AuthAPIController.profile);
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorBody = response.body;
+      throw Exception(
+        'Failed to update location (${response.statusCode}): $errorBody',
+      );
+    }
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
 }
 

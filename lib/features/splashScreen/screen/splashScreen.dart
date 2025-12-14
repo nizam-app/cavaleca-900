@@ -8,6 +8,7 @@ import 'package:workpleis/features/auth/screens/role/screen/role_selection_scree
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
+import 'package:workpleis/features/shared/realtime_location_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -75,6 +76,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final roleRaw = (user['role']).toString().toUpperCase();
     _log.i('Splash role: $roleRaw');
+
+    // Start real-time location updates for technicians
+    if (roleRaw == 'TECH_INTERNAL' || roleRaw == 'TECH_FREELANCER') {
+      RealtimeLocationService().start();
+    }
 
     if (roleRaw == 'CUSTOMER') {
       context.go(CustomerAppScreen.routeName);

@@ -54,7 +54,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
   bool _isLoadingPredictions = false;
 
   // Nouakchott default
-  static const LatLng _defaultLatLng = LatLng(18.0735, -15.9582);
+  static const LatLng _defaultLatLng = LatLng(18.078576532091493, -15.95974437920102);
   // static const LatLng _dhakaLatLng = LatLng(23.8103, 90.4125);
 
   LatLng get _selectedLatLng => LatLng(_selected.latitude, _selected.longitude);

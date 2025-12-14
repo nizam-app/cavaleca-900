@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/features/shared/realtime_location_service.dart';
 
 class CustomerLogOut {
   static Future<void> logout() async {
+    // Stop real-time location updates before logout
+    RealtimeLocationService().stop();
+
     final token = await AuthLocalStorage.getToken();
     if (token == null) {
       // locally kono login data nai, just return

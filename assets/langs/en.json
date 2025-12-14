@@ -532,5 +532,12 @@
   "failed_to_load_bookings": "Failed to load bookings",
   "no_active_bookings": "No active bookings",
   "no_completed_bookings": "No completed bookings",
-  "no_cancelled_bookings": "No cancelled bookings"
+  "no_cancelled_bookings": "No cancelled bookings",
+  "update_your_location": "Update Your Location",
+  "please_update_your_location_to_continue": "Please update your location to continue",
+  "location_updated_successfully": "Location updated successfully",
+  "select_from_map": "Select from Map",
+  "update_location": "Update Location",
+  "skip_for_now": "Skip for now",
+  "current_location": "Current Location"
 }

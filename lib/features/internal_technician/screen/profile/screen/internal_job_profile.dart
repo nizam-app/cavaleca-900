@@ -9,6 +9,7 @@ import 'package:workpleis/features/auth/screens/role/screen/role_selection_scree
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 import 'package:workpleis/features/internal_technician/screen/profile/data/internal_profile_data.dart';
 import 'package:workpleis/features/internal_technician/screen/profile/model/internal_profile_modle.dart';
+import 'package:workpleis/features/shared/location_update_service.dart';
 import 'package:workpleis/features/shared/screen/edit_profile_screen.dart';
 
 /// ------------------ COLORS ------------------
@@ -19,12 +20,54 @@ const kTextMuted = Color(0xFF9E9E9E);
 const kDarkHeader = Color(0xFF1E2432);
 const kBorderLight = Color(0xFFEAEAEA);
 
-class InternalJobProfile extends ConsumerWidget {
+class InternalJobProfile extends ConsumerStatefulWidget {
   const InternalJobProfile({super.key});
   static const String routeName = '/internal-jobProfile';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InternalJobProfile> createState() => _InternalJobProfileState();
+}
+
+class _InternalJobProfileState extends ConsumerState<InternalJobProfile> {
+  bool _isLocationUpdating = false;
+
+  Future<void> _updateLocationStatus(bool isOnline) async {
+    setState(() => _isLocationUpdating = true);
+
+    try {
+      await LocationUpdateService.updateLocationStatus(
+        status: isOnline ? 'ONLINE' : 'OFFLINE',
+      );
+
+      // Invalidate the profile provider to refresh the data
+      ref.invalidate(internalProfileProvider);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('location_status_updated'.tr()),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${'failed_to_update_location_status'.tr()}: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLocationUpdating = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profileAsync = ref.watch(internalProfileProvider);
 
     return Scaffold(
@@ -35,6 +78,7 @@ class InternalJobProfile extends ConsumerWidget {
             Center(child: Text('${'failed_to_load_profile'.tr()}\n$err')),
         data: (profile) {
           final tech = profile.technicianProfile;
+          final isAvailable = profile.locationStatus?.toUpperCase() == 'ONLINE';
 
           return SingleChildScrollView(
             child: Column(
@@ -42,6 +86,12 @@ class InternalJobProfile extends ConsumerWidget {
                 _headerSection(),
                 SizedBox(height: 16.h),
                 _profileCard(context, profile, tech),
+                SizedBox(height: 16.h),
+                _AvailabilityCard(
+                  isAvailable: isAvailable,
+                  isLoading: _isLocationUpdating,
+                  onChanged: (val) => _updateLocationStatus(val),
+                ),
                 SizedBox(height: 16.h),
                 if (tech != null) _employmentDetails(tech),
                 SizedBox(height: 16.h),
@@ -135,6 +185,74 @@ class InternalJobProfile extends ConsumerWidget {
             "manage_account_info".tr(),
             style: TextStyle(color: Colors.white70, fontSize: 13.sp),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ----------------------------------------------------
+  // Availability Status Card
+  // ----------------------------------------------------
+  Widget _AvailabilityCard({
+    required bool isAvailable,
+    required bool isLoading,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 18.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          Container(
+            width: 40.w,
+            height: 40.w,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE7FEF2),
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: const Icon(
+              Icons.work_outline_rounded,
+              color: Color(0xFF16A34A),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'availability_status'.tr(),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: kTextMain,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'accept_new_jobs'.tr(),
+                  style: TextStyle(fontSize: 12.sp, color: kTextMuted),
+                ),
+              ],
+            ),
+          ),
+          if (isLoading)
+            SizedBox(
+              width: 20.w,
+              height: 20.w,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Switch(
+              value: isAvailable,
+              onChanged: onChanged,
+              activeColor: Colors.white,
+              inactiveThumbColor: Colors.white,
+              activeTrackColor: const Color(0xFFC20001),
+              inactiveTrackColor: const Color(0xFFE5E7EB),
+            ),
         ],
       ),
     );
