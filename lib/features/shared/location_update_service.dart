@@ -47,4 +47,44 @@ class LocationUpdateService {
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
+
+  /// Update location only (without status) using POST /api/location/update
+  /// Sends only latitude and longitude
+  static Future<Map<String, dynamic>> updateLocation({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final token = await AuthLocalStorage.getToken();
+
+    if (token == null) {
+      throw Exception('No auth token found');
+    }
+
+    // Build request body with only latitude and longitude
+    final Map<String, dynamic> body = {
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+
+    final url = Uri.parse(AuthAPIController.locationUpdate);
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorBody = response.body;
+      throw Exception(
+        'Failed to update location (${response.statusCode}): $errorBody',
+      );
+    }
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
 }

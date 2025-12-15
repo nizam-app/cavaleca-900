@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:workpleis/features/customer/model/map_local_data_map.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
 import 'package:workpleis/features/shared/profile_update_service.dart';
+import 'package:workpleis/features/shared/location_update_service.dart';
 import 'package:workpleis/features/shared/realtime_location_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -130,7 +131,14 @@ class _LocationUpdatePopupState extends State<LocationUpdatePopup>
     });
 
     try {
+      // Update profile location via PATCH /api/auth/profile
       await ProfileUpdateService.updateLocation(
+        latitude: lat,
+        longitude: lng,
+      );
+
+      // Update location via POST /api/location/update (without status)
+      await LocationUpdateService.updateLocation(
         latitude: lat,
         longitude: lng,
       );
