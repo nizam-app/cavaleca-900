@@ -15,6 +15,8 @@ class AuthAPIController {
   static String time_remaining(woId) => "${_base_api}/wos/$woId/time-remaining";
 
   static String technician_earnings = "${_base_api}/technician/earnings";
+  static String technician_payout_request =
+      "${_base_api}/commissions/payout-request";
   static String set_password = "${_base_api}/auth/set-password";
   static String technician_dashboard = "${_base_api}/technician/dashboard";
   static String locationUpdate = "${_base_api}/location/update";

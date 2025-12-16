@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
-import 'package:workpleis/features/shared/profile_update_service.dart';
+import 'package:workpleis/features/shared/location_update_service.dart';
 import 'package:logger/logger.dart';
 
 class RealtimeLocationService {
@@ -146,16 +146,15 @@ class RealtimeLocationService {
 
       _log.i('Updating location: ${position.latitude}, ${position.longitude}');
 
-      // Update profile location via PATCH /api/auth/profile
-      // Note: /api/location/update will be handled separately when availability status is changed
+      // Push real-time location to /api/location/update with latitude & longitude
       try {
-        await ProfileUpdateService.updateLocation(
+        final result = await LocationUpdateService.updateLocation(
           latitude: position.latitude,
           longitude: position.longitude,
         );
-        _log.i('Profile location updated successfully');
+        _log.i('Realtime location updated successfully: $result');
       } catch (e) {
-        _log.e('Error updating profile location: $e');
+        _log.e('Error updating realtime location: $e');
       }
 
       _lastPosition = position;

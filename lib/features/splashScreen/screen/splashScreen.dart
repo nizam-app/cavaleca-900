@@ -8,6 +8,7 @@ import 'package:workpleis/features/auth/screens/role/screen/role_selection_scree
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
+import 'package:workpleis/features/shared/widget/location_update_popup.dart';
 import 'package:workpleis/features/shared/realtime_location_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -77,19 +78,32 @@ class _SplashScreenState extends State<SplashScreen> {
     final roleRaw = (user['role']).toString().toUpperCase();
     _log.i('Splash role: $roleRaw');
 
-    // Start real-time location updates for technicians
-    if (roleRaw == 'TECH_INTERNAL' || roleRaw == 'TECH_FREELANCER') {
-      RealtimeLocationService().start();
-    }
-
     if (roleRaw == 'CUSTOMER') {
       context.go(CustomerAppScreen.routeName);
-    } else if (roleRaw == 'TECH_INTERNAL') {
-      context.go(InternalBottomNavBar.routeName);
-    } else if (roleRaw == 'TECH_FREELANCER') {
-      context.go(FreelancerBottomNavBar.routeName);
-    } else {
-      context.go(RoleSelectionScreen.routeName);
+      return;
     }
+
+    // For technicians (internal/freelancer), always show location popup even if already logged in
+    if (roleRaw == 'TECH_INTERNAL' || roleRaw == 'TECH_FREELANCER') {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const LocationUpdatePopup(),
+      );
+
+      if (!mounted) return;
+
+      // Start real-time updates after popup completes
+      RealtimeLocationService().start();
+
+      if (roleRaw == 'TECH_INTERNAL') {
+        context.go(InternalBottomNavBar.routeName);
+      } else {
+        context.go(FreelancerBottomNavBar.routeName);
+      }
+      return;
+    }
+
+    context.go(RoleSelectionScreen.routeName);
   }
 }
