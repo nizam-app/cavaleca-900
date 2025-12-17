@@ -26,6 +26,9 @@ class AppPermissionService {
         Permission.storage,
         Permission.photos,
         Permission.mediaLibrary,
+        
+        // Notification permission (Android 13+)
+        Permission.notification,
       ];
 
       // Request permissions one by one

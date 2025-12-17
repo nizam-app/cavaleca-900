@@ -976,7 +976,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bonus Earned ($bonusPercentage%)',
+                      'Commission Earned ($bonusPercentage%)',
                       style: const TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 11,

@@ -129,9 +129,18 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
         lng: lng,
       );
 
+      // Preserve payment and bonus if API response has $0.00
+      final paymentToUse = updated.payment == '\$0.00' ? job.payment : updated.payment;
+      final bonusToUse = updated.bonus == '\$0.00' ? job.bonus : updated.bonus;
+      
+      final finalUpdated = updated.copyWith(
+        payment: paymentToUse,
+        bonus: bonusToUse,
+      );
+
       setState(() {
         _activeJobs = _activeJobs
-            .map((j) => j.id == updated.id ? updated : j)
+            .map((j) => j.id == finalUpdated.id ? finalUpdated : j)
             .toList();
       });
     } catch (e) {

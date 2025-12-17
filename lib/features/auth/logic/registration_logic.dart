@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/core/services/fcm_service.dart';
 import 'package:workpleis/features/auth/model/d.dart';
 
 class RegistrationApi {
@@ -103,6 +104,9 @@ class RegistrationApi {
       token: data['token'],
       userJson: data['user'],
     );
+
+    // Initialize FCM and register token after successful registration
+    await FCMService.initialize();
 
     return SetPasswordResponse.fromJson(data);
   }

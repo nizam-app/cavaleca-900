@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/core/services/fcm_service.dart';
 import 'package:workpleis/features/auth/screens/customer/model/customer_login_model.dart';
 
 class CustomerAuthApi {
@@ -53,5 +54,8 @@ class CustomerAuthApi {
 
     // ⬇️ tumi je helper diecho, ota diye save
     await AuthLocalStorage.saveLoginData(token: token, userJson: userJson);
+    
+    // Initialize FCM and register token after successful login
+    await FCMService.initialize();
   }
 }

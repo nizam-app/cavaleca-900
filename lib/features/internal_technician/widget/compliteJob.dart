@@ -50,7 +50,7 @@ class _ComplitejobState extends State<Complitejob> {
   double _calculateBonus(String payment) {
     final sanitized = payment.replaceAll('\$', '').replaceAll(',', '');
     final amount = double.tryParse(sanitized) ?? 0;
-    return amount * 0.05; // 5% bonus
+    return amount * 0.05; // 5% commission
   }
 
   Future<void> _showImageSourceDialog() async {
@@ -479,7 +479,7 @@ class _ComplitejobState extends State<Complitejob> {
     );
   }
 
-  /// -------------------  BONUS CARD  -------------------
+  /// -------------------  COMMISSION CARD  -------------------
   Widget _buildBonusCard(
     double jobPayment,
     double bonusRate,

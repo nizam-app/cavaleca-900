@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "99921452031",
+    "project_id": "acceleratecyber-d30ee",
+    "storage_bucket": "acceleratecyber-d30ee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:99921452031:android:555dc22ed8ea8d44ec65ca",
+        "android_client_info": {
+          "package_name": "com.example.checking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHnat-piGfIqdn-yZPBnbu0peXpHlxXxs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

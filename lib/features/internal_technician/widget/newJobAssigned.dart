@@ -332,7 +332,7 @@ class _NewjobassignedState extends State<Newjobassigned> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Your Bonus (5%)',
+                                  'Your Commission (5%)',
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: const Color(0xFF059669),

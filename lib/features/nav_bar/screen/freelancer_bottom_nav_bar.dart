@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workpleis/features/erning/screen/freelancer_earnings_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
+import 'package:workpleis/features/notification/customer_notifications_screen.dart';
+import 'package:workpleis/features/notification/data/notificaion_data.dart';
 
 import '../../freelancer_pages/screen/freelarcer_job_screen.dart';
 import '../logic/botton_nav_index_logic.dart';
@@ -15,6 +17,7 @@ class FreelancerBottomNavBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(bottomNavIndexProvider);
+    final unreadCount = ref.watch(unreadNotificationsProvider).value ?? 0;
     const activeColor = Color(0xFFCF2626); // red
     const inactiveColor = Color(0xFFB0B0B0); // grey
 
@@ -25,6 +28,7 @@ class FreelancerBottomNavBar extends ConsumerWidget {
         children: [
           FreelancerHomeScreen(),
           FreelarcerJobScreen(),
+          CustomerNotificationsScreen(isGuest: false),
           FreelancerEarningsScreen(),
           FreelancerProfileScreen(),
         ],
@@ -70,6 +74,17 @@ class FreelancerBottomNavBar extends ConsumerWidget {
               label: 'jobs'.tr(),
             ),
             BottomNavigationBarItem(
+              icon: _NotificationIcon(
+                icon: Icons.notifications_none_rounded,
+                activeIcon: Icons.notifications_rounded,
+                isActive: currentIndex == 2,
+                badgeCount: unreadCount,
+                activeColor: activeColor,
+                inactiveColor: inactiveColor,
+              ),
+              label: 'alerts'.tr(),
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.attach_money_outlined),
               activeIcon: Icon(Icons.attach_money_outlined),
               label: 'earnings'.tr(),
@@ -83,5 +98,65 @@ class FreelancerBottomNavBar extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class _NotificationIcon extends StatelessWidget {
+  const _NotificationIcon({
+    required this.icon,
+    required this.activeIcon,
+    required this.isActive,
+    required this.badgeCount,
+    required this.activeColor,
+    required this.inactiveColor,
+  });
+
+  final IconData icon;
+  final IconData activeIcon;
+  final bool isActive;
+  final int badgeCount;
+  final Color activeColor;
+  final Color inactiveColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = isActive ? activeColor : inactiveColor;
+
+    Widget iconWidget = Icon(
+      isActive ? activeIcon : icon,
+      color: color,
+    );
+
+    if (badgeCount > 0) {
+      iconWidget = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          iconWidget,
+          Positioned(
+            right: -4,
+            top: -4,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: Color(0xFFCF2626),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                badgeCount > 9 ? '9+' : badgeCount.toString(),
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return iconWidget;
   }
 }

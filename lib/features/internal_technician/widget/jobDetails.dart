@@ -325,9 +325,9 @@ class Jobdetails extends StatelessWidget {
     );
   }
 
-  /// -------------------  BONUS CARD  -------------------
+  /// -------------------  COMMISSION CARD  -------------------
   Widget _buildBonusCard() {
-    // Calculate bonus from payment (5%)
+    // Calculate commission from payment (5%)
     final paymentAmount = double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0;
     final bonus = paymentAmount * 0.05;
     
