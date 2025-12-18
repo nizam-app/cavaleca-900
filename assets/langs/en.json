@@ -3,6 +3,8 @@
   "monday_friday": "Monday - Friday",
   "saturday": "Saturday",
   "sunday": "Sunday",
+  "location_status_updated": "Location status updated.",
+
   "join_as_freelancer": "Join as Freelancer",
   "s_tep_1_of_3": "Step 1 of 3: Enter your details",
   "step_2_of_3": "Step 2 of 3",
@@ -506,7 +508,7 @@
   "pending_two": "2 pending",
   "verified": "verified",
   "bank_linked": "Bank linked",
-  "active": "active",
+  "active": "Active",
   "completed": "Completed",
   "jobs_completed": "jobs completed",
   "customer_label": "Customer:",
