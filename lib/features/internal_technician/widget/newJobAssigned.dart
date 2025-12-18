@@ -115,12 +115,15 @@ class _NewjobassignedState extends State<Newjobassigned> {
                 child: Row(
                   children: [
                     const Spacer(),
+                    // Disable close button during countdown (first 30 seconds)
                     InkWell(
-                      onTap: widget.onClose,
+                      onTap: _remainingSeconds > 0 ? null : widget.onClose,
                       child: Icon(
                         Icons.close_rounded,
                         size: 20.sp,
-                        color: const Color(0xFF6B7280),
+                        color: _remainingSeconds > 0 
+                            ? const Color(0xFFD1D5DB) // Disabled color
+                            : const Color(0xFF6B7280), // Enabled color
                       ),
                     ),
                   ],
@@ -155,25 +158,28 @@ class _NewjobassignedState extends State<Newjobassigned> {
                         color: const Color(0xFF111827),
                       ),
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      'You have ${widget.initialSeconds} seconds to respond',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: const Color(0xFF6B7280),
+                    // Only show timer text and countdown if initialSeconds > 0
+                    if (widget.initialSeconds > 0) ...[
+                      SizedBox(height: 4.h),
+                      Text(
+                        'You have ${widget.initialSeconds} seconds to respond',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: const Color(0xFF6B7280),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      _formattedTime,
-                      style: TextStyle(
-                        fontSize: 32.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFDC2626),
-                        letterSpacing: 1.5,
+                      SizedBox(height: 12.h),
+                      Text(
+                        _formattedTime,
+                        style: TextStyle(
+                          fontSize: 32.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFDC2626),
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

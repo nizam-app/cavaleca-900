@@ -191,8 +191,10 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
     final inProgressCount = _activeJobs.where(_isInProgress).length;
     final readyToStartCount = _activeJobs.where(_isReadyToStart).length;
 
-    final completedCount =
-        _dashboardData?.completedThisMonth ?? _completedJobs.length;
+    // Prioritize actual completed jobs list over dashboard data
+    final completedCount = _completedJobs.isNotEmpty
+        ? _completedJobs.length
+        : (_dashboardData?.completedThisMonth ?? 0);
 
     if (_isLoading) {
       return const Scaffold(

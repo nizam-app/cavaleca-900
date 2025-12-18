@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/constants/api_control/notificiaon_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/core/services/job_notification_service.dart';
 
 class FCMService {
   static final _log = Logger();
@@ -54,12 +55,22 @@ class FCMService {
 
       // Handle foreground messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        _log.i('Got a message whilst in the foreground!');
-        _log.i('Message data: ${message.data}');
-        _log.i('Message notification: ${message.notification}');
+        _log.i('📨 Got a message whilst in the foreground!');
+        _log.i('📋 Message data: ${message.data}');
+        _log.i('🔔 Message notification: ${message.notification}');
         
-        // Show local notification when app is in foreground
-        _showLocalNotification(message);
+        // Check if this is a job notification
+        if (_isJobNotification(message)) {
+          _log.i('✅ Job notification detected, showing mandatory dialog immediately');
+          // Call immediately without await to not block the listener
+          JobNotificationService().handleFCMJobNotification(message.data).catchError((error) {
+            _log.e('❌ Error in handleFCMJobNotification: $error');
+          });
+        } else {
+          _log.i('ℹ️ Regular notification, showing local notification');
+          // Show local notification when app is in foreground
+          _showLocalNotification(message);
+        }
       });
 
       // Handle background messages (when app is in background)
@@ -139,9 +150,34 @@ class FCMService {
     );
   }
 
+  /// Check if notification is a job notification
+  static bool _isJobNotification(RemoteMessage message) {
+    final data = message.data;
+    final type = data['type']?.toString().toLowerCase();
+    final hasJobId = data.containsKey('jobId') || 
+                     data.containsKey('woId') || 
+                     data.containsKey('workOrderId');
+    
+    final isJob = type == 'job' || type == 'work_order' || hasJobId;
+    
+    _log.i('🔍 Checking if notification is job notification:');
+    _log.i('   - Type: $type');
+    _log.i('   - Has Job ID: $hasJobId');
+    _log.i('   - Is Job Notification: $isJob');
+    _log.i('   - Full data: $data');
+    
+    return isJob;
+  }
+
   /// Handle notification tap
   static void _handleNotificationTap(RemoteMessage message) {
     _log.i('Handling notification tap: ${message.data}');
+    
+    // Check if this is a job notification
+    if (_isJobNotification(message)) {
+      _log.i('Job notification tapped, showing mandatory dialog');
+      JobNotificationService().handleFCMJobNotification(message.data);
+    }
     // You can navigate to specific screen based on notification data
     // For example:
     // if (message.data['type'] == 'job') {
@@ -171,6 +207,15 @@ class FCMService {
       }
 
       final uri = Uri.parse(NotificiaonAPIController.fcmToken);
+      final requestBody = jsonEncode({
+        'fcmToken': fcmToken,
+      });
+
+      _log.i('Sending FCM token to server:');
+      _log.i('URL: $uri');
+      _log.i('Body: $requestBody');
+      _log.i('FCM Token: $fcmToken');
+
       final response = await http.post(
         uri,
         headers: {
@@ -178,20 +223,22 @@ class FCMService {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'fcmToken': fcmToken,
-        }),
+        body: requestBody,
       );
 
+      _log.i('FCM token API response:');
+      _log.i('Status Code: ${response.statusCode}');
+      _log.i('Response Body: ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        _log.i('FCM token successfully sent to server');
+        _log.i('✅ FCM token successfully sent to server');
         return true;
       } else {
-        _log.w('Failed to send FCM token. Status: ${response.statusCode}, Body: ${response.body}');
+        _log.w('❌ Failed to send FCM token. Status: ${response.statusCode}, Body: ${response.body}');
         return false;
       }
     } catch (e, stackTrace) {
-      _log.e('Error sending FCM token to server: $e', error: e, stackTrace: stackTrace);
+      _log.e('❌ Error sending FCM token to server: $e', error: e, stackTrace: stackTrace);
       return false;
     }
   }

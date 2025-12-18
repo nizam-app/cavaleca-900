@@ -5,17 +5,42 @@ import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_scree
 import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/notification/customer_notifications_screen.dart';
 import 'package:workpleis/features/notification/data/notificaion_data.dart';
+import 'package:workpleis/core/services/job_notification_service.dart';
 
 import '../../freelancer_pages/screen/freelarcer_job_screen.dart';
 import '../logic/botton_nav_index_logic.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-class FreelancerBottomNavBar extends ConsumerWidget {
+class FreelancerBottomNavBar extends ConsumerStatefulWidget {
   const FreelancerBottomNavBar({super.key});
   static const routeName = '/freelancerBottomNavBar';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FreelancerBottomNavBar> createState() => _FreelancerBottomNavBarState();
+}
+
+class _FreelancerBottomNavBarState extends ConsumerState<FreelancerBottomNavBar> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize job notification service after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final context = this.context;
+      if (context.mounted) {
+        await JobNotificationService().initialize(context);
+        JobNotificationService().startPolling();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    JobNotificationService().stopPolling();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentIndex = ref.watch(bottomNavIndexProvider);
     final unreadCount = ref.watch(unreadNotificationsProvider).value ?? 0;
     const activeColor = Color(0xFFCF2626); // red
