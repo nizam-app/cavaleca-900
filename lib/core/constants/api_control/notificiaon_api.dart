@@ -5,4 +5,5 @@ class NotificiaonAPIController {
   static String notifications(query) => "${_base_api}/notifications?$query";
   static String readNotifications(id) => "${_base_api}/notifications/$id/read";
   static String all_read_Notifications = "${_base_api}/notifications/read-all";
+  static String fcmToken = "${_base_api}/notifications/fcm-token";
 }

@@ -3,10 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/core/utils/app_permission_service.dart';
+import 'package:workpleis/core/services/fcm_service.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
+import 'package:workpleis/features/shared/widget/location_update_popup.dart';
+import 'package:workpleis/features/shared/realtime_location_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,6 +26,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeApp();
+  }
+
+  /// Initialize app - request permissions and then check auth
+  Future<void> _initializeApp() async {
+    // Request all permissions when app starts
+    await AppPermissionService.requestAllPermissions();
+    
+    // Initialize FCM and register token (only if user is logged in)
+    final token = await AuthLocalStorage.getToken();
+    if (token != null) {
+      await FCMService.initialize();
+    }
+    
+    // Then proceed with auth check and navigation
     _checkAuthAndRedirect();
   }
 
@@ -68,12 +87,30 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (roleRaw == 'CUSTOMER') {
       context.go(CustomerAppScreen.routeName);
-    } else if (roleRaw == 'TECH_INTERNAL') {
-      context.go(InternalBottomNavBar.routeName);
-    } else if (roleRaw == 'TECH_FREELANCER') {
-      context.go(FreelancerBottomNavBar.routeName);
-    } else {
-      context.go(RoleSelectionScreen.routeName);
+      return;
     }
+
+    // For technicians (internal/freelancer), always show location popup even if already logged in
+    if (roleRaw == 'TECH_INTERNAL' || roleRaw == 'TECH_FREELANCER') {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const LocationUpdatePopup(),
+      );
+
+      if (!mounted) return;
+
+      // Start real-time updates after popup completes
+      RealtimeLocationService().start();
+
+      if (roleRaw == 'TECH_INTERNAL') {
+        context.go(InternalBottomNavBar.routeName);
+      } else {
+        context.go(FreelancerBottomNavBar.routeName);
+      }
+      return;
+    }
+
+    context.go(RoleSelectionScreen.routeName);
   }
 }

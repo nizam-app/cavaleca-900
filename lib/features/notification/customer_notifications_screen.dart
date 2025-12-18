@@ -31,84 +31,117 @@ class CustomerNotificationsScreen extends ConsumerWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return Center(
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: 420.w,
-                    minHeight: constraints.maxHeight,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _NotificationsHeader(),
-                      SizedBox(height: 16.h),
+              child: RefreshIndicator(
+                onRefresh: () => notifier.refresh(),
+                color: kPrimaryRed,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: 420.w,
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const _NotificationsHeader(),
+                        SizedBox(height: 16.h),
 
-                      if (isGuest) ...[
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.0.w),
-                          child: _GuestLimitedCard(onSignUp: onSignUp),
-                        ),
-                      ] else ...[
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24.0.w,
-                            vertical: 4.h,
+                        if (isGuest) ...[
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.0.w),
+                            child: _GuestLimitedCard(onSignUp: onSignUp),
                           ),
-                          child: notificationsState.when(
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
+                        ] else ...[
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24.0.w,
+                              vertical: 4.h,
                             ),
-                            error: (err, _) => Column(
-                              children: [
-                                Text(
-                                  'failed_load_notifications'.tr(),
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 13.sp,
-                                  ),
+                            child: notificationsState.when(
+                              loading: () => Padding(
+                                padding: EdgeInsets.only(top: 40.h),
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
                                 ),
-                                SizedBox(height: 8.h),
-                                TextButton(
-                                  onPressed: notifier.refresh,
-                                  child:  Text('Retry'),
+                              ),
+                              error: (err, _) => Padding(
+                                padding: EdgeInsets.only(top: 40.h),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'failed_load_notifications'.tr(),
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 13.sp,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    TextButton(
+                                      onPressed: notifier.refresh,
+                                      child:  Text('Retry'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            data: (list) {
-                              if (list.isEmpty) {
-                                return Padding(
-                                  padding: EdgeInsets.only(top: 40.h),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.notifications_off_outlined,
-                                        size: 40.sp,
-                                        color: const Color(0xFF9CA3AF),
-                                      ),
-                                      SizedBox(height: 8.h),
-                                      Text(
-                                        'no_notifications_yet'.tr(),
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: const Color(0xFF6B7280),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-
-                              final hasUnread = list.any((n) => !n.isRead);
-
-                              return Column(
-                                children: [
-                                  // Mark all as read row
-                                  if (hasUnread)
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                              ),
+                              data: (list) {
+                                if (list.isEmpty) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(top: 40.h),
+                                    child: Column(
                                       children: [
+                                        Icon(
+                                          Icons.notifications_off_outlined,
+                                          size: 40.sp,
+                                          color: const Color(0xFF9CA3AF),
+                                        ),
+                                        SizedBox(height: 8.h),
                                         Text(
+                                          'no_notifications_yet'.tr(),
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: const Color(0xFF6B7280),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+
+                                final hasUnread = list.any((n) => !n.isRead);
+
+                                return Column(
+                                  children: [
+                                    // Mark all as read row
+                                    if (hasUnread)
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Recent',
+                                            style: TextStyle(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: const Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: notifier.markAllAsRead,
+                                            child: Text(
+                                              'Mark all as read',
+                                              style: TextStyle(
+                                                fontSize: 13.sp,
+                                                color: kPrimaryRed,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
                                           'Recent',
                                           style: TextStyle(
                                             fontSize: 13.sp,
@@ -116,48 +149,26 @@ class CustomerNotificationsScreen extends ConsumerWidget {
                                             color: const Color(0xFF6B7280),
                                           ),
                                         ),
-                                        TextButton(
-                                          onPressed: notifier.markAllAsRead,
-                                          child: Text(
-                                            'Mark all as read',
-                                            style: TextStyle(
-                                              fontSize: 13.sp,
-                                              color: kPrimaryRed,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  else
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        'Recent',
-                                        style: TextStyle(
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: const Color(0xFF6B7280),
-                                        ),
                                       ),
-                                    ),
-                                  SizedBox(height: 8.h),
+                                    SizedBox(height: 8.h),
 
-                                  for (final item in list)
-                                    Padding(
-                                      padding: EdgeInsets.only(bottom: 12.0.h),
-                                      child: GestureDetector(
-                                        onTap: () =>
-                                            notifier.markAsRead(item.id),
-                                        child: _NotificationCard(item: item),
+                                    for (final item in list)
+                                      Padding(
+                                        padding: EdgeInsets.only(bottom: 12.0.h),
+                                        child: GestureDetector(
+                                          onTap: () =>
+                                              notifier.markAsRead(item.id),
+                                          child: _NotificationCard(item: item),
+                                        ),
                                       ),
-                                    ),
-                                ],
-                              );
-                            },
+                                  ],
+                                );
+                              },
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),

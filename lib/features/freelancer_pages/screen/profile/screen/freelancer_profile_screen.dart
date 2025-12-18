@@ -9,6 +9,7 @@ import 'package:workpleis/core/widget/log_out_utton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 import 'package:workpleis/features/freelancer_pages/screen/profile/data/freelancer_profile_data.dart';
+import 'package:workpleis/features/shared/location_update_service.dart';
 import 'package:workpleis/features/shared/screen/edit_profile_screen.dart';
 
 /// ---------------------------------------------------------------------------
@@ -34,6 +35,7 @@ class FreelancerProfileData {
   final List<String> skills;
   final int verifiedCerts;
   final bool bankLinked;
+  final String? locationStatus;
 
   const FreelancerProfileData({
     required this.initials,
@@ -43,6 +45,7 @@ class FreelancerProfileData {
     required this.skills,
     required this.verifiedCerts,
     required this.bankLinked,
+    this.locationStatus,
   });
 }
 
@@ -117,13 +120,38 @@ class FreelancerProfileScreen extends ConsumerStatefulWidget {
 
 class _FreelancerProfileScreenState
     extends ConsumerState<FreelancerProfileScreen> {
-  bool _isAvailable = true;
+  bool _isLocationUpdating = false;
   AppLanguage _language = AppLanguage.en;
 
   void _showToast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
+  }
+
+  Future<void> _updateLocationStatus(bool isOnline) async {
+    setState(() => _isLocationUpdating = true);
+
+    try {
+      await LocationUpdateService.updateLocationStatus(
+        status: isOnline ? 'ONLINE' : 'OFFLINE',
+      );
+
+      // Invalidate the profile provider to refresh the data
+      ref.invalidate(freelancerProfileProvider);
+
+      if (!mounted) return;
+
+      _showToast('location_status_updated'.tr());
+    } catch (e) {
+      if (!mounted) return;
+
+      _showToast('${'failed_to_update_location_status'.tr()}: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLocationUpdating = false);
+      }
+    }
   }
 
   @override
@@ -145,6 +173,7 @@ class _FreelancerProfileScreenState
             ),
           ),
           data: (profile) {
+            final isAvailable = profile.locationStatus?.toUpperCase() == 'ONLINE';
             return SingleChildScrollView(
               child: Column(
                 children: [
@@ -153,11 +182,9 @@ class _FreelancerProfileScreenState
                   _ProfileInfoCard(data: profile),
                   SizedBox(height: 14.h),
                   _AvailabilityCard(
-                    isAvailable: _isAvailable,
-                    onChanged: (val) {
-                      setState(() => _isAvailable = val);
-                      // TODO: availability update API
-                    },
+                    isAvailable: isAvailable,
+                    isLoading: _isLocationUpdating,
+                    onChanged: (val) => _updateLocationStatus(val),
                   ),
                   SizedBox(height: 14.h),
                   _SkillsCard(skills: profile.skills),
@@ -489,10 +516,15 @@ class _ProfileInfoCard extends StatelessWidget {
 /// Availability status card (switch)
 /// ---------------------------------------------------------------------------
 class _AvailabilityCard extends StatelessWidget {
-  const _AvailabilityCard({required this.isAvailable, required this.onChanged});
+  const _AvailabilityCard({
+    required this.isAvailable,
+    required this.onChanged,
+    this.isLoading = false,
+  });
 
   final bool isAvailable;
   final ValueChanged<bool> onChanged;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -545,14 +577,21 @@ class _AvailabilityCard extends StatelessWidget {
               ],
             ),
           ),
-          Switch(
-            value: isAvailable,
-            onChanged: onChanged,
-            activeColor: Colors.white,
-            inactiveThumbColor: Colors.white,
-            activeTrackColor: kAccentRed,
-            inactiveTrackColor: const Color(0xFFE5E7EB),
-          ),
+          if (isLoading)
+            SizedBox(
+              width: 20.w,
+              height: 20.w,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Switch(
+              value: isAvailable,
+              onChanged: onChanged,
+              activeColor: Colors.white,
+              inactiveThumbColor: Colors.white,
+              activeTrackColor: kAccentRed,
+              inactiveTrackColor: const Color(0xFFE5E7EB),
+            ),
         ],
       ),
     );

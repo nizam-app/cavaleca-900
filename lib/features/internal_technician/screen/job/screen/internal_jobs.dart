@@ -92,16 +92,31 @@ class _InternalJobsState extends State<InternalJobs> {
   }
 
   void _handleJobUpdate(InternalJob updatedJob) {
+    // Find the existing job to preserve payment/bonus if needed
+    final existingJob = _activeJobs.firstWhere(
+      (job) => job.id == updatedJob.id,
+      orElse: () => updatedJob,
+    );
+
+    // Preserve payment and bonus if API response has $0.00
+    final paymentToUse = updatedJob.payment == '\$0.00' ? existingJob.payment : updatedJob.payment;
+    final bonusToUse = updatedJob.bonus == '\$0.00' ? existingJob.bonus : updatedJob.bonus;
+    
+    final finalUpdated = updatedJob.copyWith(
+      payment: paymentToUse,
+      bonus: bonusToUse,
+    );
+
     // active list update + if completed, move to completed
     setState(() {
       _activeJobs = _activeJobs
-          .map((job) => job.id == updatedJob.id ? updatedJob : job)
+          .map((job) => job.id == finalUpdated.id ? finalUpdated : job)
           .toList();
 
-      if (updatedJob.status == JobStatus.completed) {
-        _completedJobs = [..._completedJobs, updatedJob];
+      if (finalUpdated.status == JobStatus.completed) {
+        _completedJobs = [..._completedJobs, finalUpdated];
         _activeJobs = _activeJobs
-            .where((job) => job.id != updatedJob.id)
+            .where((job) => job.id != finalUpdated.id)
             .toList();
       }
     });
@@ -650,7 +665,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Your Bonus ($bonusRate%)',
+                          'Your Commission ($bonusRate%)',
                           style: TextStyle(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 11.sp,
@@ -936,7 +951,7 @@ class _InternalJobsState extends State<InternalJobs> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'Your Bonus ($bonusRate%)',
+                            'Your Commission ($bonusRate%)',
                             style: TextStyle(
                               color: const Color(0xFF9CA3AF),
                               fontSize: 11.sp,
@@ -1048,7 +1063,17 @@ class _InternalJobsState extends State<InternalJobs> {
                                     lat: lat,
                                     lng: lng,
                                   );
-                                  _handleJobUpdate(updated);
+                                  
+                                  // Preserve payment and bonus if API response has $0.00
+                                  final paymentToUse = updated.payment == '\$0.00' ? job.payment : updated.payment;
+                                  final bonusToUse = updated.bonus == '\$0.00' ? job.bonus : updated.bonus;
+                                  
+                                  final finalUpdated = updated.copyWith(
+                                    payment: paymentToUse,
+                                    bonus: bonusToUse,
+                                  );
+                                  
+                                  _handleJobUpdate(finalUpdated);
                                   
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1228,7 +1253,7 @@ class _InternalJobsState extends State<InternalJobs> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Bonus Earned ($bonusRate%)',
+                      'Commission Earned ($bonusRate%)',
                       style: TextStyle(
                         color: const Color(0xFF9CA3AF),
                         fontSize: 11.sp,

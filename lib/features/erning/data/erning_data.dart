@@ -40,4 +40,45 @@ class TechnicianEarningsApi {
     final jsonMap = jsonDecode(res.body) as Map<String, dynamic>;
     return TechnicianEarningsSummary.fromJson(jsonMap);
   }
+
+  /// POST /api/commissions/payout-request
+  ///
+  /// Body:
+  /// {
+  ///   "amount": 100,
+  ///   "reason": "Need funds for expenses",
+  ///   "paymentMethod": "BANK_ACCOUNT"
+  /// }
+  static Future<void> requestEarlyPayout({
+    required double amount,
+    required String reason,
+    required String paymentMethod,
+  }) async {
+    final token = await AuthLocalStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token found (please login first).');
+    }
+
+    final uri = Uri.parse(AuthAPIController.technician_payout_request);
+
+    final res = await http.post(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'amount': amount,
+        'reason': reason,
+        'paymentMethod': paymentMethod,
+      }),
+    );
+
+    if (res.statusCode != 201 && res.statusCode != 200) {
+      throw Exception(
+        'Failed to request payout (${res.statusCode}): ${res.body}',
+      );
+    }
+  }
 }

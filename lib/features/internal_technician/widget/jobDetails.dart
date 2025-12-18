@@ -20,8 +20,9 @@ const Color kBorderLight = Color(0xFFE5E5E5);
 
 class Jobdetails extends StatelessWidget {
   final InternalJob job;
+  final Function(InternalJob)? onJobCompleted;
 
-  const Jobdetails({super.key, required this.job});
+  const Jobdetails({super.key, required this.job, this.onJobCompleted});
 
   @override
   Widget build(BuildContext context) {
@@ -324,9 +325,9 @@ class Jobdetails extends StatelessWidget {
     );
   }
 
-  /// -------------------  BONUS CARD  -------------------
+  /// -------------------  COMMISSION CARD  -------------------
   Widget _buildBonusCard() {
-    // Calculate bonus from payment (5%)
+    // Calculate commission from payment (5%)
     final paymentAmount = double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0;
     final bonus = paymentAmount * 0.05;
     
@@ -389,11 +390,6 @@ class Jobdetails extends StatelessWidget {
 
   /// -------------------  BUTTONS  ----------------------
   Widget _buildCompleteButton(BuildContext context) {
-    // payment string থেকে amount বের করি
-    final paymentAmount =
-        double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ??
-        0;
-
     return SizedBox(
       width: double.infinity,
       height: 48.h,
@@ -412,6 +408,7 @@ class Jobdetails extends StatelessWidget {
             builder: (_) => Complitejob(
               woId: job.id,
               job: job,
+              onJobCompleted: onJobCompleted,
             ),
           );
         },

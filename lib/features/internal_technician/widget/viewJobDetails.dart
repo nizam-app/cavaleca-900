@@ -356,9 +356,18 @@ class Viewjobdetails extends StatelessWidget {
                   lng: lng,
                 );
                 
+                // Preserve payment and bonus if API response has $0.00
+                final paymentToUse = updated.payment == '\$0.00' ? job.payment : updated.payment;
+                final bonusToUse = updated.bonus == '\$0.00' ? job.bonus : updated.bonus;
+                
+                final finalUpdated = updated.copyWith(
+                  payment: paymentToUse,
+                  bonus: bonusToUse,
+                );
+                
                 // Notify parent about job update
                 if (onJobUpdate != null) {
-                  onJobUpdate!(updated);
+                  onJobUpdate!(finalUpdated);
                 }
                 
                 if (context.mounted) {

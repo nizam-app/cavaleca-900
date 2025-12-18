@@ -89,7 +89,13 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   int get _inProgressJobs =>
       _activeJobs.where((j) => j.status == JobStatus.inProgress).length;
 
-  int get _completedCount => _completedJobs.length;
+  /// Prefer locally fetched lists for counts; fall back to dashboard numbers.
+  int get _uiActiveCount =>
+      _activeJobs.isNotEmpty ? _activeJobs.length : (_dashboardData?.activeJobs ?? 0);
+
+  int get _uiCompletedCount => _completedJobs.isNotEmpty
+      ? _completedJobs.length
+      : (_dashboardData?.completedThisMonth ?? 0);
 
   double get _totalBonus =>
       _completedJobs.fold(0, (sum, job) => sum + _calculateBonus(job.payment));
@@ -142,7 +148,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       ),
       _DashboardStat(
         label: 'Active Jobs',
-        value: (dashboard?.activeJobs ?? (_openJobs + _inProgressJobs)).toString(),
+        value: _uiActiveCount.toString(),
         icon: Icons.work_outline,
         iconBg: const Color(0xFFFEF3C7),
         iconColor: const Color(0xFFF59E0B),
@@ -150,7 +156,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       ),
       _DashboardStat(
         label: 'Completed',
-        value: (dashboard?.completedThisMonth ?? _completedCount).toString(),
+        value: _uiCompletedCount.toString(),
         icon: Icons.check_circle_outline,
         iconBg: const Color(0xFFEDE9FE),
         iconColor: const Color(0xFF7C3AED),
@@ -378,8 +384,8 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   }
 
   Widget _buildTabs() {
-    final totalActive = _dashboardData?.activeJobs ?? (_openJobs + _inProgressJobs);
-    final completed = _dashboardData?.completedThisMonth ?? _completedCount;
+    final totalActive = _uiActiveCount;
+    final completed = _uiCompletedCount;
 
     return Container(
       padding: const EdgeInsets.all(4),
@@ -645,7 +651,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${_dashboardData?.completedThisMonth ?? _completedCount} jobs completed this month',
+                    '${_uiCompletedCount} jobs completed this month',
                     style: const TextStyle(
                       color: Color(0xFF4B5563),
                       fontSize: 13,
@@ -970,7 +976,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bonus Earned ($bonusPercentage%)',
+                      'Commission Earned ($bonusPercentage%)',
                       style: const TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 11,
