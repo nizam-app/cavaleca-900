@@ -20,12 +20,18 @@ class Viewjobdetails extends StatelessWidget {
   final InternalJob job;
   final Function(InternalJob)? onJobUpdate;
   final double bonusRate;
+  final VoidCallback? onAccept;
+  final VoidCallback? onReject;
+  final bool showAcceptRejectButtons;
 
   const Viewjobdetails({
     super.key,
     required this.job,
     this.onJobUpdate,
     this.bonusRate = 5.0,
+    this.onAccept,
+    this.onReject,
+    this.showAcceptRejectButtons = false,
   });
 
   double _calculateBonus(String payment) {
@@ -67,9 +73,16 @@ class Viewjobdetails extends StatelessWidget {
                   SizedBox(height: 14.h),
                   _buildBonusCard(),
                   SizedBox(height: 20.h),
-                  _buildStartButton(context),
-                  SizedBox(height: 10.h),
-                  _buildCloseButton(context)
+                  if (showAcceptRejectButtons && (onAccept != null || onReject != null))
+                    _buildAcceptRejectButtons(context)
+                  else
+                    Column(
+                      children: [
+                        _buildStartButton(context),
+                        SizedBox(height: 10.h),
+                        _buildCloseButton(context),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -428,6 +441,71 @@ class Viewjobdetails extends StatelessWidget {
           style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: kTextMain),
         ),
       ),
+    );
+  }
+
+  // ---------------- ACCEPT/REJECT BUTTONS ----------------
+  Widget _buildAcceptRejectButtons(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            if (onReject != null)
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onReject?.call();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                      color: Colors.red,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                  child: Text(
+                    'reject'.tr(),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ),
+            if (onReject != null && onAccept != null) SizedBox(width: 12.w),
+            if (onAccept != null)
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onAccept?.call();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryGreen,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                  child: Text(
+                    'accept'.tr(),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 

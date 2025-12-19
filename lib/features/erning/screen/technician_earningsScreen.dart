@@ -312,26 +312,29 @@ class Earningsscreen extends ConsumerWidget {
                 ),
               ),
               SizedBox(width: 12.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "available_bonus".tr(),
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "available_bonus".tr(),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    "this_week_earnings".tr(),
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.white.withOpacity(0.8),
+                    SizedBox(height: 2.h),
+                    Text(
+                      "this_week_earnings".tr(),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -351,6 +354,9 @@ class Earningsscreen extends ConsumerWidget {
               fontSize: 12.sp,
               color: Colors.white.withOpacity(0.85),
             ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+            softWrap: true,
           ),
           SizedBox(height: 20.h),
           _earlyPayoutButton(context, summary),

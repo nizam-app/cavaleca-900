@@ -184,6 +184,61 @@ class TechnicianJobsApi {
     final Map<String, dynamic> data = jsonDecode(res.body);
     return TimeRemaining.fromJson(data);
   }
+
+  /// POST /api/payments
+  /// Submit payment with multipart form-data
+  static Future<Map<String, dynamic>> submitPayment({
+    required int woId,
+    required double amount,
+    required String method,
+    required String transactionRef,
+    required XFile proofImage,
+  }) async {
+    final token = await _getToken();
+    final url = Uri.parse(AuthAPIController.createPayment);
+
+    final request = http.MultipartRequest('POST', url);
+    request.headers.addAll({
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
+
+    // Add form fields
+    request.fields['woId'] = woId.toString();
+    request.fields['amount'] = amount.toString();
+    request.fields['method'] = method;
+    request.fields['transactionRef'] = transactionRef;
+
+    // Add proof image
+    final fileExtension = proofImage.path.split('.').last.toLowerCase();
+    String contentType;
+    if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
+      contentType = 'image/jpeg';
+    } else if (fileExtension == 'png') {
+      contentType = 'image/png';
+    } else {
+      contentType = 'image/jpeg';
+    }
+
+    final bytes = await proofImage.readAsBytes();
+    final fileWithType = http.MultipartFile.fromBytes(
+      'proof',
+      bytes,
+      filename: proofImage.name.isNotEmpty ? proofImage.name : 'proof.$fileExtension',
+      contentType: MediaType.parse(contentType),
+    );
+    request.files.add(fileWithType);
+
+    final streamedResponse = await request.send();
+    final res = await http.Response.fromStream(streamedResponse);
+
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception('Failed to submit payment: ${res.body}');
+    }
+
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    return body;
+  }
 }
 
 class TimeRemaining {

@@ -93,9 +93,14 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   int get _uiActiveCount =>
       _activeJobs.isNotEmpty ? _activeJobs.length : (_dashboardData?.activeJobs ?? 0);
 
-  int get _uiCompletedCount => _completedJobs.isNotEmpty
-      ? _completedJobs.length
-      : (_dashboardData?.completedThisMonth ?? 0);
+  int get _uiCompletedCount {
+    final paidVerifiedCount = _completedJobs
+        .where((job) => job.status == JobStatus.paidVerified)
+        .length;
+    return paidVerifiedCount > 0
+        ? paidVerifiedCount
+        : (_dashboardData?.completedThisMonth ?? 0);
+  }
 
   double get _totalBonus =>
       _completedJobs.fold(0, (sum, job) => sum + _calculateBonus(job.payment));
@@ -569,7 +574,12 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   // ------------------------------------------------------
 
   Widget _buildCompletedJobsSection() {
-    if (_completedJobs.isEmpty) {
+    // Filter to show only PAID_VERIFIED jobs
+    final paidVerifiedJobs = _completedJobs
+        .where((job) => job.status == JobStatus.paidVerified)
+        .toList();
+
+    if (paidVerifiedJobs.isEmpty) {
       return Card(
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -601,7 +611,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     }
 
     return Column(
-      children: _completedJobs
+      children: paidVerifiedJobs
           .map((job) => _buildCompletedJobCard(job: job))
           .toList(),
     );

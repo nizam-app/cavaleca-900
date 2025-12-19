@@ -451,29 +451,7 @@ class _AvailableBalanceCard extends StatelessWidget {
                 ),
                 onPressed: data.availableBalance == 0
                     ? null
-                    : () async {
-                        final confirmed =
-                            await showDialog<bool>(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (_) => EarlyPayoutDialog(
-                                availableBalance: data.availableBalance,
-                                jobsCount: data.thisWeekJobs,
-                                commissionRate: data.commissionRate,
-                              ),
-                            ) ??
-                            false;
-
-                        if (confirmed && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Payout request submitted successfully! You will receive your payment within 24 hours.',
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                    : () => _showEarlyPayoutBottomSheet(context, data),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -503,6 +481,360 @@ class _AvailableBalanceCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEarlyPayoutBottomSheet(
+    BuildContext context,
+    FreelancerEarningsData data,
+  ) {
+    final available = data.availableBalance;
+    final amountController = TextEditingController(
+      text: available.toStringAsFixed(0),
+    );
+    final reasonController = TextEditingController(
+      text: 'Need funds for expenses',
+    );
+    String paymentMethod = 'BANK_ACCOUNT';
+    bool isSubmitting = false;
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            top: 16.h,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
+          ),
+          child: StatefulBuilder(
+            builder: (sheetContext, setState) {
+              Future<void> submit() async {
+                if (isSubmitting) return;
+                if (!formKey.currentState!.validate()) return;
+
+                final amount = double.tryParse(amountController.text.trim());
+                if (amount == null || amount <= 0) {
+                  ScaffoldMessenger.of(sheetContext).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid amount')),
+                  );
+                  return;
+                }
+
+                setState(() => isSubmitting = true);
+                try {
+                  await TechnicianEarningsApi.requestEarlyPayout(
+                    amount: amount,
+                    reason: reasonController.text.trim(),
+                    paymentMethod: paymentMethod,
+                  );
+                  if (Navigator.of(sheetContext).canPop()) {
+                    Navigator.of(sheetContext).pop();
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Payout request submitted successfully'),
+                    ),
+                  );
+                } catch (e) {
+                  setState(() => isSubmitting = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to submit request: $e'),
+                    ),
+                  );
+                }
+              }
+
+              return Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 48.w,
+                        height: 4.h,
+                        margin: EdgeInsets.only(bottom: 20.h),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                    ),
+                    // Title with icon
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.account_balance_wallet,
+                            color: kEarningsGreenDark,
+                            size: 24.sp,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Request Early Payout',
+                                style: TextStyle(
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                'Available: \$${available.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24.h),
+                    // Amount field
+                    TextFormField(
+                      controller: amountController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Amount',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.attach_money,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                      validator: (value) {
+                        final v = double.tryParse(value?.trim() ?? '');
+                        if (v == null || v <= 0) {
+                          return 'Enter a valid amount';
+                        }
+                        if (v > available) {
+                          return 'Insufficient balance';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16.h),
+                    // Reason field
+                    TextFormField(
+                      controller: reasonController,
+                      maxLines: 3,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Reason',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        alignLabelWithHint: true,
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.description_outlined,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a reason';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 24.h),
+                    // Submit button
+                    Container(
+                      width: double.infinity,
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kEarningsGreenDark.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: isSubmitting ? null : submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kEarningsGreenDark,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: isSubmitting
+                            ? SizedBox(
+                                width: 24.w,
+                                height: 24.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.send_rounded,
+                                    color: Colors.white,
+                                    size: 20.sp,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'Submit request',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

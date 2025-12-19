@@ -15,6 +15,8 @@ class InternalJob {
   final JobPriority? priority;
   final double? latitude;
   final double? longitude;
+  final List<Payment>? payments; // Array of payment submissions
+  final String? backendStatus; // Original backend status string (e.g. "COMPLETED_PENDING_PAYMENT", "ACCEPTED", "IN_PROGRESS")
 
   const InternalJob({
     required this.id,
@@ -33,6 +35,8 @@ class InternalJob {
     this.priority,
     this.latitude,
     this.longitude,
+    this.payments,
+    this.backendStatus,
   });
 
   InternalJob copyWith({
@@ -52,6 +56,8 @@ class InternalJob {
     JobPriority? priority,
     double? latitude,
     double? longitude,
+    List<Payment>? payments,
+    String? backendStatus,
   }) {
     return InternalJob(
       id: id ?? this.id,
@@ -70,6 +76,8 @@ class InternalJob {
       priority: priority ?? this.priority,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      payments: payments ?? this.payments,
+      backendStatus: backendStatus ?? this.backendStatus,
     );
   }
 
@@ -130,18 +138,31 @@ class InternalJob {
 
     // ---- status mapping: incoming / active / done ----
     final backendStatus = (json['status'] as String? ?? '').toUpperCase();
-    final startedAt = json['startedAt'];
-    final completedAt = json['completedAt'];
 
     JobStatus status;
-    if (json['completedAt'] != null) {
-      status = JobStatus.completed;
-    } else if (json['startedAt'] != null) {
+    // Check for new payment-related statuses FIRST (before checking completedAt/startedAt)
+    if (backendStatus == 'PAID_VERIFIED') {
+      status = JobStatus.paidVerified;
+    } else if (backendStatus == 'COMPLETED_PENDING_PAYMENT') {
+      status = JobStatus.completedPendingPayment;
+    } else if (backendStatus == 'IN_PROGRESS' || json['startedAt'] != null) {
+      // Check IN_PROGRESS status or startedAt
       status = JobStatus.inProgress;
-    } else if ((json['status'] as String?)?.toUpperCase() == 'ACCEPTED') {
+    } else if (json['completedAt'] != null && backendStatus != 'COMPLETED_PENDING_PAYMENT') {
+      // Only set completed if not COMPLETED_PENDING_PAYMENT
+      status = JobStatus.completed;
+    } else if (backendStatus == 'ACCEPTED') {
       status = JobStatus.assigned;
     } else {
       status = JobStatus.incoming;
+    }
+
+    // Parse payments array
+    List<Payment>? paymentsList;
+    if (json['payments'] != null && json['payments'] is List) {
+      paymentsList = (json['payments'] as List)
+          .map((e) => Payment.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
 
     // ---- location & payment ----
@@ -180,10 +201,52 @@ class InternalJob {
       priority: priority,
       latitude: lat,
       longitude: lng,
+      payments: paymentsList,
+      backendStatus: json['status'] as String?, // Store original backend status
     );
   }
 }
 
-enum JobStatus { incoming, assigned, inProgress, completed }
+enum JobStatus { 
+  incoming, 
+  assigned, 
+  inProgress, 
+  completed,
+  completedPendingPayment,
+  paidVerified,
+}
 
 enum JobPriority { high, medium, low }
+
+/// Payment model for payment submissions
+class Payment {
+  final int id;
+  final String status; // "PENDING_VERIFICATION", "VERIFIED", "REJECTED"
+  final String? proofUrl;
+  final double amount;
+  final String method;
+  final String? transactionRef; // Optional - may not be in all API responses
+
+  const Payment({
+    required this.id,
+    required this.status,
+    this.proofUrl,
+    required this.amount,
+    required this.method,
+    this.transactionRef,
+  });
+
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    // Parse status and ensure it's uppercase and trimmed
+    final statusStr = (json['status'] as String? ?? '').trim().toUpperCase();
+    
+    return Payment(
+      id: json['id'] as int,
+      status: statusStr,
+      proofUrl: json['proofUrl'] as String?,
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      method: json['method'] as String? ?? '',
+      transactionRef: json['transactionRef'] as String?,
+    );
+  }
+}

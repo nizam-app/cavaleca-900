@@ -1,13 +1,22 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../widget/jobDetails.dart';
 import '../../../widget/viewJobDetails.dart';
 import '../../../widget/incomingJobDetails.dart';
 import '../model/internal_job_model.dart';
+
+enum PaymentButtonState {
+  none,
+  submit, // "Please submit payment"
+  verifying, // "Payment verifying" (disabled)
+  resubmit, // "Resubmit payment"
+}
 
 ///  Screen
 
@@ -50,10 +59,37 @@ class _InternalJobsState extends State<InternalJobs> {
       final active = await TechnicianJobsApi.fetchJobs('active');
       final done = await TechnicianJobsApi.fetchJobs('done');
 
+      // Filter jobs according to new rules:
+      // - Done/Completed: ONLY jobs with status == PAID_VERIFIED
+      // - Active: Include jobs with COMPLETED_PENDING_PAYMENT (needs payment)
+      final filteredCompleted = done
+          .where((job) => job.status == JobStatus.paidVerified)
+          .toList();
+
+      // Active tab should include:
+      // - All jobs from 'active' endpoint
+      // - Jobs with status COMPLETED_PENDING_PAYMENT (from any endpoint)
+      final allJobsForActive = [...active, ...done, ...incoming];
+      final filteredActive = allJobsForActive
+          .where((job) {
+            // Include if it's a normal active job
+            if (job.status == JobStatus.assigned || 
+                job.status == JobStatus.inProgress ||
+                job.status == JobStatus.completed) {
+              // But exclude if it's PAID_VERIFIED (should be in completed tab)
+              return job.status != JobStatus.paidVerified;
+            }
+            // Include if it needs payment
+            return job.status == JobStatus.completedPendingPayment;
+          })
+          .toList();
+
       setState(() {
-        _incomingJobs = incoming;
-        _activeJobs = active;
-        _completedJobs = done;
+        _incomingJobs = incoming
+            .where((job) => job.status == JobStatus.incoming)
+            .toList();
+        _activeJobs = filteredActive;
+        _completedJobs = filteredCompleted;
       });
     } catch (e) {
       setState(() {
@@ -89,6 +125,66 @@ class _InternalJobsState extends State<InternalJobs> {
     final sanitized = payment.replaceAll('\$', '').replaceAll(',', '');
     final amount = double.tryParse(sanitized) ?? 0;
     return (amount * bonusRate) / 100;
+  }
+
+  /// Format backend status string to readable format
+  /// "COMPLETED_PENDING_PAYMENT" -> "Completed Pending Payment"
+  /// "IN_PROGRESS" -> "In Progress"
+  /// "ACCEPTED" -> "Accepted"
+  String _formatStatusString(String backendStatus) {
+    return backendStatus
+        .split('_')
+        .map((word) => word.isEmpty
+            ? ''
+            : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .join(' ');
+  }
+
+  /// Determine payment button state for COMPLETED_PENDING_PAYMENT jobs
+  /// Rules:
+  /// 1. If payments is empty ([]) or null → show action: "Please submit payment"
+  /// 2. If payments has at least one item with status == "PENDING_VERIFICATION" → 
+  ///    disable payment submission and show: "Payment verifying" (cannot upload proof again)
+  /// 3. If payments is not empty and there is NO "PENDING_VERIFICATION", and all existing 
+  ///    payments are "REJECTED" → show action: "Resubmit payment"
+  PaymentButtonState _getPaymentButtonState(InternalJob job) {
+    // Only check for COMPLETED_PENDING_PAYMENT status
+    if (job.status != JobStatus.completedPendingPayment) {
+      return PaymentButtonState.none;
+    }
+
+    final payments = job.payments ?? [];
+    
+    // Rule 1: If payments is empty ([]) or null → show action: "Please submit payment"
+    if (payments.isEmpty) {
+      return PaymentButtonState.submit;
+    }
+
+    // Rule 2: If payments has at least one item with status == "PENDING_VERIFICATION" 
+    // → disable payment submission and show: "Payment verifying" (cannot upload proof again)
+    // IMPORTANT: Check PENDING_VERIFICATION FIRST (highest priority)
+    final hasPendingVerification = payments.any((p) {
+      final status = p.status.toUpperCase().trim();
+      return status == 'PENDING_VERIFICATION';
+    });
+    
+    if (hasPendingVerification) {
+      return PaymentButtonState.verifying;
+    }
+
+    // Rule 3: If payments is not empty and there is NO "PENDING_VERIFICATION", 
+    // and all existing payments are "REJECTED" → show action: "Resubmit payment"
+    final allRejected = payments.every((p) {
+      final status = p.status.toUpperCase().trim();
+      return status == 'REJECTED';
+    });
+    
+    if (allRejected) {
+      return PaymentButtonState.resubmit;
+    }
+
+    // Default: If payments exist but don't match above conditions → Show "Please submit payment"
+    return PaymentButtonState.submit;
   }
 
   void _handleJobUpdate(InternalJob updatedJob) {
@@ -854,28 +950,7 @@ class _InternalJobsState extends State<InternalJobs> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isInProgress
-                          ? const Color(0xFFDBEAFE)
-                          : const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(999.r),
-                    ),
-                    child: Text(
-                      isInProgress ? 'In Progress' : 'Assigned',
-                      style: TextStyle(
-                        color: isInProgress
-                            ? const Color(0xFF1D4ED8)
-                            : const Color(0xFF92400E),
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                  _buildStatusBadge(job),
                 ],
               ),
               SizedBox(height: 10.h),
@@ -975,8 +1050,18 @@ class _InternalJobsState extends State<InternalJobs> {
 
               SizedBox(height: 10.h),
 
+              // -------- Payment button for COMPLETED_PENDING_PAYMENT jobs --------
+              if (job.status == JobStatus.completedPendingPayment) ...[
+                _buildPaymentStatusInfo(job),
+                SizedBox(height: 8.h),
+                _buildPaymentActionButton(job),
+                SizedBox(height: 10.h),
+              ],
+
               // -------- buttons (View Details + Start/Continue) --------
-              if (isInProgress)
+              // Hide Start/Continue buttons if payment is pending
+              if (job.status != JobStatus.completedPendingPayment)
+                if (isInProgress)
                 SizedBox(
                   width: double.infinity,
                   height: 40.h,
@@ -1107,6 +1192,249 @@ class _InternalJobsState extends State<InternalJobs> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------
+  //  Status Badge
+  // ------------------------------------------------------
+
+  Widget _buildStatusBadge(InternalJob job) {
+    // Use backend status string if available, otherwise format from enum
+    String statusText;
+    Color backgroundColor;
+    Color textColor;
+
+    // Get backend status string or format from enum
+    if (job.backendStatus != null && job.backendStatus!.isNotEmpty) {
+      // Format backend status: "COMPLETED_PENDING_PAYMENT" -> "Completed Pending Payment"
+      statusText = _formatStatusString(job.backendStatus!);
+    } else {
+      // Fallback to enum-based text
+      switch (job.status) {
+        case JobStatus.incoming:
+          statusText = 'Incoming';
+          break;
+        case JobStatus.assigned:
+          statusText = 'Assigned';
+          break;
+        case JobStatus.inProgress:
+          statusText = 'In Progress';
+          break;
+        case JobStatus.completed:
+          statusText = 'Completed';
+          break;
+        case JobStatus.completedPendingPayment:
+          statusText = 'Completed Pending Payment';
+          break;
+        case JobStatus.paidVerified:
+          statusText = 'Paid Verified';
+          break;
+      }
+    }
+
+    // Set colors based on status
+    switch (job.status) {
+      case JobStatus.incoming:
+        backgroundColor = const Color(0xFFFFF5F5);
+        textColor = const Color(0xFFC20001);
+        break;
+      case JobStatus.assigned:
+        backgroundColor = const Color(0xFFFEF3C7);
+        textColor = const Color(0xFF92400E);
+        break;
+      case JobStatus.inProgress:
+        backgroundColor = const Color(0xFFDBEAFE);
+        textColor = const Color(0xFF1D4ED8);
+        break;
+      case JobStatus.completed:
+        backgroundColor = const Color(0xFFD1FAE5);
+        textColor = const Color(0xFF065F46);
+        break;
+      case JobStatus.completedPendingPayment:
+        backgroundColor = const Color(0xFFFFF4E6);
+        textColor = const Color(0xFFB45309);
+        break;
+      case JobStatus.paidVerified:
+        backgroundColor = const Color(0xFFD1FAE5);
+        textColor = const Color(0xFF065F46);
+        break;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 8.w,
+        vertical: 4.h,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999.r),
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------
+  //  Payment Status Info & Action Button
+  // ------------------------------------------------------
+
+  Widget _buildPaymentStatusInfo(InternalJob job) {
+    // Only show status for COMPLETED_PENDING_PAYMENT jobs
+    if (job.status != JobStatus.completedPendingPayment) {
+      return const SizedBox.shrink();
+    }
+
+    final payments = job.payments ?? [];
+    
+    // If payments is empty, don't show status
+    if (payments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Check overall payment status (priority: PENDING > REJECTED > VERIFIED)
+    final pendingCount = payments.where((p) => p.status.toUpperCase() == 'PENDING_VERIFICATION').length;
+    final rejectedCount = payments.where((p) => p.status.toUpperCase() == 'REJECTED').length;
+    final verifiedCount = payments.where((p) => p.status.toUpperCase() == 'VERIFIED').length;
+
+    String statusText = '';
+    Color statusColor = const Color(0xFF6B7280);
+    IconData statusIcon = Icons.info_outline;
+
+    // Priority: PENDING_VERIFICATION > REJECTED > VERIFIED
+    if (pendingCount > 0) {
+      statusText = 'Payment verification pending';
+      statusColor = const Color(0xFFF59E0B);
+      statusIcon = Icons.access_time;
+    } else if (rejectedCount > 0) {
+      statusText = 'Rejected ${rejectedCount}x';
+      statusColor = const Color(0xFFEF4444);
+      statusIcon = Icons.cancel_outlined;
+    } else if (verifiedCount > 0) {
+      statusText = 'Payment verified';
+      statusColor = const Color(0xFF10B981);
+      statusIcon = Icons.check_circle_outline;
+    }
+
+    if (statusText.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: statusColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            statusIcon,
+            size: 14.sp,
+            color: statusColor,
+          ),
+          SizedBox(width: 6.w),
+          Text(
+            statusText,
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: statusColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentActionButton(InternalJob job) {
+    final buttonState = _getPaymentButtonState(job);
+    
+    // Debug: Print payment state for troubleshooting
+    // if (job.status == JobStatus.completedPendingPayment) {
+    //   print('Job ${job.id} - Button State: $buttonState');
+    //   print('  Payments: ${job.payments?.length ?? 0}');
+    //   if (job.payments != null) {
+    //     for (var p in job.payments!) {
+    //       print('    Payment ${p.id}: status="${p.status}"');
+    //     }
+    //   }
+    // }
+    
+    if (buttonState == PaymentButtonState.none) {
+      return const SizedBox.shrink();
+    }
+
+    String buttonText;
+    bool isEnabled;
+    Color backgroundColor;
+
+    switch (buttonState) {
+      case PaymentButtonState.submit:
+        buttonText = 'Please submit payment';
+        isEnabled = true;
+        backgroundColor = const Color(0xFFC20001);
+        break;
+      case PaymentButtonState.verifying:
+        buttonText = 'Payment verifying';
+        isEnabled = false;
+        backgroundColor = const Color(0xFF9CA3AF);
+        break;
+      case PaymentButtonState.resubmit:
+        buttonText = 'Resubmit payment';
+        isEnabled = true;
+        backgroundColor = const Color(0xFFC20001);
+        break;
+      default:
+        return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      height: 40.h,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: backgroundColor,
+          disabledForegroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14.r),
+          ),
+        ),
+        onPressed: isEnabled
+            ? () => _showPaymentSubmitDialog(job)
+            : null,
+        child: Text(
+          buttonText,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPaymentSubmitDialog(InternalJob job) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PaymentSubmitBottomSheet(
+        job: job,
+        onPaymentSubmitted: () {
+          _loadAllJobs(); // Refresh job list
+        },
       ),
     );
   }
@@ -1319,6 +1647,393 @@ class _EmptyCard extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Payment Submit/Resubmit Bottom Sheet
+class PaymentSubmitBottomSheet extends StatefulWidget {
+  final InternalJob job;
+  final VoidCallback onPaymentSubmitted;
+
+  const PaymentSubmitBottomSheet({
+    super.key,
+    required this.job,
+    required this.onPaymentSubmitted,
+  });
+
+  @override
+  State<PaymentSubmitBottomSheet> createState() => _PaymentSubmitBottomSheetState();
+}
+
+class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _amountController = TextEditingController();
+  final _transactionRefController = TextEditingController();
+  final _imagePicker = ImagePicker();
+  
+  String _selectedMethod = 'MOBILE_MONEY';
+  XFile? _proofImage;
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _transactionRefController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickProofImage() async {
+    try {
+      final source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
+                  onTap: () => Navigator.pop(context, ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Camera'),
+                  onTap: () => Navigator.pop(context, ImageSource.camera),
+                ),
+                SizedBox(height: 10.h),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      if (source == null) return;
+
+      final image = await _imagePicker.pickImage(source: source);
+      if (image != null) {
+        setState(() {
+          _proofImage = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _submitPayment() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_proofImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload proof image')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final amount = double.parse(_amountController.text.trim());
+      
+      await TechnicianJobsApi.submitPayment(
+        woId: widget.job.id,
+        amount: amount,
+        method: _selectedMethod,
+        transactionRef: _transactionRefController.text.trim(),
+        proofImage: _proofImage!,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment submitted successfully')),
+        );
+        widget.onPaymentSubmitted();
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit payment: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Submit Payment',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20.h),
+
+                // Amount field
+                TextFormField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    hintText: 'Enter amount',
+                    prefixIcon: const Icon(Icons.attach_money),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Amount is required';
+                    }
+                    if (double.tryParse(value.trim()) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16.h),
+
+                // Method dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedMethod,
+                  decoration: InputDecoration(
+                    labelText: 'Payment Method',
+                    prefixIcon: const Icon(Icons.payment),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'MOBILE_MONEY',
+                      child: Text('Mobile Money'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedMethod = value;
+                      });
+                    }
+                  },
+                ),
+                SizedBox(height: 16.h),
+
+                // Transaction Ref field
+                TextFormField(
+                  controller: _transactionRefController,
+                  decoration: InputDecoration(
+                    labelText: 'Transaction Reference',
+                    hintText: 'Enter transaction reference',
+                    prefixIcon: const Icon(Icons.receipt),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Transaction reference is required';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16.h),
+
+                // Proof image upload
+                Text(
+                  'Proof Image',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                GestureDetector(
+                  onTap: _pickProofImage,
+                  child: Container(
+                    height: 120.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(
+                        color: const Color(0xFFE5E7EB),
+                        width: 1,
+                      ),
+                    ),
+                    child: _proofImage != null
+                        ? Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14.r),
+                                child: Image.file(
+                                  File(_proofImage!.path),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Icon(Icons.image, size: 48),
+                                    );
+                                  },
+                                ),
+                              ),
+                              Positioned(
+                                top: 4.h,
+                                right: 4.w,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _proofImage = null;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.all(4.w),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.cloud_upload_outlined,
+                                size: 40.sp,
+                                color: const Color(0xFF9CA3AF),
+                              ),
+                              SizedBox(height: 8.h),
+                              Text(
+                                'Tap to upload proof image',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+
+                // Submit and Cancel buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFD1D5DB)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitPayment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC20001),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                        ),
+                        child: _isSubmitting
+                            ? SizedBox(
+                                height: 20.h,
+                                width: 20.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                'Submit',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+              ],
+            ),
+          ),
         ),
       ),
     );

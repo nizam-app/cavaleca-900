@@ -80,11 +80,16 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
       final active = await TechnicianJobsApi.fetchJobs('active');
       final done = await TechnicianJobsApi.fetchJobs('done');
 
+      // Filter completed jobs: ONLY jobs with status == PAID_VERIFIED
+      final filteredCompleted = done
+          .where((job) => job.status == JobStatus.paidVerified)
+          .toList();
+
       setState(() {
         _dashboardData = dashboardData;
         _incomingJobs = incoming;
         _activeJobs = active;
-        _completedJobs = done;
+        _completedJobs = filteredCompleted;
       });
     } catch (e) {
       setState(() {
@@ -184,17 +189,15 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
       return aInc ? -1 : 1;
     });
 
-    // counts
-    final activeCount = homeActiveJobs.length;
-
     // Stats: activeJobs থেকেই logically count (incoming বাদ)
     final inProgressCount = _activeJobs.where(_isInProgress).length;
     final readyToStartCount = _activeJobs.where(_isReadyToStart).length;
 
-    // Prioritize actual completed jobs list over dashboard data
-    final completedCount = _completedJobs.isNotEmpty
-        ? _completedJobs.length
-        : (_dashboardData?.completedThisMonth ?? 0);
+    // Use dashboard API for "this month" completed jobs count
+    final completedThisMonth = _dashboardData?.completedThisMonth ?? 0;
+    
+    // Total completed jobs count (PAID_VERIFIED only)
+    final totalCompletedCount = _completedJobs.length;
 
     if (_isLoading) {
       return const Scaffold(
@@ -238,26 +241,26 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
                 _HeaderSection(
                   monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0)
                       .toDouble(),
-                  completedJobsThisMonth: completedCount,
+                  completedJobsThisMonth: completedThisMonth,
                   userName: headerUserName,
                 ),
                 SizedBox(height: 12.h),
                 _StatsRow(
                   active: readyToStartCount,
                   inProgress: inProgressCount,
-                  completedThisMonth: completedCount,
+                  completedThisMonth: completedThisMonth,
                 ),
-                SizedBox(height: 16.h),
+               SizedBox(height: 16.h),
                 _TabSwitcher(
-                  activeCount: activeCount,
-                  completedCount: completedCount,
+                  activeCount: inProgressCount,
+                  completedCount: totalCompletedCount,
                 ),
                 SizedBox(height: 12.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: tab == JobsTab.active
                       ? _ActiveJobsSection(
-                          activeJobs: homeActiveJobs,
+                          activeJobs: _activeJobs.where(_isInProgress).toList(),
                           incomingIds: incomingIds,
                           onStartJob: _handleStartJob,
                           onAcceptJob: _handleAcceptJob,
@@ -556,6 +559,11 @@ class _TabSwitcher extends ConsumerWidget {
 
   const _TabSwitcher({required this.activeCount, required this.completedCount});
 
+  String _capitalizeFirst(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tab = ref.watch(jobsTabProvider);
@@ -579,7 +587,7 @@ class _TabSwitcher extends ConsumerWidget {
           children: [
             Expanded(
               child: _TabChip(
-                label: '${'active'.tr()} ($activeCount)',
+                label: '${_capitalizeFirst('active'.tr())} ($activeCount)',
                 selected: tab == JobsTab.active,
                 onTap: () =>
                     ref.read(jobsTabProvider.notifier).state = JobsTab.active,
