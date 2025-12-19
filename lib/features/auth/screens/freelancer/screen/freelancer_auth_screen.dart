@@ -7,8 +7,7 @@ import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/auth/logic/registration_logic.dart';
 import 'package:workpleis/features/auth/model/auth_login_model.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
-import 'package:workpleis/features/shared/widget/location_update_popup.dart';
-import 'package:workpleis/features/shared/realtime_location_service.dart';
+import 'package:workpleis/features/shared/background_location_service.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -116,21 +115,12 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           // backend theke asha user object use korbo
           if (res.user.role == 'TECH_FREELANCER') {
           _showToast('Login successful!');
-            // Show location update popup after successful login
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const LocationUpdatePopup(),
-              ).then((_) {
-                // Start real-time location updates after popup closes
-                RealtimeLocationService().start();
-                // Navigate to home after location update (or if user closes popup)
-                if (context.mounted) {
-                  context.push(FreelancerBottomNavBar.routeName);
-                }
-              });
-            });
+            // Request location permission and update location silently in background
+            BackgroundLocationService.requestAndUpdateLocationInBackground();
+            // Navigate to home
+            if (context.mounted) {
+              context.push(FreelancerBottomNavBar.routeName);
+            }
           } else {
             _showToast('You are not authorized');
             // context.push(FreelancerBottomNavBar.routeName);
@@ -258,21 +248,12 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
 
       _showSnack(res.message);
       // token save হয়েছে, এখন nav + callback
-      // Show location update popup after successful signup
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const LocationUpdatePopup(),
-        ).then((_) {
-          // Start real-time location updates after popup closes
-          RealtimeLocationService().start();
-          // Navigate to home after location update (or if user closes popup)
-          if (context.mounted) {
-            context.push(FreelancerBottomNavBar.routeName);
-          }
-        });
-      });
+      // Request location permission and update location silently in background
+      BackgroundLocationService.requestAndUpdateLocationInBackground();
+      // Navigate to home
+      if (context.mounted) {
+        context.push(FreelancerBottomNavBar.routeName);
+      }
 
       widget.onAuthComplete(FreelancerUserData(name: name, phone: phone));
     } catch (e) {
