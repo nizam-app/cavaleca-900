@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/constants/api_control/notificiaon_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
@@ -100,7 +101,7 @@ class FCMService {
       'high_importance_channel',
       'High Importance Notifications',
       description: 'This channel is used for important notifications.',
-      importance: Importance.high,
+      importance: Importance.max,
       playSound: true,
       enableVibration: true,
     );
@@ -140,15 +141,16 @@ class FCMService {
     final notification = message.notification;
     if (notification == null) return;
 
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'high_importance_channel',
       'High Importance Notifications',
       channelDescription: 'This channel is used for important notifications.',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       showWhen: true,
       playSound: true,
       enableVibration: true,
+      vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -157,7 +159,7 @@ class FCMService {
       presentSound: true,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -324,7 +326,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       'high_importance_channel',
       'High Importance Notifications',
       description: 'This channel is used for important notifications.',
-      importance: Importance.high,
+      importance: Importance.max,
       playSound: true,
       enableVibration: true,
     );
@@ -348,15 +350,16 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     // Show notification
     final notification = message.notification;
     if (notification != null) {
-      const androidDetails = AndroidNotificationDetails(
+      final androidDetails = AndroidNotificationDetails(
         'high_importance_channel',
         'High Importance Notifications',
         channelDescription: 'This channel is used for important notifications.',
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
         showWhen: true,
         playSound: true,
         enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
       );
       
       const iosDetails = DarwinNotificationDetails(
@@ -365,7 +368,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         presentSound: true,
       );
       
-      const details = NotificationDetails(
+      final details = NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
       );
