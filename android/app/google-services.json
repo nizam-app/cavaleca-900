@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "99921452031",
-    "project_id": "acceleratecyber-d30ee",
-    "storage_bucket": "acceleratecyber-d30ee.firebasestorage.app"
+    "project_number": "548271692184",
+    "project_id": "ibacos-services",
+    "storage_bucket": "ibacos-services.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:99921452031:android:555dc22ed8ea8d44ec65ca",
+        "mobilesdk_app_id": "1:548271692184:android:9db357336fbe41a40633ed",
         "android_client_info": {
-          "package_name": "com.example.checking"
+          "package_name": "com.ibacos.services"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBHnat-piGfIqdn-yZPBnbu0peXpHlxXxs"
+          "current_key": "AIzaSyC1Whj9ng4rPBf0unU-xZm7MYJSbNEqybU"
         }
       ],
       "services": {
