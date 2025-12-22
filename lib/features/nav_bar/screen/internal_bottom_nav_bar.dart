@@ -6,6 +6,7 @@ import 'package:workpleis/features/internal_technician/screen/job/screen/interna
 import 'package:workpleis/features/internal_technician/screen/profile/screen/internal_job_profile.dart';
 import 'package:workpleis/features/notification/customer_notifications_screen.dart';
 import 'package:workpleis/features/notification/data/notificaion_data.dart';
+import 'package:workpleis/features/erning/data/erning_data.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/core/services/job_notification_service.dart';
 
@@ -37,6 +38,30 @@ class _InternalBottomNavBarState extends ConsumerState<InternalBottomNavBar> {
   void dispose() {
     JobNotificationService().stopPolling();
     super.dispose();
+  }
+
+  void _handleTabChange(int index) {
+    // Update the tab index
+    ref.read(bottomNavIndexProvider.notifier).state = index;
+    
+    // Refresh relevant providers when tab changes
+    switch (index) {
+      case 3: // Earnings tab
+        ref.invalidate(internalEarningsProvider);
+        break;
+      case 2: // Notifications tab
+        ref.invalidate(notificationsProvider);
+        break;
+      case 1: // Jobs tab
+        // Jobs will refresh via their own state management
+        break;
+      case 0: // Home/Dashboard tab
+        // Dashboard will refresh via its own state management
+        break;
+      case 4: // Profile tab
+        // Profile will refresh via its own state management
+        break;
+    }
   }
 
   @override
@@ -71,8 +96,7 @@ class _InternalBottomNavBarState extends ConsumerState<InternalBottomNavBar> {
         ),
         child: BottomNavigationBar(
           currentIndex: currentIndex,
-          onTap: (index) =>
-              ref.read(bottomNavIndexProvider.notifier).state = index,
+          onTap: _handleTabChange,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           backgroundColor: Colors.white,

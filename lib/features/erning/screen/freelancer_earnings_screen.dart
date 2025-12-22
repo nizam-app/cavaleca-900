@@ -56,29 +56,36 @@ class FreelancerEarningsScreen extends ConsumerWidget {
         return Scaffold(
           backgroundColor: kEarningsBg,
           body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _HeaderSection(data: data),
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Column(
-                      children: [
-                        _StatsRow(data: data),
-                        SizedBox(height: 16.h),
-                        _AvailableBalanceCard(data: data),
-                        SizedBox(height: 16.h),
-                        _CommissionRateCard(data: data),
-                        SizedBox(height: 16.h),
-                        _MonthBreakdownCard(data: data),
-                        SizedBox(height: 16.h),
-                        _RecentTransactions(data: data),
-                        SizedBox(height: 32.h),
-                      ],
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(freelancerEarningsProvider);
+                await ref.read(freelancerEarningsProvider.future);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _HeaderSection(data: data),
+                    SizedBox(height: 16.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      child: Column(
+                        children: [
+                          _StatsRow(data: data),
+                          SizedBox(height: 16.h),
+                          _AvailableBalanceCard(data: data),
+                          SizedBox(height: 16.h),
+                          _CommissionRateCard(data: data),
+                          SizedBox(height: 16.h),
+                          _MonthBreakdownCard(data: data),
+                          SizedBox(height: 16.h),
+                          _RecentTransactions(data: data),
+                          SizedBox(height: 32.h),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

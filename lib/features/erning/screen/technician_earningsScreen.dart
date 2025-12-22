@@ -34,46 +34,53 @@ class Earningsscreen extends ConsumerWidget {
       data: (summary) {
         return Scaffold(
           backgroundColor: const Color(0xFFF4F4F4),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.only(bottom: 30.h),
-            child: Column(
-              children: [
-                _header(summary),
-                SizedBox(height: 16.h),
-                _statsRow(summary),
-                SizedBox(height: 16.h),
-                _availableBonusCard(context, summary),
-                SizedBox(height: 16.h),
-                _bonusRateCard(summary),
-                SizedBox(height: 16.h),
-                monthlySalaryCard(summary),
-                SizedBox(height: 22.h),
-                _recentBonusesHeader(),
-                SizedBox(height: 8.h),
-                if (summary.recentBonuses.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'No recent bonuses yet',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.black45,
+          body: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(internalEarningsProvider);
+              await ref.read(internalEarningsProvider.future);
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.only(bottom: 30.h),
+              child: Column(
+                children: [
+                  _header(summary),
+                  SizedBox(height: 16.h),
+                  _statsRow(summary),
+                  SizedBox(height: 16.h),
+                  _availableBonusCard(context, summary),
+                  SizedBox(height: 16.h),
+                  _bonusRateCard(summary),
+                  SizedBox(height: 16.h),
+                  monthlySalaryCard(summary),
+                  SizedBox(height: 22.h),
+                  _recentBonusesHeader(),
+                  SizedBox(height: 8.h),
+                  if (summary.recentBonuses.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'No recent bonuses yet',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.black45,
+                          ),
                         ),
                       ),
+                    )
+                  else
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      child: Column(
+                        children: summary.recentBonuses
+                            .map((bonus) => _bonusCard(bonus))
+                            .toList(),
+                      ),
                     ),
-                  )
-                else
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Column(
-                      children: summary.recentBonuses
-                          .map((bonus) => _bonusCard(bonus))
-                          .toList(),
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         );

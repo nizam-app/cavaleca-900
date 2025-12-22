@@ -192,7 +192,7 @@ class TechnicianJobsApi {
     required double amount,
     required String method,
     required String transactionRef,
-    required XFile proofImage,
+    XFile? proofImage, // Optional - not required for CASH payments
   }) async {
     final token = await _getToken();
     final url = Uri.parse(AuthAPIController.createPayment);
@@ -209,25 +209,27 @@ class TechnicianJobsApi {
     request.fields['method'] = method;
     request.fields['transactionRef'] = transactionRef;
 
-    // Add proof image
-    final fileExtension = proofImage.path.split('.').last.toLowerCase();
-    String contentType;
-    if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
-      contentType = 'image/jpeg';
-    } else if (fileExtension == 'png') {
-      contentType = 'image/png';
-    } else {
-      contentType = 'image/jpeg';
-    }
+    // Add proof image only if provided (required for MOBILE_MONEY, optional for CASH)
+    if (proofImage != null) {
+      final fileExtension = proofImage.path.split('.').last.toLowerCase();
+      String contentType;
+      if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
+        contentType = 'image/jpeg';
+      } else if (fileExtension == 'png') {
+        contentType = 'image/png';
+      } else {
+        contentType = 'image/jpeg';
+      }
 
-    final bytes = await proofImage.readAsBytes();
-    final fileWithType = http.MultipartFile.fromBytes(
-      'proof',
-      bytes,
-      filename: proofImage.name.isNotEmpty ? proofImage.name : 'proof.$fileExtension',
-      contentType: MediaType.parse(contentType),
-    );
-    request.files.add(fileWithType);
+      final bytes = await proofImage.readAsBytes();
+      final fileWithType = http.MultipartFile.fromBytes(
+        'proof',
+        bytes,
+        filename: proofImage.name.isNotEmpty ? proofImage.name : 'proof.$fileExtension',
+        contentType: MediaType.parse(contentType),
+      );
+      request.files.add(fileWithType);
+    }
 
     final streamedResponse = await request.send();
     final res = await http.Response.fromStream(streamedResponse);

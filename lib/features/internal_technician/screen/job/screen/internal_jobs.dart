@@ -1670,13 +1670,25 @@ class PaymentSubmitBottomSheet extends StatefulWidget {
 
 class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
+  late final TextEditingController _amountController;
   final _transactionRefController = TextEditingController();
   final _imagePicker = ImagePicker();
   
   String _selectedMethod = 'MOBILE_MONEY';
   XFile? _proofImage;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-populate amount from job.payment
+    final paymentAmount = double.tryParse(
+      widget.job.payment.replaceAll('\$', '').replaceAll(',', ''),
+    ) ?? 0.0;
+    _amountController = TextEditingController(
+      text: paymentAmount.toStringAsFixed(2),
+    );
+  }
 
   @override
   void dispose() {
@@ -1738,9 +1750,10 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
       return;
     }
 
-    if (_proofImage == null) {
+    // Only require proof image for MOBILE_MONEY
+    if (_selectedMethod != 'CASH' && _proofImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload proof image')),
+        const SnackBar(content: Text('Please upload proof image for mobile payment')),
       );
       return;
     }
@@ -1757,7 +1770,7 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
         amount: amount,
         method: _selectedMethod,
         transactionRef: _transactionRefController.text.trim(),
-        proofImage: _proofImage!,
+        proofImage: _proofImage,
       );
 
       if (mounted) {
@@ -1794,244 +1807,323 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
           padding: EdgeInsets.all(24.w),
           child: Form(
             key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Submit Payment',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20.h),
+
+                  // Amount field (read-only or auto-populated)
+                  TextFormField(
+                    controller: _amountController,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    readOnly: true, // Make it read-only to prevent manual editing
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF111827),
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Amount',
+                      hintText: 'Amount',
+                      prefixIcon: const Icon(Icons.attach_money),
+                      suffixIcon: Icon(
+                        Icons.lock_outline,
+                        size: 18,
+                        color: Colors.grey.shade400,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                        borderSide: BorderSide(color: Colors.grey.shade400),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Amount is required';
+                      }
+                      if (double.tryParse(value.trim()) == null) {
+                        return 'Please enter a valid number';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Service price (auto-filled)',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Method dropdown
+                  DropdownButtonFormField<String>(
+                    value: _selectedMethod,
+                    decoration: InputDecoration(
+                      labelText: 'Payment Method',
+                      prefixIcon: const Icon(Icons.payment),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'CASH',
+                        child: Text('Cash'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'MOBILE_MONEY',
+                        child: Text('Mobile Money (bKash/Nagad/Bank Transfer)'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedMethod = value;
+                          // Clear proof image when switching to CASH
+                          if (value == 'CASH') {
+                            _proofImage = null;
+                          }
+                        });
+                      }
+                    },
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Transaction Ref field (required only for MOBILE_MONEY)
+                  TextFormField(
+                    controller: _transactionRefController,
+                    decoration: InputDecoration(
+                      labelText: _selectedMethod == 'CASH' 
+                          ? 'Transaction Reference (Optional)' 
+                          : 'Transaction Reference',
+                      hintText: _selectedMethod == 'CASH'
+                          ? 'Enter transaction reference (optional)'
+                          : 'Enter transaction reference',
+                      prefixIcon: const Icon(Icons.receipt),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                    ),
+                    validator: (value) {
+                      // Transaction ref is required only for MOBILE_MONEY
+                      if (_selectedMethod != 'CASH' && (value == null || value.trim().isEmpty)) {
+                        return 'Transaction reference is required for mobile payment';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Proof image upload (only for MOBILE_MONEY)
+                  if (_selectedMethod != 'CASH') ...[
                     Text(
-                      'Submit Payment',
+                      'Proof Image *',
                       style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
                         color: const Color(0xFF111827),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-
-                // Amount field
-                TextFormField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Amount',
-                    hintText: 'Enter amount',
-                    prefixIcon: const Icon(Icons.attach_money),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Amount is required';
-                    }
-                    if (double.tryParse(value.trim()) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16.h),
-
-                // Method dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedMethod,
-                  decoration: InputDecoration(
-                    labelText: 'Payment Method',
-                    prefixIcon: const Icon(Icons.payment),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'MOBILE_MONEY',
-                      child: Text('Mobile Money'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedMethod = value;
-                      });
-                    }
-                  },
-                ),
-                SizedBox(height: 16.h),
-
-                // Transaction Ref field
-                TextFormField(
-                  controller: _transactionRefController,
-                  decoration: InputDecoration(
-                    labelText: 'Transaction Reference',
-                    hintText: 'Enter transaction reference',
-                    prefixIcon: const Icon(Icons.receipt),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Transaction reference is required';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16.h),
-
-                // Proof image upload
-                Text(
-                  'Proof Image',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                GestureDetector(
-                  onTap: _pickProofImage,
-                  child: Container(
-                    height: 120.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(
-                        color: const Color(0xFFE5E7EB),
-                        width: 1,
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Required for mobile payments',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
-                    child: _proofImage != null
-                        ? Stack(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(14.r),
-                                child: Image.file(
-                                  File(_proofImage!.path),
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Center(
-                                      child: Icon(Icons.image, size: 48),
-                                    );
-                                  },
+                  ] else ...[
+                    Text(
+                      'Proof Image',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Not required for cash payment',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey.shade500,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 8.h),
+                  GestureDetector(
+                    onTap: _selectedMethod != 'CASH' ? _pickProofImage : null,
+                    child: Opacity(
+                      opacity: _selectedMethod == 'CASH' ? 0.5 : 1.0,
+                      child: Container(
+                      height: 120.h,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 1,
+                        ),
+                      ),
+                      child: _proofImage != null
+                          ? Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  child: Image.file(
+                                    File(_proofImage!.path),
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Center(
+                                        child: Icon(Icons.image, size: 48),
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ),
-                              Positioned(
-                                top: 4.h,
-                                right: 4.w,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _proofImage = null;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.all(4.w),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black54,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 16,
+                                Positioned(
+                                  top: 4.h,
+                                  right: 4.w,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _proofImage = null;
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(4.w),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.cloud_upload_outlined,
-                                size: 40.sp,
-                                color: const Color(0xFF9CA3AF),
-                              ),
-                              SizedBox(height: 8.h),
-                              Text(
-                                'Tap to upload proof image',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: const Color(0xFF6B7280),
+                              ],
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.cloud_upload_outlined,
+                                  size: 40.sp,
+                                  color: const Color(0xFF9CA3AF),
                                 ),
-                              ),
-                            ],
-                          ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  _selectedMethod == 'CASH'
+                                      ? 'Not required for cash'
+                                      : 'Tap to upload proof image',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(height: 24.h),
+                  SizedBox(height: 24.h),
 
-                // Submit and Cancel buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _isSubmitting
-                            ? null
-                            : () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFD1D5DB)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
+                  // Submit and Cancel buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFD1D5DB)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 14.h),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submitPayment,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC20001),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitPayment,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC20001),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 14.h),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                          child: _isSubmitting
+                              ? SizedBox(
+                                  height: 20.h,
+                                  width: 20.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                         ),
-                        child: _isSubmitting
-                            ? SizedBox(
-                                height: 20.h,
-                                width: 20.w,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : Text(
-                                'Submit',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-              ],
+                    ],
+                  ),
+                  SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+                ],
+              ),
             ),
           ),
         ),
