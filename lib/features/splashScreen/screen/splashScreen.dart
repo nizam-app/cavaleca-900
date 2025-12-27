@@ -9,8 +9,7 @@ import 'package:workpleis/features/auth/screens/role/screen/role_selection_scree
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
-import 'package:workpleis/features/shared/widget/location_update_popup.dart';
-import 'package:workpleis/features/shared/realtime_location_service.dart';
+import 'package:workpleis/features/shared/background_location_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -90,18 +89,10 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    // For technicians (internal/freelancer), always show location popup even if already logged in
+    // For technicians (internal/freelancer), request location in background without popup
     if (roleRaw == 'TECH_INTERNAL' || roleRaw == 'TECH_FREELANCER') {
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const LocationUpdatePopup(),
-      );
-
-      if (!mounted) return;
-
-      // Start real-time updates after popup completes
-      RealtimeLocationService().start();
+      // Request location permission and update location silently in background
+      BackgroundLocationService.requestAndUpdateLocationInBackground();
 
       if (roleRaw == 'TECH_INTERNAL') {
         context.go(InternalBottomNavBar.routeName);

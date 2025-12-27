@@ -8,6 +8,7 @@ import 'package:workpleis/features/notification/customer_notifications_screen.da
 import 'package:workpleis/features/notification/data/notificaion_data.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/core/services/job_notification_service.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
 
 import '../logic/botton_nav_index_logic.dart';
 
@@ -46,6 +47,14 @@ class _InternalBottomNavBarState extends ConsumerState<InternalBottomNavBar> {
     const activeColor = Color(0xFFCF2626); // red
     const inactiveColor = Color(0xFFB0B0B0); // grey
 
+    // Watch for tab changes and trigger refresh
+    ref.listen<int>(bottomNavIndexProvider, (previous, next) {
+      if (previous != null && previous != next) {
+        // Tab changed - trigger refresh for the new screen
+        triggerScreenRefresh(ref, next);
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       body: IndexedStack(
@@ -71,8 +80,11 @@ class _InternalBottomNavBarState extends ConsumerState<InternalBottomNavBar> {
         ),
         child: BottomNavigationBar(
           currentIndex: currentIndex,
-          onTap: (index) =>
-              ref.read(bottomNavIndexProvider.notifier).state = index,
+          onTap: (index) {
+            ref.read(bottomNavIndexProvider.notifier).state = index;
+            // Trigger refresh when tab is tapped
+            triggerScreenRefresh(ref, index);
+          },
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           backgroundColor: Colors.white,

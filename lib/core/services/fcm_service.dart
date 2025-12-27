@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/constants/api_control/notificiaon_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
@@ -54,10 +55,13 @@ class FCMService {
       });
 
       // Handle foreground messages
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         _log.i('📨 Got a message whilst in the foreground!');
         _log.i('📋 Message data: ${message.data}');
         _log.i('🔔 Message notification: ${message.notification}');
+        
+        // Always show system notification first (for both job and regular notifications)
+        await _showLocalNotification(message);
         
         // Check if this is a job notification
         if (_isJobNotification(message)) {
@@ -66,10 +70,6 @@ class FCMService {
           JobNotificationService().handleFCMJobNotification(message.data).catchError((error) {
             _log.e('❌ Error in handleFCMJobNotification: $error');
           });
-        } else {
-          _log.i('ℹ️ Regular notification, showing local notification');
-          // Show local notification when app is in foreground
-          _showLocalNotification(message);
         }
       });
 
@@ -96,6 +96,24 @@ class FCMService {
 
   /// Initialize local notifications
   static Future<void> _initializeLocalNotifications() async {
+    // Create Android notification channel
+    const androidChannel = AndroidNotificationChannel(
+      'high_importance_channel',
+      'High Importance Notifications',
+      description: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    // Create channel on Android
+    final androidImplementation = _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      await androidImplementation.createNotificationChannel(androidChannel);
+      _log.i('✅ Android notification channel created: high_importance_channel');
+    }
+
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -114,6 +132,8 @@ class FCMService {
         _log.i('Notification tapped: ${response.payload}');
       },
     );
+    
+    _log.i('✅ Local notifications initialized');
   }
 
   /// Show local notification for foreground messages
@@ -121,13 +141,16 @@ class FCMService {
     final notification = message.notification;
     if (notification == null) return;
 
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'high_importance_channel',
       'High Importance Notifications',
       channelDescription: 'This channel is used for important notifications.',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       showWhen: true,
+      playSound: true,
+      enableVibration: true,
+      vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -136,7 +159,7 @@ class FCMService {
       presentSound: true,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -297,6 +320,25 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     
     // Initialize local notifications for background
     final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+    
+    // Create Android notification channel
+    const androidChannel = AndroidNotificationChannel(
+      'high_importance_channel',
+      'High Importance Notifications',
+      description: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    // Create channel on Android
+    final androidImplementation = localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      await androidImplementation.createNotificationChannel(androidChannel);
+      logger.i('✅ Android notification channel created in background handler');
+    }
+    
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
     const initSettings = InitializationSettings(
@@ -308,13 +350,16 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     // Show notification
     final notification = message.notification;
     if (notification != null) {
-      const androidDetails = AndroidNotificationDetails(
+      final androidDetails = AndroidNotificationDetails(
         'high_importance_channel',
         'High Importance Notifications',
         channelDescription: 'This channel is used for important notifications.',
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
         showWhen: true,
+        playSound: true,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
       );
       
       const iosDetails = DarwinNotificationDetails(
@@ -323,7 +368,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         presentSound: true,
       );
       
-      const details = NotificationDetails(
+      final details = NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
       );
@@ -334,6 +379,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         notification.body ?? '',
         details,
       );
+      
+      logger.i('✅ Background notification shown');
     }
   }
 }

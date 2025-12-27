@@ -565,12 +565,31 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
 
                   if (result != null) {
                     setState(() {
-                      // place name + address
-                      final name = result.placeName?.trim();
-                      if (name != null && name.isNotEmpty) {
-                        _addressCtrl.text = '$name, ${result.address}';
+                      // Store location data separately for latitude/longitude
+                      _selectedLocation = result;
+                      
+                      // Set address field with only the address text (not coordinates)
+                      // If address contains coordinates, use placeName instead
+                      final addressText = result.address.trim();
+                      // Match patterns like "18.083651, -15.964036" or "-1.292066, 36.821946"
+                      final isCoordinate = RegExp(r'^-?\d+\.?\d+,\s*-?\d+\.?\d+$').hasMatch(addressText);
+                      
+                      if (isCoordinate) {
+                        // If address is just coordinates, use placeName or a default text
+                        final name = result.placeName?.trim();
+                        if (name != null && name.isNotEmpty) {
+                          _addressCtrl.text = name;
+                        } else {
+                          _addressCtrl.text = 'Selected Location';
+                        }
                       } else {
-                        _addressCtrl.text = result.address;
+                        // Use placeName + address if both available, otherwise just address
+                        final name = result.placeName?.trim();
+                        if (name != null && name.isNotEmpty && name != addressText) {
+                          _addressCtrl.text = '$name, $addressText';
+                        } else {
+                          _addressCtrl.text = addressText;
+                        }
                       }
                     });
                   }

@@ -5,8 +5,7 @@ import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/auth/logic/registration_logic.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
-import 'package:workpleis/features/shared/widget/location_update_popup.dart';
-import 'package:workpleis/features/shared/realtime_location_service.dart';
+import 'package:workpleis/features/shared/background_location_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 /// -----------------------------
@@ -83,21 +82,12 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
         if (data != null) {
          if (data.user.role == 'TECH_INTERNAL') {
             _showToast('Login successful!');
-            // Show location update popup after successful login
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const LocationUpdatePopup(),
-              ).then((_) {
-                // Start real-time location updates after popup closes
-                RealtimeLocationService().start();
-                // Navigate to home after location update (or if user closes popup)
-                if (context.mounted) {
-                  context.push(InternalBottomNavBar.routeName);
-                }
-              });
-            });
+            // Request location permission and update location silently in background
+            BackgroundLocationService.requestAndUpdateLocationInBackground();
+            // Navigate to home
+            if (context.mounted) {
+              context.push(InternalBottomNavBar.routeName);
+            }
           } else {
             _showToast('You are not authorized');
             // context.push(FreelancerBottomNavBar.routeName);
@@ -215,21 +205,12 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
       _showToast(res.message);
 
       // token/user already save হয়েছে RegistrationApi ভেতরে
-      // Show location update popup after successful signup
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const LocationUpdatePopup(),
-        ).then((_) {
-          // Start real-time location updates after popup closes
-          RealtimeLocationService().start();
-          // Navigate to home after location update (or if user closes popup)
-          if (context.mounted) {
-            context.push(InternalBottomNavBar.routeName);
-          }
-        });
-      });
+      // Request location permission and update location silently in background
+      BackgroundLocationService.requestAndUpdateLocationInBackground();
+      // Navigate to home
+      if (context.mounted) {
+        context.push(InternalBottomNavBar.routeName);
+      }
 
       // চাইলে এখানে internalAuthProvider refresh করতে পারো
       // ref.refresh(internalAuthProvider);

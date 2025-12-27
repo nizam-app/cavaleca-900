@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/features/erning/data/erning_data.dart';
 import 'package:workpleis/features/erning/model/freelancer_transaction.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
 /// ------------------------------------------------------
 ///  COLORS
@@ -25,14 +29,29 @@ const kEarningsYellow = Color(0xFFFFB111);
 /// ------------------------------------------------------
 ///  MAIN SCREEN
 /// ------------------------------------------------------
-class FreelancerEarningsScreen extends ConsumerWidget {
+class FreelancerEarningsScreen extends ConsumerStatefulWidget {
   const FreelancerEarningsScreen({super.key});
 
   static const String routeName = 'freelancer-earnings';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FreelancerEarningsScreen> createState() => _FreelancerEarningsScreenState();
+}
+
+class _FreelancerEarningsScreenState extends ConsumerState<FreelancerEarningsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final asyncData = ref.watch(freelancerEarningsProvider);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the earnings screen (index 3) and it's currently visible
+      if (currentIndex == 3 && visibleIndex == 3) {
+        ref.invalidate(freelancerEarningsProvider);
+      }
+    });
 
     return asyncData.when(
       loading: () => const Scaffold(
@@ -451,29 +470,7 @@ class _AvailableBalanceCard extends StatelessWidget {
                 ),
                 onPressed: data.availableBalance == 0
                     ? null
-                    : () async {
-                        final confirmed =
-                            await showDialog<bool>(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (_) => EarlyPayoutDialog(
-                                availableBalance: data.availableBalance,
-                                jobsCount: data.thisWeekJobs,
-                                commissionRate: data.commissionRate,
-                              ),
-                            ) ??
-                            false;
-
-                        if (confirmed && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Payout request submitted successfully! You will receive your payment within 24 hours.',
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                    : () => _showEarlyPayoutBottomSheet(context, data),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -503,6 +500,599 @@ class _AvailableBalanceCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEarlyPayoutBottomSheet(
+    BuildContext context,
+    FreelancerEarningsData data,
+  ) {
+    final available = data.availableBalance;
+    final amountController = TextEditingController(
+      text: available.toStringAsFixed(2),
+    );
+    final reasonController = TextEditingController(
+      text: 'Need funds for expenses',
+    );
+    final imagePicker = ImagePicker();
+    String paymentMethod = 'CASH';
+    XFile? proofImage;
+    bool isSubmitting = false;
+    String? imageError;
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            top: 16.h,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
+          ),
+          child: StatefulBuilder(
+            builder: (sheetContext, setState) {
+              // Check if payment method requires image
+              bool requiresImage = paymentMethod != 'CASH';
+              
+              Future<void> pickProofImage() async {
+                try {
+                  final source = await showModalBottomSheet<ImageSource>(
+                    context: sheetContext,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.photo_library),
+                              title: const Text('Gallery'),
+                              onTap: () => Navigator.pop(context, ImageSource.gallery),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.camera_alt),
+                              title: const Text('Camera'),
+                              onTap: () => Navigator.pop(context, ImageSource.camera),
+                            ),
+                            SizedBox(height: 10.h),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+
+                  if (source == null) return;
+
+                  final image = await imagePicker.pickImage(source: source);
+                  if (image != null) {
+                    setState(() {
+                      proofImage = image;
+                      imageError = null; // Clear error when image is selected
+                    });
+                  }
+                } catch (e) {
+                  if (sheetContext.mounted) {
+                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                      SnackBar(content: Text('Failed to pick image: $e')),
+                    );
+                  }
+                }
+              }
+
+              Future<void> submit() async {
+                if (isSubmitting) return;
+                if (!formKey.currentState!.validate()) return;
+
+                // Validate image for mobile payment methods
+                if (requiresImage && proofImage == null) {
+                  setState(() {
+                    imageError = 'Please upload payment proof image';
+                  });
+                  return;
+                }
+                
+                // Clear error if image is present
+                setState(() {
+                  imageError = null;
+                });
+
+                final amount = double.tryParse(amountController.text.trim());
+                if (amount == null || amount <= 0) {
+                  ScaffoldMessenger.of(sheetContext).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid amount')),
+                  );
+                  return;
+                }
+
+                setState(() => isSubmitting = true);
+                try {
+                  // Note: API may need to be updated to support image upload
+                  // For now, we'll call the existing API
+                  await TechnicianEarningsApi.requestEarlyPayout(
+                    amount: amount,
+                    reason: reasonController.text.trim(),
+                    paymentMethod: paymentMethod,
+                  );
+                  if (Navigator.of(sheetContext).canPop()) {
+                    Navigator.of(sheetContext).pop();
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Payout request submitted successfully'),
+                    ),
+                  );
+                } catch (e) {
+                  setState(() => isSubmitting = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to submit request: $e'),
+                    ),
+                  );
+                }
+              }
+
+              return Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 48.w,
+                        height: 4.h,
+                        margin: EdgeInsets.only(bottom: 20.h),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                    ),
+                    // Title with icon
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.account_balance_wallet,
+                            color: kEarningsGreenDark,
+                            size: 24.sp,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Request Early Payout',
+                                style: TextStyle(
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                'Available: \$${available.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24.h),
+                    // Amount field (read-only)
+                    TextFormField(
+                      controller: amountController,
+                      readOnly: true,
+                      enabled: false,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Amount (Auto-filled)',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.attach_money,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    // Payment Method dropdown
+                    DropdownButtonFormField<String>(
+                      value: paymentMethod,
+                      decoration: InputDecoration(
+                        labelText: 'Payment Method',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.payment,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'CASH',
+                          child: Text('Cash'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'MOBILE_MONEY',
+                          child: Text('Mobile money'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'BANK_TRANSFER',
+                          child: Text('Bank transfer'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            paymentMethod = value;
+                            // Clear image and error when switching to CASH
+                            if (value == 'CASH') {
+                              proofImage = null;
+                              imageError = null;
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    SizedBox(height: 16.h),
+                    // Reason field
+                    TextFormField(
+                      controller: reasonController,
+                      maxLines: 3,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Reason',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        alignLabelWithHint: true,
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.description_outlined,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a reason';
+                        }
+                        return null;
+                      },
+                    ),
+                    // Conditional image upload for mobile payment methods
+                    if (requiresImage) ...[
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Payment Proof Image',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      GestureDetector(
+                        onTap: pickProofImage,
+                        child: Container(
+                          height: 120.h,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(14.r),
+                            border: Border.all(
+                              color: proofImage == null
+                                  ? Colors.grey.shade300
+                                  : kEarningsGreenDark,
+                              width: proofImage == null ? 1 : 2,
+                            ),
+                          ),
+                          child: proofImage != null
+                              ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(14.r),
+                                      child: Image.file(
+                                        File(proofImage!.path),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return const Center(
+                                            child: Icon(Icons.image, size: 48),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4.h,
+                                      right: 4.w,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            proofImage = null;
+                                            imageError = null;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(4.w),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.cloud_upload_outlined,
+                                      size: 40.sp,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      'Tap to upload payment proof',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      // Show error message if validation fails
+                      if (imageError != null) ...[
+                        SizedBox(height: 8.h),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
+                              color: Colors.red.shade200,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red.shade700,
+                                size: 20.sp,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  imageError!,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                    SizedBox(height: 24.h),
+                    // Submit button
+                    Container(
+                      width: double.infinity,
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kEarningsGreenDark.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: isSubmitting ? null : submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kEarningsGreenDark,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: isSubmitting
+                            ? SizedBox(
+                                width: 24.w,
+                                height: 24.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.send_rounded,
+                                    color: Colors.white,
+                                    size: 20.sp,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'Submit request',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                  ],
+                ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 import 'package:workpleis/features/internal_technician/screen/dashboard/logic/technician_dashboard_api.dart';
 import 'package:workpleis/features/internal_technician/screen/dashboard/model/technician_dashboard_model.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
-class InternalDashboardV2Screen extends StatefulWidget {
+class InternalDashboardV2Screen extends ConsumerStatefulWidget {
   const InternalDashboardV2Screen({super.key, this.userName = 'Sarah'});
 
   static const String routeName = '/internal-dashboard';
@@ -14,11 +17,11 @@ class InternalDashboardV2Screen extends StatefulWidget {
   final String userName;
 
   @override
-  State<InternalDashboardV2Screen> createState() =>
+  ConsumerState<InternalDashboardV2Screen> createState() =>
       _InternalDashboardV2ScreenState();
 }
 
-class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
+class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2Screen> {
   static const int bonusPercentage = 5; // 5% bonus on verified jobs
 
   bool _isLoading = false;
@@ -93,9 +96,14 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   int get _uiActiveCount =>
       _activeJobs.isNotEmpty ? _activeJobs.length : (_dashboardData?.activeJobs ?? 0);
 
-  int get _uiCompletedCount => _completedJobs.isNotEmpty
-      ? _completedJobs.length
-      : (_dashboardData?.completedThisMonth ?? 0);
+  int get _uiCompletedCount {
+    final paidVerifiedCount = _completedJobs
+        .where((job) => job.status == JobStatus.paidVerified)
+        .length;
+    return paidVerifiedCount > 0
+        ? paidVerifiedCount
+        : (_dashboardData?.completedThisMonth ?? 0);
+  }
 
   double get _totalBonus =>
       _completedJobs.fold(0, (sum, job) => sum + _calculateBonus(job.payment));
@@ -127,6 +135,16 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the home screen (index 0) and it's currently visible
+      if (currentIndex == 0 && visibleIndex == 0) {
+        _loadJobs();
+      }
+    });
 
     final dashboard = _dashboardData;
     final stats = [
@@ -569,7 +587,12 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   // ------------------------------------------------------
 
   Widget _buildCompletedJobsSection() {
-    if (_completedJobs.isEmpty) {
+    // Filter to show only PAID_VERIFIED jobs
+    final paidVerifiedJobs = _completedJobs
+        .where((job) => job.status == JobStatus.paidVerified)
+        .toList();
+
+    if (paidVerifiedJobs.isEmpty) {
       return Card(
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -601,7 +624,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     }
 
     return Column(
-      children: _completedJobs
+      children: paidVerifiedJobs
           .map((job) => _buildCompletedJobCard(job: job))
           .toList(),
     );

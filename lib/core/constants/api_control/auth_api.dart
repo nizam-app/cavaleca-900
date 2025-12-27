@@ -26,4 +26,7 @@ class AuthAPIController {
   static String bookAgain(srId) => "${_base_api}/sr/$srId/book-again";
   static String rebook(srId) => "${_base_api}/sr/$srId/rebook";
 
+  // Payment endpoints
+  static String createPayment = "${_base_api}/payments";
+
 }

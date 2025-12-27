@@ -10,6 +10,8 @@ import 'package:workpleis/features/internal_technician/screen/job/model/internal
 import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
 /// ------------------------------------------------------
 ///  Colors
@@ -80,11 +82,16 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
       final active = await TechnicianJobsApi.fetchJobs('active');
       final done = await TechnicianJobsApi.fetchJobs('done');
 
+      // Filter completed jobs: ONLY jobs with status == PAID_VERIFIED
+      final filteredCompleted = done
+          .where((job) => job.status == JobStatus.paidVerified)
+          .toList();
+
       setState(() {
         _dashboardData = dashboardData;
         _incomingJobs = incoming;
         _activeJobs = active;
-        _completedJobs = done;
+        _completedJobs = filteredCompleted;
       });
     } catch (e) {
       setState(() {
@@ -161,6 +168,16 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final tab = ref.watch(jobsTabProvider);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the home screen (index 0) and it's currently visible
+      if (currentIndex == 0 && visibleIndex == 0) {
+        _loadJobs();
+      }
+    });
 
     // ✅ Active tab এ incoming + active একসাথে দেখাবে
     final incomingIds = _incomingJobs.map((j) => j.id).toSet();
@@ -184,17 +201,15 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
       return aInc ? -1 : 1;
     });
 
-    // counts
-    final activeCount = homeActiveJobs.length;
-
     // Stats: activeJobs থেকেই logically count (incoming বাদ)
     final inProgressCount = _activeJobs.where(_isInProgress).length;
     final readyToStartCount = _activeJobs.where(_isReadyToStart).length;
 
-    // Prioritize actual completed jobs list over dashboard data
-    final completedCount = _completedJobs.isNotEmpty
-        ? _completedJobs.length
-        : (_dashboardData?.completedThisMonth ?? 0);
+    // Use dashboard API for "this month" completed jobs count
+    final completedThisMonth = _dashboardData?.completedThisMonth ?? 0;
+    
+    // Total completed jobs count (PAID_VERIFIED only)
+    final totalCompletedCount = _completedJobs.length;
 
     if (_isLoading) {
       return const Scaffold(
@@ -238,26 +253,26 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
                 _HeaderSection(
                   monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0)
                       .toDouble(),
-                  completedJobsThisMonth: completedCount,
+                  completedJobsThisMonth: completedThisMonth,
                   userName: headerUserName,
                 ),
                 SizedBox(height: 12.h),
                 _StatsRow(
                   active: readyToStartCount,
                   inProgress: inProgressCount,
-                  completedThisMonth: completedCount,
+                  completedThisMonth: completedThisMonth,
                 ),
-                SizedBox(height: 16.h),
+               SizedBox(height: 16.h),
                 _TabSwitcher(
-                  activeCount: activeCount,
-                  completedCount: completedCount,
+                  activeCount: inProgressCount,
+                  completedCount: totalCompletedCount,
                 ),
                 SizedBox(height: 12.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: tab == JobsTab.active
                       ? _ActiveJobsSection(
-                          activeJobs: homeActiveJobs,
+                          activeJobs: _activeJobs.where(_isInProgress).toList(),
                           incomingIds: incomingIds,
                           onStartJob: _handleStartJob,
                           onAcceptJob: _handleAcceptJob,
@@ -556,6 +571,11 @@ class _TabSwitcher extends ConsumerWidget {
 
   const _TabSwitcher({required this.activeCount, required this.completedCount});
 
+  String _capitalizeFirst(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tab = ref.watch(jobsTabProvider);
@@ -579,7 +599,7 @@ class _TabSwitcher extends ConsumerWidget {
           children: [
             Expanded(
               child: _TabChip(
-                label: '${'active'.tr()} ($activeCount)',
+                label: '${_capitalizeFirst('active'.tr())} ($activeCount)',
                 selected: tab == JobsTab.active,
                 onTap: () =>
                     ref.read(jobsTabProvider.notifier).state = JobsTab.active,
