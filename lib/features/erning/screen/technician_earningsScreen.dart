@@ -1,18 +1,37 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/features/erning/data/erning_data.dart';
 import 'package:workpleis/features/erning/model/erninig_model.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
-class Earningsscreen extends ConsumerWidget {
+class Earningsscreen extends ConsumerStatefulWidget {
   const Earningsscreen({super.key});
 
   static const String routeName = '/internalEarningsScreen';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Earningsscreen> createState() => _EarningsscreenState();
+}
+
+class _EarningsscreenState extends ConsumerState<Earningsscreen> {
+  @override
+  Widget build(BuildContext context) {
     final asyncSummary = ref.watch(internalEarningsProvider);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the earnings screen (index 3) and it's currently visible
+      if (currentIndex == 3 && visibleIndex == 3) {
+        ref.invalidate(internalEarningsProvider);
+      }
+    });
 
     return asyncSummary.when(
       loading: () => const Scaffold(
@@ -118,30 +137,30 @@ class Earningsscreen extends ConsumerWidget {
                 ),
               ),
               const Spacer(),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
-                  color: Colors.white.withOpacity(0.15),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.file_download_outlined,
-                      color: Colors.white70,
-                      size: 16.sp,
-                    ),
-                    SizedBox(width: 6.w),
-                    Text(
-                      "export".tr(),
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Container(
+              //   padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              //   decoration: BoxDecoration(
+              //     borderRadius: BorderRadius.circular(12.r),
+              //     color: Colors.white.withOpacity(0.15),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Icon(
+              //         Icons.file_download_outlined,
+              //         color: Colors.white70,
+              //         size: 16.sp,
+              //       ),
+              //       SizedBox(width: 6.w),
+              //       // Text(
+              //       //   "export".tr(),
+              //       //   style: TextStyle(
+              //       //     color: Colors.white70,
+              //       //     fontSize: 13.sp,
+              //       //   ),
+              //       // ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
           SizedBox(height: 6.h),
@@ -424,13 +443,16 @@ class Earningsscreen extends ConsumerWidget {
   ) {
     final available = summary.availableBonus.amount;
     final amountController = TextEditingController(
-      text: available.toStringAsFixed(0),
+      text: available.toStringAsFixed(2),
     );
     final reasonController = TextEditingController(
       text: 'Need funds for expenses',
     );
-    String paymentMethod = 'BANK_ACCOUNT';
+    final imagePicker = ImagePicker();
+    String paymentMethod = 'CASH';
+    XFile? proofImage;
     bool isSubmitting = false;
+    String? imageError;
     final formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
@@ -449,9 +471,73 @@ class Earningsscreen extends ConsumerWidget {
           ),
           child: StatefulBuilder(
             builder: (sheetContext, setState) {
+              // Check if payment method requires image
+              bool requiresImage = paymentMethod != 'CASH';
+              
+              Future<void> pickProofImage() async {
+                try {
+                  final source = await showModalBottomSheet<ImageSource>(
+                    context: sheetContext,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.photo_library),
+                              title: const Text('Gallery'),
+                              onTap: () => Navigator.pop(context, ImageSource.gallery),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.camera_alt),
+                              title: const Text('Camera'),
+                              onTap: () => Navigator.pop(context, ImageSource.camera),
+                            ),
+                            SizedBox(height: 10.h),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+
+                  if (source == null) return;
+
+                  final image = await imagePicker.pickImage(source: source);
+                  if (image != null) {
+                    setState(() {
+                      proofImage = image;
+                    });
+                  }
+                } catch (e) {
+                  if (sheetContext.mounted) {
+                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                      SnackBar(content: Text('Failed to pick image: $e')),
+                    );
+                  }
+                }
+              }
+
               Future<void> submit() async {
                 if (isSubmitting) return;
                 if (!formKey.currentState!.validate()) return;
+
+                // Validate image for mobile payment methods
+                if (requiresImage && proofImage == null) {
+                  setState(() {
+                    imageError = 'Please upload payment proof image';
+                  });
+                  return;
+                }
+                
+                // Clear error if image is present
+                setState(() {
+                  imageError = null;
+                });
 
                 final amount = double.tryParse(amountController.text.trim());
                 if (amount == null || amount <= 0) {
@@ -463,6 +549,8 @@ class Earningsscreen extends ConsumerWidget {
 
                 setState(() => isSubmitting = true);
                 try {
+                  // Note: API may need to be updated to support image upload
+                  // For now, we'll call the existing API
                   await TechnicianEarningsApi.requestEarlyPayout(
                     amount: amount,
                     reason: reasonController.text.trim(),
@@ -488,10 +576,11 @@ class Earningsscreen extends ConsumerWidget {
 
               return Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     // Drag handle
                     Center(
                       child: Container(
@@ -547,17 +636,18 @@ class Earningsscreen extends ConsumerWidget {
                       ],
                     ),
                     SizedBox(height: 24.h),
-                    // Amount field
+                    // Amount field (read-only)
                     TextFormField(
                       controller: amountController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      readOnly: true,
+                      enabled: false,
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
                       decoration: InputDecoration(
-                        labelText: 'Amount',
+                        labelText: 'Amount (Auto-filled)',
                         labelStyle: TextStyle(
                           fontSize: 14.sp,
                           color: Colors.grey.shade700,
@@ -571,6 +661,44 @@ class Earningsscreen extends ConsumerWidget {
                           ),
                           child: Icon(
                             Icons.attach_money,
+                            color: const Color(0xFF0A77FF),
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    // Payment Method dropdown
+                    DropdownButtonFormField<String>(
+                      value: paymentMethod,
+                      decoration: InputDecoration(
+                        labelText: 'Payment Method',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0A77FF).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.payment,
                             color: const Color(0xFF0A77FF),
                             size: 20.sp,
                           ),
@@ -598,34 +726,36 @@ class Earningsscreen extends ConsumerWidget {
                             width: 2,
                           ),
                         ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 2,
-                          ),
-                        ),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 16.w,
                           vertical: 16.h,
                         ),
                       ),
-                      validator: (value) {
-                        final v = double.tryParse(value?.trim() ?? '');
-                        if (v == null || v <= 0) {
-                          return 'Enter a valid amount';
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'CASH',
+                          child: Text('Cash'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'MOBILE_MONEY',
+                          child: Text('Mobile money'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'BANK_TRANSFER',
+                          child: Text('Bank transfer'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            paymentMethod = value;
+                            // Clear image and error when switching to CASH
+                            if (value == 'CASH') {
+                              proofImage = null;
+                              imageError = null;
+                            }
+                          });
                         }
-                        if (v > available) {
-                          return 'Insufficient balance';
-                        }
-                        return null;
                       },
                     ),
                     SizedBox(height: 16.h),
@@ -705,6 +835,132 @@ class Earningsscreen extends ConsumerWidget {
                         return null;
                       },
                     ),
+                    // Conditional image upload for mobile payment methods
+                    if (requiresImage) ...[
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Payment Proof Image',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      GestureDetector(
+                        onTap: pickProofImage,
+                        child: Container(
+                          height: 120.h,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(14.r),
+                            border: Border.all(
+                              color: proofImage == null
+                                  ? Colors.grey.shade300
+                                  : const Color(0xFF0A77FF),
+                              width: proofImage == null ? 1 : 2,
+                            ),
+                          ),
+                          child: proofImage != null
+                              ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(14.r),
+                                      child: Image.file(
+                                        File(proofImage!.path),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return const Center(
+                                            child: Icon(Icons.image, size: 48),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4.h,
+                                      right: 4.w,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            proofImage = null;
+                                            imageError = null;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(4.w),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.cloud_upload_outlined,
+                                      size: 40.sp,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      'Tap to upload payment proof',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      // Show error message if validation fails
+                      if (imageError != null) ...[
+                        SizedBox(height: 8.h),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
+                              color: Colors.red.shade200,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red.shade700,
+                                size: 20.sp,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  imageError!,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                     SizedBox(height: 24.h),
                     // Submit button
                     Container(
@@ -763,6 +1019,7 @@ class Earningsscreen extends ConsumerWidget {
                     ),
                     SizedBox(height: 8.h),
                   ],
+                ),
                 ),
               );
             },

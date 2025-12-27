@@ -10,6 +10,8 @@ import 'package:workpleis/features/internal_technician/screen/job/model/internal
 import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
 /// ------------------------------------------------------
 ///  Colors
@@ -166,6 +168,16 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final tab = ref.watch(jobsTabProvider);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the home screen (index 0) and it's currently visible
+      if (currentIndex == 0 && visibleIndex == 0) {
+        _loadJobs();
+      }
+    });
 
     // ✅ Active tab এ incoming + active একসাথে দেখাবে
     final incomingIds = _incomingJobs.map((j) => j.id).toSet();

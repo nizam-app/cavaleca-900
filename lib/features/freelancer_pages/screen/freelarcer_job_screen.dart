@@ -10,6 +10,8 @@ import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.da
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 
@@ -129,9 +131,29 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
         action: 'ACCEPT',
       );
 
+      // Parse payment values to check if they're zero
+      final updatedPaymentValue = double.tryParse(
+        updated.payment.replaceAll('\$', '').replaceAll(',', ''),
+      ) ?? 0.0;
+      
+      // Always preserve payment and bonus if API response has 0
+      // This ensures we don't lose payment info when API returns $0.00
+      final paymentToUse = updatedPaymentValue == 0.0
+          ? job.payment 
+          : updated.payment;
+      
+      final bonusToUse = updatedPaymentValue == 0.0
+          ? job.bonus 
+          : updated.bonus;
+      
+      final finalUpdated = updated.copyWith(
+        payment: paymentToUse,
+        bonus: bonusToUse,
+      );
+
       setState(() {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
-        _activeJobs = [..._activeJobs, updated];
+        _activeJobs = [..._activeJobs, finalUpdated];
       });
 
       if (mounted) {
@@ -178,58 +200,79 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
     await showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (_) => const Gpscheckinpopup(),
+      builder: (_) => Gpscheckinpopup(
+        jobAddress: job.address ?? job.location,
+        onLocationVerified: (lat, lng) async {
+          try {
+            final updated = await TechnicianJobsApi.startWorkOrder(
+              woId: job.id,
+              lat: lat,
+              lng: lng,
+            );
+
+            // Parse payment values to check if they're zero
+            final updatedPaymentValue = double.tryParse(
+              updated.payment.replaceAll('\$', '').replaceAll(',', ''),
+            ) ?? 0.0;
+            
+            // Always preserve payment and bonus if API response has 0
+            // This ensures we don't lose payment info when API returns $0.00
+            final paymentToUse = updatedPaymentValue == 0.0
+                ? job.payment 
+                : updated.payment;
+            final bonusToUse = updatedPaymentValue == 0.0
+                ? job.bonus 
+                : updated.bonus;
+            
+            final finalUpdated = updated.copyWith(
+              payment: paymentToUse,
+              bonus: bonusToUse,
+            );
+
+            setState(() {
+              _activeJobs = _activeJobs
+                  .map((j) => j.id == finalUpdated.id ? finalUpdated : j)
+                  .toList();
+            });
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('job_started_successfully'.tr())),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('${'failed_to_start_job'.tr()}: $e')));
+            }
+          }
+        },
+      ),
     );
-
-    final lat = job.latitude ?? 0;
-    final lng = job.longitude ?? 0;
-
-    try {
-      final updated = await TechnicianJobsApi.startWorkOrder(
-        woId: job.id,
-        lat: lat,
-        lng: lng,
-      );
-
-      // Preserve payment and bonus if API response has $0.00
-      final paymentToUse = updated.payment == '\$0.00' ? job.payment : updated.payment;
-      final bonusToUse = updated.bonus == '\$0.00' ? job.bonus : updated.bonus;
-      
-      final finalUpdated = updated.copyWith(
-        payment: paymentToUse,
-        bonus: bonusToUse,
-      );
-
-      setState(() {
-        _activeJobs = _activeJobs
-            .map((j) => j.id == finalUpdated.id ? finalUpdated : j)
-            .toList();
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${'failed_to_start_job'.tr()}: $e')));
-      }
-    }
   }
 
   Future<void> _handleJobCompleted(InternalJob completedJob) async {
-    // Remove from active jobs and add to completed jobs
-    setState(() {
-      _activeJobs = _activeJobs.where((j) => j.id != completedJob.id).toList();
-      if (!_completedJobs.any((j) => j.id == completedJob.id)) {
-        _completedJobs = [..._completedJobs, completedJob];
-      }
-    });
-
     // Refresh all job lists to get latest data from server
+    // This will automatically place jobs in correct tabs based on status:
+    // - COMPLETED_PENDING_PAYMENT → active tab (to show payment button)
+    // - PAID_VERIFIED → completed tab
     await _loadAllJobs();
   }
 
   @override
   Widget build(BuildContext context) {
     final tab = ref.watch(freelancerJobsTabProvider);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the jobs screen (index 1) and it's currently visible
+      if (currentIndex == 1 && visibleIndex == 1) {
+        _loadAllJobs();
+      }
+    });
 
     if (_isLoading) {
       return const Scaffold(
@@ -1360,6 +1403,9 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
   XFile? _proofImage;
   bool _isSubmitting = false;
 
+  bool get _requiresProof => _selectedMethod != 'CASH';
+  bool get _requiresTransactionRef => _selectedMethod != 'CASH';
+
   @override
   void initState() {
     super.initState();
@@ -1432,10 +1478,10 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
       return;
     }
 
-    // Only require proof image for MOBILE_MONEY
-    if (_selectedMethod != 'CASH' && _proofImage == null) {
+    // Require proof image for all non-cash payments
+    if (_requiresProof && _proofImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload proof image for mobile payment')),
+        const SnackBar(content: Text('Please upload proof image for this payment method')),
       );
       return;
     }
@@ -1513,55 +1559,70 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                   ),
                   SizedBox(height: 20.h),
                   // Amount field (read-only or auto-populated)
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    readOnly: true, // Make it read-only to prevent manual editing
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: kJobsTextMain,
+                  Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: Colors.grey.shade200),
                     ),
-                    decoration: InputDecoration(
-                      labelText: 'Amount',
-                      hintText: 'Amount',
-                      prefixIcon: const Icon(Icons.attach_money),
-                      suffixIcon: Icon(
-                        Icons.lock_outline,
-                        size: 18,
-                        color: Colors.grey.shade400,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                        borderSide: BorderSide(color: Colors.grey.shade400),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Amount is required';
-                      }
-                      if (double.tryParse(value.trim()) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Service price (auto-filled)',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _amountController,
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          readOnly: true, // Make it read-only to prevent manual editing
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: kJobsTextMain,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Amount',
+                            hintText: 'Amount',
+                            prefixIcon: const Icon(Icons.attach_money),
+                            suffixIcon: Icon(
+                              Icons.lock_outline,
+                              size: 18,
+                              color: Colors.grey.shade400,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                              borderSide: BorderSide(color: Colors.grey.shade400),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Amount is required';
+                            }
+                            if (double.tryParse(value.trim()) == null) {
+                              return 'Please enter a valid number';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 8.h),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Service price (auto-filled)',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(height: 16.h),
@@ -1569,19 +1630,57 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                     value: _selectedMethod,
                     decoration: InputDecoration(
                       labelText: 'Payment Method',
-                      prefixIcon: const Icon(Icons.payment),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
+                      prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
+                      helperText: 'Choose how the customer paid',
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(color: kJobsPrimaryYellow),
                       ),
                     ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'CASH',
-                        child: Text('Cash'),
-                      ),
+                    selectedItemBuilder: (BuildContext context) {
+                      return [
+                        const Text('Mobile Money'),
+                        const Text('Cash'),
+                        const Text('Bank Transfer'),
+                      ];
+                    },
+                    items: [
                       DropdownMenuItem(
                         value: 'MOBILE_MONEY',
-                        child: Text('Mobile Money (bKash/Nagad/Bank Transfer)'),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.phone_iphone, color: kJobsPrimaryBlue),
+                            SizedBox(width: 8),
+                            Text('Mobile Money'),
+                          ],
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'CASH',
+                        child: Row(
+                          children: const [
+                            Icon(Icons.attach_money, color: kJobsSuccess),
+                            SizedBox(width: 8),
+                            Text('Cash'),
+                          ],
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'BANK_TRANSFER',
+                        child: Row(
+                          children: const [
+                            Icon(Icons.account_balance, color: kJobsTextMain),
+                            SizedBox(width: 8),
+                            Text('Bank Transfer'),
+                          ],
+                        ),
                       ),
                     ],
                     onChanged: (value) {
@@ -1600,28 +1699,37 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                   TextFormField(
                     controller: _transactionRefController,
                     decoration: InputDecoration(
-                      labelText: _selectedMethod == 'CASH' 
-                          ? 'Transaction Reference (Optional)' 
-                          : 'Transaction Reference',
-                      hintText: _selectedMethod == 'CASH'
-                          ? 'Enter transaction reference (optional)'
-                          : 'Enter transaction reference',
+                      labelText: 'Transaction Reference',
+                      hintText: _requiresTransactionRef
+                          ? 'Enter transaction reference'
+                          : 'Enter transaction reference (optional)',
                       prefixIcon: const Icon(Icons.receipt),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 12.w),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(color: kJobsPrimaryYellow),
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(16.r),
                       ),
                     ),
                     validator: (value) {
-                      // Transaction ref is required only for MOBILE_MONEY
-                      if (_selectedMethod != 'CASH' && (value == null || value.trim().isEmpty)) {
-                        return 'Transaction reference is required for mobile payment';
+                      // Transaction ref is required for non-cash
+                      if (_requiresTransactionRef && (value == null || value.trim().isEmpty)) {
+                        return 'Transaction reference is required for this payment method';
                       }
                       return null;
                     },
                   ),
                   SizedBox(height: 16.h),
-                  // Proof image upload (only for MOBILE_MONEY)
-                  if (_selectedMethod != 'CASH') ...[
+                  // Proof image upload (only for MOBILE_MONEY and BANK_TRANSFER, hidden for CASH)
+                  if (_requiresProof) ...[
                     Text(
                       'Proof Image *',
                       style: TextStyle(
@@ -1632,112 +1740,91 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Required for mobile payments',
+                      _selectedMethod == 'MOBILE_MONEY'
+                          ? 'Required for mobile payments'
+                          : 'Required for bank transfer payments',
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: Colors.grey.shade600,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
-                  ] else ...[
-                    Text(
-                      'Proof Image',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      'Not required for cash payment',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey.shade500,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                  SizedBox(height: 8.h),
-                  GestureDetector(
-                    onTap: _selectedMethod != 'CASH' ? _pickProofImage : null,
-                    child: Opacity(
-                      opacity: _selectedMethod == 'CASH' ? 0.5 : 1.0,
+                    SizedBox(height: 8.h),
+                    GestureDetector(
+                      onTap: _pickProofImage,
                       child: Container(
-                      height: 120.h,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(
-                          color: const Color(0xFFE5E7EB),
-                          width: 1,
+                        height: 120.h,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(
+                            color: const Color(0xFFE5E7EB),
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: _proofImage != null
-                          ? Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  child: Image.file(
-                                    File(_proofImage!.path),
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Center(
-                                        child: Icon(Icons.image, size: 48),
-                                      );
-                                    },
+                        child: _proofImage != null
+                            ? Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    child: Image.file(
+                                      File(_proofImage!.path),
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Center(
+                                          child: Icon(Icons.image, size: 48),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                                Positioned(
-                                  top: 4.h,
-                                  right: 4.w,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _proofImage = null;
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.all(4.w),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 16,
+                                  Positioned(
+                                    top: 4.h,
+                                    right: 4.w,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _proofImage = null;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.all(4.w),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.cloud_upload_outlined,
-                                  size: 40.sp,
-                                  color: kJobsTextMuted,
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  _selectedMethod == 'CASH'
-                                      ? 'Not required for cash'
-                                      : 'Tap to upload proof image',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
+                                ],
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_upload_outlined,
+                                    size: 40.sp,
                                     color: kJobsTextMuted,
                                   ),
-                                ),
-                              ],
-                            ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    'Tap to upload proof image',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      color: kJobsTextMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
-                  ),
+                  ],
                   SizedBox(height: 24.h),
                   Row(
                     children: [

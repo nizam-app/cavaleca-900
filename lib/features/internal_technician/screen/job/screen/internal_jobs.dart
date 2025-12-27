@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
 import '../../../widget/jobDetails.dart';
 import '../../../widget/viewJobDetails.dart';
@@ -20,16 +23,16 @@ enum PaymentButtonState {
 
 ///  Screen
 
-class InternalJobs extends StatefulWidget {
+class InternalJobs extends ConsumerStatefulWidget {
   const InternalJobs({super.key});
 
   static const String routeName = '/internal-jobs';
 
   @override
-  State<InternalJobs> createState() => _InternalJobsState();
+  ConsumerState<InternalJobs> createState() => _InternalJobsState();
 }
 
-class _InternalJobsState extends State<InternalJobs> {
+class _InternalJobsState extends ConsumerState<InternalJobs> {
   static const int bonusRate = 5; // 5% bonus
 
   /// tabs: 0 = incoming, 1 = active, 2 = completed
@@ -271,6 +274,16 @@ class _InternalJobsState extends State<InternalJobs> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the jobs screen (index 1) and it's currently visible
+      if (currentIndex == 1 && visibleIndex == 1) {
+        _loadAllJobs();
+      }
+    });
 
     return Stack(
       children: [

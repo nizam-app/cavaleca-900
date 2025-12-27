@@ -5,8 +5,8 @@ import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_scree
 import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
 import 'package:workpleis/features/notification/customer_notifications_screen.dart';
 import 'package:workpleis/features/notification/data/notificaion_data.dart';
-import 'package:workpleis/features/erning/data/erning_data.dart';
 import 'package:workpleis/core/services/job_notification_service.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
 
 import '../../freelancer_pages/screen/freelarcer_job_screen.dart';
 import '../logic/botton_nav_index_logic.dart';
@@ -40,36 +40,20 @@ class _FreelancerBottomNavBarState extends ConsumerState<FreelancerBottomNavBar>
     super.dispose();
   }
 
-  void _handleTabChange(int index) {
-    // Update the tab index
-    ref.read(bottomNavIndexProvider.notifier).state = index;
-    
-    // Refresh relevant providers when tab changes
-    switch (index) {
-      case 3: // Earnings tab
-        ref.invalidate(freelancerEarningsProvider);
-        break;
-      case 2: // Notifications tab
-        ref.invalidate(notificationsProvider);
-        break;
-      case 1: // Jobs tab
-        // Jobs will refresh via their own state management
-        break;
-      case 0: // Home/Dashboard tab
-        // Dashboard will refresh via its own state management
-        break;
-      case 4: // Profile tab
-        // Profile will refresh via its own state management
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(bottomNavIndexProvider);
     final unreadCount = ref.watch(unreadNotificationsProvider).value ?? 0;
     const activeColor = Color(0xFFCF2626); // red
     const inactiveColor = Color(0xFFB0B0B0); // grey
+
+    // Watch for tab changes and trigger refresh
+    ref.listen<int>(bottomNavIndexProvider, (previous, next) {
+      if (previous != null && previous != next) {
+        // Tab changed - trigger refresh for the new screen
+        triggerScreenRefresh(ref, next);
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
@@ -96,7 +80,11 @@ class _FreelancerBottomNavBarState extends ConsumerState<FreelancerBottomNavBar>
         ),
         child: BottomNavigationBar(
           currentIndex: currentIndex,
-          onTap: _handleTabChange,
+          onTap: (index) {
+            ref.read(bottomNavIndexProvider.notifier).state = index;
+            // Trigger refresh when tab is tapped
+            triggerScreenRefresh(ref, index);
+          },
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           backgroundColor: Colors.white,
