@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 const kPrimaryRed = Color(0xFFC20001);
 const kPrimaryBlue = Color(0xFF2563EB);
 const kSheetBg = Colors.white;
@@ -42,7 +44,7 @@ Future<void> showBookingDetailsDialog(
   return showGeneralDialog(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Booking details',
+    barrierLabel: 'booking_details'.tr(),
     barrierColor: Colors.black.withOpacity(0.5),
     pageBuilder: (_, __, ___) {
       return _BookingDetailsDialog(details: details);
@@ -131,7 +133,7 @@ class _BookingDetailsDialog extends StatelessWidget {
           children: [
             const Spacer(),
             Text(
-              'Booking Details',
+              'booking_details'.tr(),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -150,8 +152,8 @@ class _BookingDetailsDialog extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
-          'View your service booking information',
+         Text(
+          'view_booking_info'.tr(),
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
         ),
@@ -168,17 +170,17 @@ class _BookingDetailsDialog extends StatelessWidget {
 
     switch (status) {
       case BookingStatus.inProgress:
-        text = 'In Progress';
+        text = 'in_progress'.tr();
         bg = const Color(0xFFE0EDFF);
         fg = kPrimaryBlue;
         break;
       case BookingStatus.completed:
-        text = 'Completed';
+        text = 'completed'.tr();
         bg = const Color(0xFFD1FAE5);
         fg = const Color(0xFF059669);
         break;
       case BookingStatus.cancelled:
-        text = 'Cancelled';
+        text = 'cancelled'.tr();
         bg = const Color(0xFFFEE2E2);
         fg = const Color(0xFFDC2626);
         break;
@@ -218,8 +220,8 @@ class _BookingDetailsDialog extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Service',
+           Text(
+            'service'.tr(),
             style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 4),
@@ -232,8 +234,8 @@ class _BookingDetailsDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Category',
+           Text(
+            'category'.tr(),
             style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 4),
@@ -246,8 +248,8 @@ class _BookingDetailsDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Description',
+           Text(
+            'description'.tr(),
             style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 4),
@@ -274,8 +276,8 @@ class _BookingDetailsDialog extends StatelessWidget {
             iconColor: kPrimaryBlue,
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Scheduled',
+           Text(
+            'scheduled'.tr(),
             style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(width: 8),
@@ -309,8 +311,8 @@ class _BookingDetailsDialog extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Location',
+                 Text(
+                  'location'.tr(),
                   style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 ),
                 const SizedBox(height: 4),
@@ -358,8 +360,8 @@ class _BookingDetailsDialog extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Assigned Technician',
+                 Text(
+                  'assigned_technician'.tr(),
                   style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 ),
                 const SizedBox(height: 4),
@@ -412,8 +414,8 @@ class _BookingDetailsDialog extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
         ),
-        child: const Text(
-          'Close',
+        child:  Text(
+          'close'.tr(),
           style: TextStyle(
             fontSize: 14,
             color: Color(0xFF111827),

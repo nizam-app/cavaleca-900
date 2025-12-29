@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 import 'package:workpleis/features/internal_technician/widget/jobDetails.dart';
 import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dart';
+import 'package:workpleis/features/internal_technician/screen/dashboard/logic/technician_dashboard_api.dart';
+import 'package:workpleis/features/internal_technician/screen/dashboard/model/technician_dashboard_model.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
-class InternalDashboardV2Screen extends StatefulWidget {
+class InternalDashboardV2Screen extends ConsumerStatefulWidget {
   const InternalDashboardV2Screen({super.key, this.userName = 'Sarah'});
 
   static const String routeName = '/internal-dashboard';
@@ -12,11 +17,11 @@ class InternalDashboardV2Screen extends StatefulWidget {
   final String userName;
 
   @override
-  State<InternalDashboardV2Screen> createState() =>
+  ConsumerState<InternalDashboardV2Screen> createState() =>
       _InternalDashboardV2ScreenState();
 }
 
-class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
+class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2Screen> {
   static const int bonusPercentage = 5; // 5% bonus on verified jobs
 
   bool _isLoading = false;
@@ -25,6 +30,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   /// API theke ashbe
   List<InternalJob> _activeJobs = []; // assigned + in_progress
   List<InternalJob> _completedJobs = []; // completed
+  TechnicianDashboardModel? _dashboardData;
 
   /// 0 = Active, 1 = Completed
   int activeTabIndex = 0;
@@ -42,11 +48,15 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     });
 
     try {
+      // Dashboard data fetch
+      final dashboardData = await TechnicianDashboardApi.fetchDashboard();
+      
       // আগের মতোই same API usage
       final active = await TechnicianJobsApi.fetchJobs('active');
       final done = await TechnicianJobsApi.fetchJobs('done');
 
       setState(() {
+        _dashboardData = dashboardData;
         _activeJobs = active;
         _completedJobs = done;
       });
@@ -82,7 +92,18 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   int get _inProgressJobs =>
       _activeJobs.where((j) => j.status == JobStatus.inProgress).length;
 
-  int get _completedCount => _completedJobs.length;
+  /// Prefer locally fetched lists for counts; fall back to dashboard numbers.
+  int get _uiActiveCount =>
+      _activeJobs.isNotEmpty ? _activeJobs.length : (_dashboardData?.activeJobs ?? 0);
+
+  int get _uiCompletedCount {
+    final paidVerifiedCount = _completedJobs
+        .where((job) => job.status == JobStatus.paidVerified)
+        .length;
+    return paidVerifiedCount > 0
+        ? paidVerifiedCount
+        : (_dashboardData?.completedThisMonth ?? 0);
+  }
 
   double get _totalBonus =>
       _completedJobs.fold(0, (sum, job) => sum + _calculateBonus(job.payment));
@@ -114,11 +135,22 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the home screen (index 0) and it's currently visible
+      if (currentIndex == 0 && visibleIndex == 0) {
+        _loadJobs();
+      }
+    });
 
+    final dashboard = _dashboardData;
     final stats = [
       _DashboardStat(
         label: 'This Week',
-        value: '\$${_weeklyBonus.toStringAsFixed(0)}',
+        value: '\$${dashboard != null ? dashboard.thisWeekBonus.toString() : _weeklyBonus.toStringAsFixed(0)}',
         icon: Icons.attach_money,
         iconBg: const Color(0xFFE0ECFF),
         iconColor: const Color(0xFF2563EB),
@@ -126,7 +158,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       ),
       _DashboardStat(
         label: 'Total Earned',
-        value: '\$${_totalBonus.toStringAsFixed(0)}',
+        value: '\$${dashboard != null ? dashboard.totalEarned.toString() : _totalBonus.toStringAsFixed(0)}',
         icon: Icons.trending_up,
         iconBg: const Color(0xFFD1FAE5),
         iconColor: const Color(0xFF059669),
@@ -134,7 +166,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       ),
       _DashboardStat(
         label: 'Active Jobs',
-        value: (_openJobs + _inProgressJobs).toString(),
+        value: _uiActiveCount.toString(),
         icon: Icons.work_outline,
         iconBg: const Color(0xFFFEF3C7),
         iconColor: const Color(0xFFF59E0B),
@@ -142,7 +174,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
       ),
       _DashboardStat(
         label: 'Completed',
-        value: _completedCount.toString(),
+        value: _uiCompletedCount.toString(),
         icon: Icons.check_circle_outline,
         iconBg: const Color(0xFFEDE9FE),
         iconColor: const Color(0xFF7C3AED),
@@ -161,7 +193,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
             // --------------- Content ----------------
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+? const Center(child: CircularProgressIndicator())
                   : _errorMessage != null
                   ? Center(
                       child: Padding(
@@ -172,30 +204,35 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                         ),
                       ),
                     )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Stats grid
-                          _buildStatsGrid(stats),
-                          const SizedBox(height: 16),
-                          // Tabs (Active / Completed)
-                          _buildTabs(),
-                          const SizedBox(height: 16),
-                          // Tab content
-                          if (activeTabIndex == 0)
-                            _buildActiveJobsSection()
-                          else
-                            _buildCompletedJobsSection(),
-                          const SizedBox(height: 16),
-                          // Performance card
-                          _buildPerformanceCard(),
-                          const SizedBox(height: 16),
-                        ],
+                  : RefreshIndicator(
+                      onRefresh: _loadJobs,
+                      color: const Color(0xFFC20001),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Stats grid
+                            _buildStatsGrid(stats),
+                            const SizedBox(height: 16),
+                            // Tabs (Active / Completed)
+                            _buildTabs(),
+                            const SizedBox(height: 16),
+                            // Tab content
+                            if (activeTabIndex == 0)
+                              _buildActiveJobsSection()
+                            else
+                              _buildCompletedJobsSection(),
+                            const SizedBox(height: 16),
+                            // Performance card
+                            _buildPerformanceCard(),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
                       ),
                     ),
             ),
@@ -292,7 +329,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '\$${_weeklyBonus.toStringAsFixed(0)}',
+                        '\$${_dashboardData != null ? _dashboardData!.thisWeekBonus.toString() : _weeklyBonus.toStringAsFixed(0)}',
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -325,7 +362,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        (_inProgressJobs + _openJobs).toString(),
+                        (_dashboardData?.jobsToday ?? (_inProgressJobs + _openJobs)).toString(),
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -365,8 +402,8 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   }
 
   Widget _buildTabs() {
-    final totalActive = _openJobs + _inProgressJobs;
-    final completed = _completedCount;
+    final totalActive = _uiActiveCount;
+    final completed = _uiCompletedCount;
 
     return Container(
       padding: const EdgeInsets.all(4),
@@ -550,7 +587,12 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
   // ------------------------------------------------------
 
   Widget _buildCompletedJobsSection() {
-    if (_completedJobs.isEmpty) {
+    // Filter to show only PAID_VERIFIED jobs
+    final paidVerifiedJobs = _completedJobs
+        .where((job) => job.status == JobStatus.paidVerified)
+        .toList();
+
+    if (paidVerifiedJobs.isEmpty) {
       return Card(
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -582,7 +624,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
     }
 
     return Column(
-      children: _completedJobs
+      children: paidVerifiedJobs
           .map((job) => _buildCompletedJobCard(job: job))
           .toList(),
     );
@@ -632,7 +674,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$_completedCount jobs completed this month',
+                    '${_uiCompletedCount} jobs completed this month',
                     style: const TextStyle(
                       color: Color(0xFF4B5563),
                       fontSize: 13,
@@ -819,7 +861,11 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                           showDialog(
                             context: context,
                             barrierDismissible: true,
-                            builder: (_) => Viewjobdetails(),
+                            builder: (_) => Viewjobdetails(
+                              job: job,
+                              onJobUpdate: (updatedJob) => _handleJobUpdate(updatedJob),
+                              bonusRate: bonusPercentage.toDouble(),
+                            ),
                           );
                         }
                       },
@@ -953,7 +999,7 @@ class _InternalDashboardV2ScreenState extends State<InternalDashboardV2Screen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bonus Earned ($bonusPercentage%)',
+                      'Commission Earned ($bonusPercentage%)',
                       style: const TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 11,

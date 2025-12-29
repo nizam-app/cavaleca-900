@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:workpleis/core/widget/global_language_dialog.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
+import 'package:workpleis/features/shared/screen/edit_profile_screen.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
@@ -43,7 +45,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   String get _displayName => (widget.userName?.trim().isNotEmpty ?? false)
       ? widget.userName!.trim()
-      : (widget.isGuest ? 'guest_user'.tr() : 'John Doe');
+      : (widget.isGuest ? 'guest_user'.tr() : 'default_user_name'.tr());
 
   String get _displayInitials {
     final name = _displayName;
@@ -83,7 +85,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       setState(() => _languageCode = selected);
 
       // 3) toast
-      _showToast('Language updated to $_currentLanguageNative');
+      _showToast('${'language_updated_to'.tr()} $_currentLanguageNative');
     }
   }
 
@@ -251,12 +253,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ],
             ),
             if (!isGuest) ...[
-              const SizedBox(height: 16),
+               const SizedBox(height: 16),
+
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () {
-                    _showToast('Edit profile tapped');
+                    context.push(EditProfileScreen.routeName);
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFFE5E5),
@@ -265,8 +268,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: const Text(
-                    'Edit Profile',
+                  child:  Text(
+                    'edit_profile'.tr(),
                     style: TextStyle(
                       color: Color(0xFFC20001),
                       fontSize: 13,
@@ -275,7 +278,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   ),
                 ),
               ),
-            ],
+    ],
           ],
         ),
       ),
@@ -398,7 +401,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               child: TextButton(
                 onPressed:
                     widget.onSignUp ??
-                    () => _showToast('Sign Up tapped (guest)'),
+                    () => _showToast('sign_up_tapped_guest'.tr()),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
@@ -432,10 +435,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         iconBgColor: const Color(0xFFF5F3FF),
         iconColor: const Color(0xFFA855F7),
         title: 'notifications'.tr(),
-        subtitle: '3 new',
+        subtitle: 'notifications_new_count'.tr(),
         onTap:
             widget.onNavigateToNotifications ??
-            () => _showToast('Open notifications'),
+            () => _showToast('open_notifications'.tr()),
         showForGuest: false,
       ),
       _MenuItem(
@@ -530,10 +533,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'Support',
+            'support'.tr(),
             style: TextStyle(
               fontSize: 15,
               color: Color(0xFF111827),
@@ -552,7 +555,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
             onTap: () {
-              _showToast('Calling +1 (800) 123-4567...');
+              _showToast('calling_support'.tr());
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -615,7 +618,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
             onTap: () {
-              _showToast('Opening email support@ibacos.com...');
+              _showToast('opening_email_support'.tr());
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -687,22 +690,22 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'Business Hours',
-                  style: TextStyle(
+                  'business_hours'.tr(),
+                  style: const TextStyle(
                     fontSize: 15,
                     color: Color(0xFF111827),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 _BusinessHourRow(
-                  day: 'Monday - Friday',
-                  time: '8:00 AM - 8:00 PM',
+                  day: 'monday_friday'.tr(),
+                  time: 'business_hours_weekday'.tr(),
                 ),
-                _BusinessHourRow(day: 'Saturday', time: '9:00 AM - 6:00 PM'),
-                _BusinessHourRow(day: 'Sunday', time: '10:00 AM - 4:00 PM'),
+                _BusinessHourRow(day: 'saturday'.tr(), time: 'business_hours_saturday'.tr()),
+                _BusinessHourRow(day: 'sunday'.tr(), time: 'business_hours_sunday'.tr()),
               ],
             ),
           ),
@@ -732,7 +735,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
         icon: const Icon(Icons.logout, color: Color(0xFFC20001), size: 20),
         label: Text(
-          isGuest ? 'Exit Guest Mode' : 'Sign Out',
+          isGuest ? 'exit_guest_mode_button'.tr() : 'sign_out'.tr(),
           style: const TextStyle(
             color: Color(0xFFC20001),
             fontSize: 14,
@@ -753,22 +756,22 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Confirm'),
+          title: Text('confirm'.tr()),
           content: Text(
             isGuest
-                ? 'Do you want to exit guest mode?'
-                : 'Are you sure you want to sign out?',
+                ? 'exit_guest_mode'.tr()
+                : 'are_you_sure_you_want_to_sign_out'.tr(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text('cancel'.tr()),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Yes',
-                style: TextStyle(color: Color(0xFFC20001)),
+              child: Text(
+                'yes'.tr(),
+                style: const TextStyle(color: Color(0xFFC20001)),
               ),
             ),
           ],
@@ -782,9 +785,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       if (!isGuest) {
         // real user logout
         await CustomerLogOut.logout();
-        _showToast('Logout successful');
+        _showToast('logout_successful'.tr());
       } else {
-        _showToast('Exited guest mode');
+        _showToast('exited_guest_mode'.tr());
       }
 
       // local state / navigation parent ke handle korte dao
@@ -795,7 +798,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      _showToast('Logout failed: $e');
+      _showToast('${'logout_failed'.tr()}: $e');
     }
   }
 }

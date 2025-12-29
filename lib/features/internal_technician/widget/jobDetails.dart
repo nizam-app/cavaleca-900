@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'compliteJob.dart';
 
 /// ------------------------------------------------------
@@ -19,8 +20,9 @@ const Color kBorderLight = Color(0xFFE5E5E5);
 
 class Jobdetails extends StatelessWidget {
   final InternalJob job;
+  final Function(InternalJob)? onJobCompleted;
 
-  const Jobdetails({super.key, required this.job});
+  const Jobdetails({super.key, required this.job, this.onJobCompleted});
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +78,7 @@ class Jobdetails extends StatelessWidget {
             SizedBox(width: 24.w), // to balance close icon on right
             Expanded(
               child: Text(
-                'Job Details',
+                'job_details'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18.sp,
@@ -97,7 +99,7 @@ class Jobdetails extends StatelessWidget {
         ),
         SizedBox(height: 4.h),
         Text(
-          'Job in progress',
+          'job_in_progress_title'.tr(),
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w400,
@@ -114,16 +116,30 @@ class Jobdetails extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _StatusChip(
-          label: 'In Progress',
+          label: 'in_progress'.tr(),
           bgColor: const Color(0xFFE7F0FF),
           textColor: kAccentBlue,
         ),
-        SizedBox(width: 8.w),
-        _StatusChip(
-          label: 'HIGH Priority',
-          bgColor: const Color(0xFFFFE6E6),
-          textColor: kPrimaryRed,
-        ),
+        if (job.priority != null) ...[
+          SizedBox(width: 8.w),
+          _StatusChip(
+            label: job.priority == JobPriority.high
+                ? 'high_priority'.tr()
+                : job.priority == JobPriority.medium
+                    ? 'medium_priority'.tr()
+                    : 'low_priority'.tr(),
+            bgColor: job.priority == JobPriority.high
+                ? const Color(0xFFFFE6E6)
+                : job.priority == JobPriority.medium
+                    ? const Color(0xFFFFF0D5)
+                    : const Color(0xFFE5F5E5),
+            textColor: job.priority == JobPriority.high
+                ? kPrimaryRed
+                : job.priority == JobPriority.medium
+                    ? Colors.orange.shade700
+                    : Colors.green.shade700,
+          ),
+        ],
       ],
     );
   }
@@ -135,32 +151,36 @@ class Jobdetails extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'HVAC Emergency Repair',
+            job.title,
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w600,
               color: kTextMain,
             ),
           ),
-          SizedBox(height: 4.h),
-          Text(
-            'HVAC Services',
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-              color: kPrimaryRed,
+          if (job.category != null) ...[
+            SizedBox(height: 4.h),
+            Text(
+              job.category!,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+                color: kPrimaryRed,
+              ),
             ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'Emergency AC unit repair - system not cooling',
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w400,
-              height: 1.4,
-              color: kTextMuted,
+          ],
+          if (job.description != null && job.description!.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Text(
+              job.description!,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+                color: kTextMuted,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -176,7 +196,7 @@ class Jobdetails extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Customer',
+                  'customer'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
@@ -185,35 +205,39 @@ class Jobdetails extends StatelessWidget {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  'Michael Johnson',
+                  job.customer,
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: kTextMain,
                   ),
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  '+1 234 567 8900',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w400,
-                    color: kTextMuted,
+                if (job.customerPhone != null) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    job.customerPhone!,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      color: kTextMuted,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          SizedBox(width: 12.w),
-          Container(
-            height: 40.w,
-            width: 40.w,
-            decoration: BoxDecoration(
-              color: kPrimaryRed,
-              borderRadius: BorderRadius.circular(999.r),
+          if (job.customerPhone != null)
+            SizedBox(width: 12.w),
+          if (job.customerPhone != null)
+            Container(
+              height: 40.w,
+              width: 40.w,
+              decoration: BoxDecoration(
+                color: kPrimaryRed,
+                borderRadius: BorderRadius.circular(999.r),
+              ),
+              child: Icon(Icons.phone, size: 20.sp, color: Colors.white),
             ),
-            child: Icon(Icons.phone, size: 20.sp, color: Colors.white),
-          ),
         ],
       ),
     );
@@ -221,6 +245,7 @@ class Jobdetails extends StatelessWidget {
 
   /// -------------------  LOCATION CARD  ----------------
   Widget _buildLocationCard() {
+    final address = job.address ?? job.location;
     return _CardContainer(
       child: Row(
         children: [
@@ -235,7 +260,7 @@ class Jobdetails extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Location',
+                  'location'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
@@ -244,7 +269,7 @@ class Jobdetails extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  '123 Main St, Apt 4B',
+                  address,
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -261,6 +286,7 @@ class Jobdetails extends StatelessWidget {
 
   /// -------------------  SCHEDULE CARD  ----------------
   Widget _buildScheduleCard() {
+    final dateTime = '${job.date}${job.time != null ? ' at ${job.time}' : ''}';
     return _CardContainer(
       child: Row(
         children: [
@@ -275,7 +301,7 @@ class Jobdetails extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Scheduled',
+                  'scheduled'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
@@ -284,7 +310,7 @@ class Jobdetails extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Today at 2:00 PM',
+                  dateTime,
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -299,8 +325,14 @@ class Jobdetails extends StatelessWidget {
     );
   }
 
-  /// -------------------  BONUS CARD  -------------------
+  /// -------------------  COMMISSION CARD  -------------------
   Widget _buildBonusCard() {
+    // Use yourBonus from API if available, otherwise calculate from bonusRate
+    final bonusAmount = job.yourBonus ?? 
+        (job.bonusRate != null 
+            ? (double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0) * job.bonusRate! / 100
+            : 0);
+    
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -325,7 +357,9 @@ class Jobdetails extends StatelessWidget {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  'Performance Bonus (5%)',
+                  job.bonusRate != null 
+                      ? "Performance Commission (${job.bonusRate!.toStringAsFixed(0)}%)"
+                      : 'performance_bonus'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -337,7 +371,7 @@ class Jobdetails extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            '\$7.50',
+            '\$${bonusAmount.toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: 22.sp,
               fontWeight: FontWeight.w700,
@@ -346,7 +380,7 @@ class Jobdetails extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            'from \$150 job',
+            'from ${job.payment} job',
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w400,
@@ -360,11 +394,6 @@ class Jobdetails extends StatelessWidget {
 
   /// -------------------  BUTTONS  ----------------------
   Widget _buildCompleteButton(BuildContext context) {
-    // payment string থেকে amount বের করি
-    final paymentAmount =
-        double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ??
-        0;
-
     return SizedBox(
       width: double.infinity,
       height: 48.h,
@@ -381,9 +410,9 @@ class Jobdetails extends StatelessWidget {
             context: context,
             barrierDismissible: true,
             builder: (_) => Complitejob(
-              woId: job.id, // <-- main thing
-              jobPayment: paymentAmount,
-              bonusRate: 0.05,
+              woId: job.id,
+              job: job,
+              onJobCompleted: onJobCompleted,
             ),
           );
         },
@@ -397,7 +426,7 @@ class Jobdetails extends StatelessWidget {
             ),
             SizedBox(width: 8.w),
             Text(
-              'Complete Job',
+              'complete_job'.tr(),
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
@@ -424,7 +453,7 @@ class Jobdetails extends StatelessWidget {
         ),
         onPressed: () => Navigator.of(context).pop(),
         child: Text(
-          'Close',
+          'close'.tr(),
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w500,

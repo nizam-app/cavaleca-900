@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/features/erning/data/erning_data.dart';
 import 'package:workpleis/features/erning/model/freelancer_transaction.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
 /// ------------------------------------------------------
 ///  COLORS
@@ -24,14 +29,29 @@ const kEarningsYellow = Color(0xFFFFB111);
 /// ------------------------------------------------------
 ///  MAIN SCREEN
 /// ------------------------------------------------------
-class FreelancerEarningsScreen extends ConsumerWidget {
+class FreelancerEarningsScreen extends ConsumerStatefulWidget {
   const FreelancerEarningsScreen({super.key});
 
   static const String routeName = 'freelancer-earnings';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FreelancerEarningsScreen> createState() => _FreelancerEarningsScreenState();
+}
+
+class _FreelancerEarningsScreenState extends ConsumerState<FreelancerEarningsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final asyncData = ref.watch(freelancerEarningsProvider);
+    
+    // Listen for refresh triggers when this screen becomes visible
+    ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
+      final currentIndex = ref.read(bottomNavIndexProvider);
+      final visibleIndex = ref.read(currentVisibleScreenIndexProvider);
+      // Refresh if this is the earnings screen (index 3) and it's currently visible
+      if (currentIndex == 3 && visibleIndex == 3) {
+        ref.invalidate(freelancerEarningsProvider);
+      }
+    });
 
     return asyncData.when(
       loading: () => const Scaffold(
@@ -55,29 +75,38 @@ class FreelancerEarningsScreen extends ConsumerWidget {
         return Scaffold(
           backgroundColor: kEarningsBg,
           body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _HeaderSection(data: data),
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Column(
-                      children: [
-                        _StatsRow(data: data),
-                        SizedBox(height: 16.h),
-                        _AvailableBalanceCard(data: data),
-                        SizedBox(height: 16.h),
-                        _CommissionRateCard(data: data),
-                        SizedBox(height: 16.h),
-                        _MonthBreakdownCard(data: data),
-                        SizedBox(height: 16.h),
-                        _RecentTransactions(data: data),
-                        SizedBox(height: 32.h),
-                      ],
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(freelancerEarningsProvider);
+                // Wait for the provider to refresh
+                await ref.read(freelancerEarningsProvider.future);
+              },
+              color: kEarningsGreenDark,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _HeaderSection(data: data),
+                    SizedBox(height: 16.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      child: Column(
+                        children: [
+                          _StatsRow(data: data),
+                          SizedBox(height: 16.h),
+                          _AvailableBalanceCard(data: data),
+                          SizedBox(height: 16.h),
+                          _CommissionRateCard(data: data),
+                          SizedBox(height: 16.h),
+                          _MonthBreakdownCard(data: data),
+                          SizedBox(height: 16.h),
+                          _RecentTransactions(data: data),
+                          SizedBox(height: 32.h),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -128,7 +157,7 @@ class _HeaderSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Earnings',
+                    'earnings_label'.tr(),
                     style: TextStyle(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w700,
@@ -137,7 +166,7 @@ class _HeaderSection extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Track your commission',
+                    'track_commission'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: kEarningsTextMain.withOpacity(0.85),
@@ -145,32 +174,32 @@ class _HeaderSection extends StatelessWidget {
                   ),
                 ],
               ),
-              TextButton.icon(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 6.h,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  foregroundColor: kEarningsTextMain,
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Export coming soon…')),
-                  );
-                },
-                icon: Icon(Icons.download_rounded, size: 16.sp),
-                label: Text(
-                  'Export',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              // TextButton.icon(
+              //   style: TextButton.styleFrom(
+              //     backgroundColor: Colors.white.withOpacity(0.2),
+              //     padding: EdgeInsets.symmetric(
+              //       horizontal: 10.w,
+              //       vertical: 6.h,
+              //     ),
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(14.r),
+              //     ),
+              //     foregroundColor: kEarningsTextMain,
+              //   ),
+              //   onPressed: () {
+              //     ScaffoldMessenger.of(context).showSnackBar(
+              //       SnackBar(content: Text('export_coming_soon'.tr())),
+              //     );
+              //   },
+              //   icon: Icon(Icons.download_rounded, size: 16.sp),
+              //   label: Text(
+              //     'export'.tr(),
+              //     style: TextStyle(
+              //       fontSize: 12.sp,
+              //       fontWeight: FontWeight.w500,
+              //     ),
+              //   ),
+              // ),
             ],
           ),
 
@@ -195,7 +224,7 @@ class _HeaderSection extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Total Earnings (All Time)',
+                    'total_earnings_all_time'.tr(),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: kEarningsTextMain.withOpacity(0.85),
@@ -246,7 +275,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.attach_money_rounded,
             iconBg: const Color(0xFFE8FFF3),
             iconColor: kEarningsGreen,
-            label: 'Today',
+            label: 'today'.tr(),
             value: '\$${data.todayEarnings.toStringAsFixed(2)}',
           ),
         ),
@@ -266,7 +295,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.calendar_month_rounded,
             iconBg: const Color(0xFFF3E8FF),
             iconColor: const Color(0xFF7C3AED),
-            label: 'This Month',
+            label: 'this_month'.tr(),
             value: '\$${data.thisMonthEarnings.toStringAsFixed(0)}',
           ),
         ),
@@ -397,7 +426,7 @@ class _AvailableBalanceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Available Balance',
+                      'available_balance'.tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -450,36 +479,14 @@ class _AvailableBalanceCard extends StatelessWidget {
                 ),
                 onPressed: data.availableBalance == 0
                     ? null
-                    : () async {
-                        final confirmed =
-                            await showDialog<bool>(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (_) => EarlyPayoutDialog(
-                                availableBalance: data.availableBalance,
-                                jobsCount: data.thisWeekJobs,
-                                commissionRate: data.commissionRate,
-                              ),
-                            ) ??
-                            false;
-
-                        if (confirmed && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Payout request submitted successfully! You will receive your payment within 24 hours.',
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                    : () => _showEarlyPayoutBottomSheet(context, data),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.attach_money_rounded, size: 18.sp),
                     SizedBox(width: 6.w),
                     Text(
-                      'Request Early Payout',
+                      'request_payout'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -492,7 +499,7 @@ class _AvailableBalanceCard extends StatelessWidget {
             SizedBox(height: 8.h),
             Center(
               child: Text(
-                'Regular payout: Every Monday',
+                'regular_payout'.tr(),
                 style: TextStyle(
                   fontSize: 11.sp,
                   color: Colors.white.withOpacity(0.9),
@@ -502,6 +509,639 @@ class _AvailableBalanceCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEarlyPayoutBottomSheet(
+    BuildContext context,
+    FreelancerEarningsData data,
+  ) {
+    final available = data.availableBalance;
+    final amountController = TextEditingController(
+      text: available.toStringAsFixed(2),
+    );
+    final reasonController = TextEditingController(
+      text: 'Need funds for expenses',
+    );
+    final imagePicker = ImagePicker();
+    String paymentMethod = 'CASH';
+    XFile? proofImage;
+    bool isSubmitting = false;
+    String? imageError;
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20.w,
+            right: 20.w,
+            top: 16.h,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20.h,
+          ),
+          child: StatefulBuilder(
+            builder: (sheetContext, setState) {
+              // Check if payment method requires image
+              bool requiresImage = paymentMethod != 'CASH';
+              
+              Future<void> pickProofImage() async {
+                try {
+                  final source = await showModalBottomSheet<ImageSource>(
+                    context: sheetContext,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.photo_library),
+                              title: const Text('Gallery'),
+                              onTap: () => Navigator.pop(context, ImageSource.gallery),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.camera_alt),
+                              title: const Text('Camera'),
+                              onTap: () => Navigator.pop(context, ImageSource.camera),
+                            ),
+                            SizedBox(height: 10.h),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+
+                  if (source == null) return;
+
+                  final image = await imagePicker.pickImage(source: source);
+                  if (image != null) {
+                    setState(() {
+                      proofImage = image;
+                      imageError = null; // Clear error when image is selected
+                    });
+                  }
+                } catch (e) {
+                  if (sheetContext.mounted) {
+                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                      SnackBar(content: Text('Failed to pick image: $e')),
+                    );
+                  }
+                }
+              }
+
+              Future<void> submit() async {
+                if (isSubmitting) return;
+                if (!formKey.currentState!.validate()) return;
+
+                // Validate image for mobile payment methods
+                if (requiresImage && proofImage == null) {
+                  setState(() {
+                    imageError = 'Please upload payment proof image';
+                  });
+                  return;
+                }
+                
+                // Clear error if image is present
+                setState(() {
+                  imageError = null;
+                });
+
+                final amount = double.tryParse(amountController.text.trim());
+                if (amount == null || amount <= 0) {
+                  ScaffoldMessenger.of(sheetContext).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid amount')),
+                  );
+                  return;
+                }
+
+                setState(() => isSubmitting = true);
+                try {
+                  // Note: API may need to be updated to support image upload
+                  // For now, we'll call the existing API
+                  await TechnicianEarningsApi.requestEarlyPayout(
+                    amount: amount,
+                    reason: reasonController.text.trim(),
+                    paymentMethod: paymentMethod,
+                  );
+                  if (Navigator.of(sheetContext).canPop()) {
+                    Navigator.of(sheetContext).pop();
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Payout request submitted successfully'),
+                    ),
+                  );
+                } catch (e) {
+                  setState(() => isSubmitting = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to submit request: $e'),
+                    ),
+                  );
+                }
+              }
+
+              return Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 48.w,
+                        height: 4.h,
+                        margin: EdgeInsets.only(bottom: 20.h),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                    ),
+                    // Title with icon
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.account_balance_wallet,
+                            color: kEarningsGreenDark,
+                            size: 24.sp,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Request Early Payout',
+                                style: TextStyle(
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                'Available: \$${available.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24.h),
+                    // Amount field (editable)
+                    TextFormField(
+                      controller: amountController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Amount (Auto-filled)',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.attach_money,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter an amount';
+                        }
+                        final amount = double.tryParse(value.trim());
+                        if (amount == null || amount <= 0) {
+                          return 'Please enter a valid amount';
+                        }
+                        if (amount > available) {
+                          return 'Amount cannot exceed available balance';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16.h),
+                    // Payment Method dropdown
+                    DropdownButtonFormField<String>(
+                      value: paymentMethod,
+                      decoration: InputDecoration(
+                        labelText: 'Payment Method',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.payment,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'CASH',
+                          child: Text('Cash'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'MOBILE_MONEY',
+                          child: Text('Mobile money'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'BANK_TRANSFER',
+                          child: Text('Bank transfer'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            paymentMethod = value;
+                            // Clear image and error when switching to CASH
+                            if (value == 'CASH') {
+                              proofImage = null;
+                              imageError = null;
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    SizedBox(height: 16.h),
+                    // Reason field
+                    TextFormField(
+                      controller: reasonController,
+                      maxLines: 3,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Reason',
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey.shade700,
+                        ),
+                        alignLabelWithHint: true,
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(12.r),
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: kEarningsGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.description_outlined,
+                            color: kEarningsGreenDark,
+                            size: 20.sp,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 16.h,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a reason';
+                        }
+                        return null;
+                      },
+                    ),
+                    // Conditional image upload for mobile payment methods
+                    if (requiresImage) ...[
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Payment Proof Image',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      GestureDetector(
+                        onTap: pickProofImage,
+                        child: Container(
+                          height: 120.h,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(14.r),
+                            border: Border.all(
+                              color: proofImage == null
+                                  ? Colors.grey.shade300
+                                  : kEarningsGreenDark,
+                              width: proofImage == null ? 1 : 2,
+                            ),
+                          ),
+                          child: proofImage != null
+                              ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(14.r),
+                                      child: Image.file(
+                                        File(proofImage!.path),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return const Center(
+                                            child: Icon(Icons.image, size: 48),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4.h,
+                                      right: 4.w,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            proofImage = null;
+                                            imageError = null;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(4.w),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.cloud_upload_outlined,
+                                      size: 40.sp,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      'Tap to upload payment proof',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      // Show error message if validation fails
+                      if (imageError != null) ...[
+                        SizedBox(height: 8.h),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
+                              color: Colors.red.shade200,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red.shade700,
+                                size: 20.sp,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  imageError!,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                    SizedBox(height: 24.h),
+                    // Submit button
+                    Container(
+                      width: double.infinity,
+                      height: 52.h,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kEarningsGreenDark.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: isSubmitting ? null : submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kEarningsGreenDark,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: isSubmitting
+                            ? SizedBox(
+                                width: 24.w,
+                                height: 24.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.send_rounded,
+                                    color: Colors.white,
+                                    size: 20.sp,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'Submit request',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                  ],
+                ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -558,7 +1198,7 @@ class _CommissionRateCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Current Commission',
+                      'current_commission'.tr(),
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
@@ -567,7 +1207,7 @@ class _CommissionRateCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Your earnings per job',
+                      'earnings_per_job'.tr(),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: kEarningsTextMain.withOpacity(0.85),
@@ -600,7 +1240,7 @@ class _CommissionRateCard extends StatelessWidget {
                 ),
                 SizedBox(width: 6.w),
                 Text(
-                  'per job',
+                  '${data.commissionRate.toStringAsFixed(0)}% per job',
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: kEarningsTextMain.withOpacity(0.9),
@@ -625,8 +1265,6 @@ class _MonthBreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = data.monthJobsAmount + data.monthCommission;
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -646,7 +1284,7 @@ class _MonthBreakdownCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'This Month Breakdown',
+              'this_month_breakdown'.tr(),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
@@ -656,40 +1294,16 @@ class _MonthBreakdownCard extends StatelessWidget {
             SizedBox(height: 12.h),
             _BreakdownRow(
               icon: '💼',
-              title: 'Jobs Completed',
+              title: 'jobs_completed_amount'.tr(),
               subtitle: '${data.monthJobsCompleted} jobs',
               amount: '\$${data.monthJobsAmount.toStringAsFixed(0)}',
             ),
             SizedBox(height: 10.h),
             _BreakdownRow(
               icon: '💰',
-              title: 'Commission',
-              subtitle: 'Earnings rate',
-              amount: '\$${data.monthCommission.toStringAsFixed(0)}',
-            ),
-            SizedBox(height: 10.h),
-            Divider(color: const Color(0xFFE5E7EB)),
-            SizedBox(height: 8.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: kEarningsTextMain,
-                  ),
-                ),
-                Text(
-                  '\$${total.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: kEarningsGreenDark,
-                  ),
-                ),
-              ],
+              title: 'commission_earnings_rate'.tr(),
+              subtitle: 'commission'.tr(),
+              amount: '${data.commissionRate.toStringAsFixed(0)}%',
             ),
           ],
         ),
@@ -764,7 +1378,7 @@ class _BreakdownRow extends StatelessWidget {
 }
 
 /// ------------------------------------------------------
-///  RECENT TRANSACTIONS
+///  RECENT WITHDRAWALS
 /// ------------------------------------------------------
 class _RecentTransactions extends StatelessWidget {
   const _RecentTransactions({required this.data});
@@ -780,100 +1394,153 @@ class _RecentTransactions extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Recent Transactions',
+              'recent_withdrawals'.tr(),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
                 color: kEarningsTextMain,
               ),
             ),
-            TextButton(
-              onPressed: () {
-                // TODO: view-all route
-              },
-              child: Text(
-                'View All',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: kEarningsYellow,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+            // TextButton(
+            //   onPressed: () {
+            //     // TODO: view-all route
+            //   },
+            //   child: Text(
+            //     'view_all'.tr(),
+            //     style: TextStyle(
+            //       fontSize: 12.sp,
+            //       color: kEarningsYellow,
+            //       fontWeight: FontWeight.w500,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         SizedBox(height: 8.h),
-        Column(
-          children: data.recentTransactions
-              .map(
-                (tx) => Container(
-                  margin: EdgeInsets.only(bottom: 8.h),
-                  decoration: BoxDecoration(
-                    color: kEarningsCard,
-                    borderRadius: BorderRadius.circular(18.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10.r,
-                        offset: Offset(0, 4.h),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(14.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    tx.job,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: kEarningsTextMain,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    tx.customer,
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      color: kEarningsTextMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              tx.amount,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: kEarningsGreenDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          tx.date,
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: kEarningsTextMuted,
-                          ),
+        if (data.recentWithdrawals.isEmpty)
+          Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: kEarningsCard,
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            child: Center(
+              child: Text(
+                'No withdrawals yet',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: kEarningsTextMuted,
+                ),
+              ),
+            ),
+          )
+        else
+          Column(
+            children: data.recentWithdrawals
+                .map(
+                  (withdrawal) => Container(
+                    margin: EdgeInsets.only(bottom: 8.h),
+                    decoration: BoxDecoration(
+                      color: kEarningsCard,
+                      borderRadius: BorderRadius.circular(18.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10.r,
+                          offset: Offset(0, 4.h),
                         ),
                       ],
                     ),
+                    child: Padding(
+                      padding: EdgeInsets.all(14.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      withdrawal.description,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: kEarningsTextMain,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2.h),
+                                    Text(
+                                      withdrawal.sourceType == 'PAYOUT'
+                                          ? 'Payout Request'
+                                          : withdrawal.type,
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: kEarningsTextMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                withdrawal.formattedAmount,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              Text(
+                                withdrawal.formattedDate,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: kEarningsTextMuted,
+                                ),
+                              ),
+                              if (withdrawal.status.isNotEmpty) ...[
+                                SizedBox(width: 8.w),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w,
+                                    vertical: 2.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: withdrawal.status == 'COMPLETED'
+                                        ? kEarningsGreen.withOpacity(0.1)
+                                        : withdrawal.status == 'PENDING'
+                                            ? Colors.orange.withOpacity(0.1)
+                                            : Colors.red.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4.r),
+                                  ),
+                                  child: Text(
+                                    withdrawal.status,
+                                    style: TextStyle(
+                                      fontSize: 9.sp,
+                                      color: withdrawal.status == 'COMPLETED'
+                                          ? kEarningsGreenDark
+                                          : withdrawal.status == 'PENDING'
+                                              ? Colors.orange
+                                              : Colors.red,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              )
-              .toList(),
-        ),
+                )
+                .toList(),
+          ),
       ],
     );
   }
@@ -930,7 +1597,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                     // Center title
                     Center(
                       child: Text(
-                        'Request Early Payout',
+                        'request_payout'.tr(),
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -952,8 +1619,11 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
               ),
               SizedBox(height: 4.h),
               Text(
-                'Request to receive your weekly earnings before the regular Monday payout.',
-                style: TextStyle(fontSize: 12.sp, color: kEarningsTextMuted),
+                'early_payout_description'.tr(),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: kEarningsTextMuted,
+                ),
               ),
               SizedBox(height: 16.h),
 
@@ -971,7 +1641,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        'Amount Available',
+                        'amount_available'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: kEarningsTextMuted,
@@ -991,7 +1661,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Jobs completed:',
+                            'jobs_completed'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: kEarningsTextMuted,
@@ -1012,7 +1682,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Commission rate:',
+                            'commission_rate'.tr(),
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: kEarningsTextMuted,
@@ -1057,15 +1727,9 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _infoText(
-                              'Payment will be processed within 24 hours',
-                            ),
-                            _infoText(
-                              'Funds will be sent to your linked bank account',
-                            ),
-                            _infoText(
-                              'Regular Monday payout schedule resumes next week',
-                            ),
+                            _infoText('payment_processing_time'.tr()),
+                            _infoText('sent_to_bank'.tr()),
+                            _infoText('regular_payout_next_week'.tr()),
                           ],
                         ),
                       ),
@@ -1078,8 +1742,11 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
 
               /// payment method
               Text(
-                'Payment Method',
-                style: TextStyle(fontSize: 12.sp, color: kEarningsTextMuted),
+                'payment_method'.tr(),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: kEarningsTextMuted,
+                ),
               ),
               SizedBox(height: 6.h),
               Container(
@@ -1110,7 +1777,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Bank Account',
+                            'bank_account'.tr(),
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -1162,7 +1829,7 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                             ),
                             SizedBox(width: 6.w),
                             Text(
-                              'Confirm Payout Request',
+                              'confirm_payout_request'.tr(),
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
@@ -1185,8 +1852,11 @@ class _EarlyPayoutDialogState extends State<EarlyPayoutDialog> {
                     ),
                   ),
                   child: Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 13.sp, color: kEarningsTextMain),
+                    'cancel'.tr(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: kEarningsTextMain,
+                    ),
                   ),
                 ),
               ),

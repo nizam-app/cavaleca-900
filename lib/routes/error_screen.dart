@@ -1,6 +1,7 @@
 // widgets/custom_go_error_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CustomGoErrorPage extends StatelessWidget {
   const CustomGoErrorPage({
@@ -167,7 +168,7 @@ class _ErrorCardState extends State<_ErrorCard> {
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                     ),
-                    child: const Text('Report'),
+                    child: Text('report'.tr()),
                   ),
                 ),
                 SizedBox(width: 10.w),
@@ -182,7 +183,7 @@ class _ErrorCardState extends State<_ErrorCard> {
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                     ),
-                    child: const Text('Go Home'),
+                    child: Text('go_home'.tr()),
                   ),
                 ),
               ],

@@ -77,6 +77,9 @@ class FreelancerProfileRepository {
     final bool bankLinked =
         tech?['bankName'] != null && tech?['bankAccountNumber'] != null;
 
+    // locationStatus
+    final String? locationStatus = root['locationStatus'] as String?;
+
     // ====== 4) UI model build ======
     return FreelancerProfileData(
       initials: initials,
@@ -86,6 +89,7 @@ class FreelancerProfileRepository {
       skills: skills.isEmpty ? ['General'] : skills,
       verifiedCerts: verifiedCerts,
       bankLinked: bankLinked,
+      locationStatus: locationStatus,
     );
   }
 

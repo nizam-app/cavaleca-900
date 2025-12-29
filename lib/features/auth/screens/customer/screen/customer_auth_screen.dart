@@ -1325,7 +1325,7 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
 
   Widget _buildFooter() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 24.w),
+      padding: EdgeInsets.fromLTRB(24.w, 0.w, 24.w, 45.w),
       child: SizedBox(
         width: double.infinity,
         height: 48.h,
@@ -1357,16 +1357,17 @@ class _CustomerAuthScreenState extends ConsumerState<CustomerAuthScreen> {
                 ),
               ),
 
-              Icon(
-                Icons.arrow_back,
-                size: 18.sp,
-                color: const Color(0xFF374151),
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                _mode == AuthMode.welcome ? 'Back to Role Selection' : 'Back',
-                style: TextStyle(fontSize: 14.sp, color: Color(0xFF374151)),
-              ),
+
+              // Icon(
+              //   Icons.arrow_back,
+              //   size: 18.sp,
+              //   color: const Color(0xFF374151),
+              // ),
+              // SizedBox(width: 8.w),
+              // Text(
+              //   _mode == AuthMode.welcome ? 'Back to Role Selection' : 'Back',
+              //   style: TextStyle(fontSize: 14.sp, color: Color(0xFF374151)),
+              // ),
             ],
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// --------------------- COLORS ------------------------
 const kDialogBg = Color(0xFFF4F4F4);
@@ -126,7 +127,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
   // ------------------------------------------------------
   Widget _titleText() {
     return Text(
-      "New Job Assigned!",
+      "new_job_assigned".tr(),
       style: TextStyle(
         color: kTextMain,
         fontSize: 18.sp,
@@ -137,7 +138,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
 
   Widget _subtitleText() {
     return Text(
-      "You have 20 seconds to respond",
+      "you_have_seconds_respond".tr(),
       style: TextStyle(
         color: kTextMuted,
         fontSize: 12.sp,
@@ -185,7 +186,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
             children: [
               Expanded(
                 child: Text(
-                  "Electrical Safety Check",
+                  "electrical_safety_check".tr(),
                   style: TextStyle(
                     color: kTextMain,
                     fontSize: 15.sp,
@@ -200,7 +201,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
-                  "MEDIUM",
+                  "medium".tr(),
                   style: TextStyle(
                     color: Colors.orange.shade700,
                     fontSize: 10.sp,
@@ -213,7 +214,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
 
           SizedBox(height: 4.h),
           Text(
-            "Electrical",
+            "electrical".tr(),
             style: TextStyle(
               color: Colors.red,
               fontSize: 12.sp,
@@ -281,7 +282,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
 
           // ------------------- DESCRIPTION -------------------
           Text(
-            "Comprehensive electrical safety inspection.",
+            "comprehensive_electrical_safety".tr(),
             style: TextStyle(
               fontSize: 12.sp,
               color: kTextMain,
@@ -302,9 +303,9 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _paymentRow("Job Payment", "\$150"),
+                _paymentRow("job_payment".tr(), "\$150"),
                 SizedBox(height: 6.h),
-                _paymentRow("Your Bonus (5%)", "+\$7.50"),
+                _paymentRow("you_bonus".tr(), "+\$7.50"),
               ],
             ),
           ),
@@ -352,7 +353,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
               ),
               alignment: Alignment.center,
               child: Text(
-                "Decline",
+                "decline".tr(),
                 style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
               ),
             ),
@@ -377,7 +378,7 @@ class _NewJobAssignedPopupState extends State<NewJobAssignedPopup> {
               ),
               alignment: Alignment.center,
               child: Text(
-                "Accept Job",
+                "accept_job".tr(),
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,

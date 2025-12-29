@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:workpleis/features/customer/model/map_local_data_map.dart';
+import 'package:workpleis/features/customer/screen/map.dart';
+
+import 'package:easy_localization/easy_localization.dart';
 
 /// ---------------- COLORS ----------------
 const kDialogBg = Color(0xFFF4F4F4);
@@ -11,8 +16,117 @@ const kPrimaryBlue = Color(0xFF2563EB);
 const kBorderLight = Color(0xFFE5E5E5);
 const kPrimaryRed = Color(0xFFE60000);
 
-class Gpscheckinpopup extends StatelessWidget {
-  const Gpscheckinpopup({super.key});
+class Gpscheckinpopup extends StatefulWidget {
+  final String? jobAddress;
+  final Function(double lat, double lng)? onLocationVerified;
+
+  const Gpscheckinpopup({
+    super.key,
+    this.jobAddress,
+    this.onLocationVerified,
+  });
+
+  @override
+  State<Gpscheckinpopup> createState() => _GpscheckinpopupState();
+}
+
+class _GpscheckinpopupState extends State<Gpscheckinpopup> with WidgetsBindingObserver {
+  bool _isLoadingLocation = true;
+  double? _currentLat;
+  double? _currentLng;
+  String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When user returns from settings, check location again
+    if (state == AppLifecycleState.resumed && _locationError != null) {
+      _getCurrentLocation();
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+      _locationError = null;
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _isLoadingLocation = false;
+          _locationError = 'location_service_disabled'.tr();
+        });
+        // Automatically open location settings
+        await _openLocationSettings();
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLoadingLocation = false;
+          _locationError = 'location_permission_denied'.tr();
+        });
+        // Automatically open app settings for permission
+        await _openAppSettings();
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        _currentLat = position.latitude;
+        _currentLng = position.longitude;
+        _isLoadingLocation = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingLocation = false;
+        _locationError = '${'could_not_get_current_location'.tr()}: $e';
+      });
+    }
+  }
+
+  Future<void> _openLocationSettings() async {
+    await Geolocator.openLocationSettings();
+    // The lifecycle observer will handle retry when user returns from settings
+    // Also retry after a delay as backup
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      _getCurrentLocation();
+    }
+  }
+
+  Future<void> _openAppSettings() async {
+    await Geolocator.openAppSettings();
+    // The lifecycle observer will handle retry when user returns from settings
+    // Also retry after a delay as backup
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      _getCurrentLocation();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +145,7 @@ class Gpscheckinpopup extends StatelessWidget {
           children: [
             // ----------- TITLE -----------
             Text(
-              "GPS Check-In Required",
+              "gps_check_required".tr(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w700,
@@ -41,7 +155,7 @@ class Gpscheckinpopup extends StatelessWidget {
             SizedBox(height: 6.h),
 
             Text(
-              "Verify your location at the job site to start working",
+              "verify_your_location_at_job_site_start_working".tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12.sp,
@@ -71,7 +185,7 @@ class Gpscheckinpopup extends StatelessWidget {
             SizedBox(height: 16.h),
 
             Text(
-              "Click below to verify your location",
+              "job_location".tr(),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
@@ -104,7 +218,7 @@ class Gpscheckinpopup extends StatelessWidget {
                       Icon(Icons.location_on, size: 18.sp, color: Colors.red),
                       SizedBox(width: 6.w),
                       Text(
-                        "Job Location",
+                        "your_location".tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: kTextMuted,
@@ -114,14 +228,108 @@ class Gpscheckinpopup extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 6.h),
-                  Text(
-                    "Rue 15, Ksar, Nouakchott",
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
-                      color: kTextMain,
+                  if (_isLoadingLocation)
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 16.w,
+                          height: 16.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(kPrimaryBlue),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "getting_location".tr(),
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: kTextMuted,
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (_locationError != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _locationError!,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.red,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        GestureDetector(
+                          onTap: () async {
+                            final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+                            if (!serviceEnabled) {
+                              await _openLocationSettings();
+                            } else {
+                              final permission = await Geolocator.checkPermission();
+                              if (permission == LocationPermission.denied ||
+                                  permission == LocationPermission.deniedForever) {
+                                await _openAppSettings();
+                              }
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            decoration: BoxDecoration(
+                              color: kPrimaryBlue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.settings, size: 14.sp, color: kPrimaryBlue),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  'open_location_settings'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: kPrimaryBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (_currentLat != null && _currentLng != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Lat: ${_currentLat!.toStringAsFixed(6)}",
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
+                            color: kTextMain,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          "Lng: ${_currentLng!.toStringAsFixed(6)}",
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
+                            color: kTextMain,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      "location_not_available".tr(),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: kTextMuted,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -130,27 +338,52 @@ class Gpscheckinpopup extends StatelessWidget {
 
             // ----------- VERIFY BUTTON -----------
             GestureDetector(
-              onTap: () {
+              onTap: () async {
+                // Close GPS popup first
                 context.pop();
+                
+                // Open map to verify/select location
+                if (widget.onLocationVerified != null) {
+                  final locationData = await Navigator.push<LocationData>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MapAddressPickerScreen(
+                        initialLocation: (_currentLat != null && _currentLng != null)
+                            ? LocationData(
+                                latitude: _currentLat!,
+                                longitude: _currentLng!,
+                                address: widget.jobAddress ?? '',
+                              )
+                            : null,
+                      ),
+                    ),
+                  );
+                  
+                  if (locationData != null) {
+                    widget.onLocationVerified!(locationData.latitude, locationData.longitude);
+                  }
+                }
               },
               child: Container(
                 height: 50.h,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: kPrimaryBlue,
+                  color: (_currentLat != null && _currentLng != null) 
+                      ? kPrimaryBlue 
+                      : Colors.grey,
                   borderRadius: BorderRadius.circular(26.r),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.navigation_rounded,
+                      Icons.check_circle_outline,
                       color: Colors.white,
                       size: 20.sp,
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      "Verify Location",
+                      "accept_location".tr(),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
