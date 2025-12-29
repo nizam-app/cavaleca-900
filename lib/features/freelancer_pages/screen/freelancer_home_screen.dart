@@ -251,7 +251,7 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _HeaderSection(
-                  monthlyCommission: (_dashboardData?.thisWeekEarned ?? 0)
+                  monthlyCommission: (_dashboardData?.totalEarned ?? 0)
                       .toDouble(),
                   completedJobsThisMonth: completedThisMonth,
                   userName: headerUserName,
@@ -391,7 +391,7 @@ class _HeaderSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'monthly_commission_label'.tr(),
+                        'total_earned'.tr(),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Colors.black.withOpacity(0.9),

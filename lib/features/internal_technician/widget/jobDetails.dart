@@ -327,9 +327,11 @@ class Jobdetails extends StatelessWidget {
 
   /// -------------------  COMMISSION CARD  -------------------
   Widget _buildBonusCard() {
-    // Calculate commission from payment (5%)
-    final paymentAmount = double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0;
-    final bonus = paymentAmount * 0.05;
+    // Use yourBonus from API if available, otherwise calculate from bonusRate
+    final bonusAmount = job.yourBonus ?? 
+        (job.bonusRate != null 
+            ? (double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0) * job.bonusRate! / 100
+            : 0);
     
     return Container(
       width: double.infinity,
@@ -355,7 +357,9 @@ class Jobdetails extends StatelessWidget {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  'performance_bonus'.tr(),
+                  job.bonusRate != null 
+                      ? "Performance Commission (${job.bonusRate!.toStringAsFixed(0)}%)"
+                      : 'performance_bonus'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -367,7 +371,7 @@ class Jobdetails extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            '\$${bonus.toStringAsFixed(2)}',
+            '\$${bonusAmount.toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: 22.sp,
               fontWeight: FontWeight.w700,

@@ -338,7 +338,9 @@ class _NewjobassignedState extends State<Newjobassigned> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Your Commission (5%)',
+                                  job.bonusRate != null
+                                      ? 'Your Commission (${job.bonusRate!.toStringAsFixed(0)}%)'
+                                      : 'Your Commission',
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: const Color(0xFF059669),

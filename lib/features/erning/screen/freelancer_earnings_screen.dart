@@ -75,29 +75,38 @@ class _FreelancerEarningsScreenState extends ConsumerState<FreelancerEarningsScr
         return Scaffold(
           backgroundColor: kEarningsBg,
           body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _HeaderSection(data: data),
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Column(
-                      children: [
-                        _StatsRow(data: data),
-                        SizedBox(height: 16.h),
-                        _AvailableBalanceCard(data: data),
-                        SizedBox(height: 16.h),
-                        _CommissionRateCard(data: data),
-                        SizedBox(height: 16.h),
-                        _MonthBreakdownCard(data: data),
-                        SizedBox(height: 16.h),
-                        _RecentTransactions(data: data),
-                        SizedBox(height: 32.h),
-                      ],
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(freelancerEarningsProvider);
+                // Wait for the provider to refresh
+                await ref.read(freelancerEarningsProvider.future);
+              },
+              color: kEarningsGreenDark,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _HeaderSection(data: data),
+                    SizedBox(height: 16.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      child: Column(
+                        children: [
+                          _StatsRow(data: data),
+                          SizedBox(height: 16.h),
+                          _AvailableBalanceCard(data: data),
+                          SizedBox(height: 16.h),
+                          _CommissionRateCard(data: data),
+                          SizedBox(height: 16.h),
+                          _MonthBreakdownCard(data: data),
+                          SizedBox(height: 16.h),
+                          _RecentTransactions(data: data),
+                          SizedBox(height: 32.h),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -165,32 +174,32 @@ class _HeaderSection extends StatelessWidget {
                   ),
                 ],
               ),
-              TextButton.icon(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 6.h,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  foregroundColor: kEarningsTextMain,
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('export_coming_soon'.tr())),
-                  );
-                },
-                icon: Icon(Icons.download_rounded, size: 16.sp),
-                label: Text(
-                  'export'.tr(),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              // TextButton.icon(
+              //   style: TextButton.styleFrom(
+              //     backgroundColor: Colors.white.withOpacity(0.2),
+              //     padding: EdgeInsets.symmetric(
+              //       horizontal: 10.w,
+              //       vertical: 6.h,
+              //     ),
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(14.r),
+              //     ),
+              //     foregroundColor: kEarningsTextMain,
+              //   ),
+              //   onPressed: () {
+              //     ScaffoldMessenger.of(context).showSnackBar(
+              //       SnackBar(content: Text('export_coming_soon'.tr())),
+              //     );
+              //   },
+              //   icon: Icon(Icons.download_rounded, size: 16.sp),
+              //   label: Text(
+              //     'export'.tr(),
+              //     style: TextStyle(
+              //       fontSize: 12.sp,
+              //       fontWeight: FontWeight.w500,
+              //     ),
+              //   ),
+              // ),
             ],
           ),
 
@@ -703,11 +712,10 @@ class _AvailableBalanceCard extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 24.h),
-                    // Amount field (read-only)
+                    // Amount field (editable)
                     TextFormField(
                       controller: amountController,
-                      readOnly: true,
-                      enabled: false,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -733,12 +741,40 @@ class _AvailableBalanceCard extends StatelessWidget {
                           ),
                         ),
                         filled: true,
-                        fillColor: Colors.grey.shade100,
-                        disabledBorder: OutlineInputBorder(
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16.r),
                           borderSide: BorderSide(
                             color: Colors.grey.shade300,
                             width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: kEarningsGreenDark,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
                           ),
                         ),
                         contentPadding: EdgeInsets.symmetric(
@@ -746,6 +782,19 @@ class _AvailableBalanceCard extends StatelessWidget {
                           vertical: 16.h,
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter an amount';
+                        }
+                        final amount = double.tryParse(value.trim());
+                        if (amount == null || amount <= 0) {
+                          return 'Please enter a valid amount';
+                        }
+                        if (amount > available) {
+                          return 'Amount cannot exceed available balance';
+                        }
+                        return null;
+                      },
                     ),
                     SizedBox(height: 16.h),
                     // Payment Method dropdown
@@ -1191,7 +1240,7 @@ class _CommissionRateCard extends StatelessWidget {
                 ),
                 SizedBox(width: 6.w),
                 Text(
-                  'five_percent_rate'.tr(),
+                  '${data.commissionRate.toStringAsFixed(0)}% per job',
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: kEarningsTextMain.withOpacity(0.9),
@@ -1216,8 +1265,6 @@ class _MonthBreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = data.monthJobsAmount + data.monthCommission;
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1255,32 +1302,8 @@ class _MonthBreakdownCard extends StatelessWidget {
             _BreakdownRow(
               icon: '💰',
               title: 'commission_earnings_rate'.tr(),
-              subtitle: 'Earnings rate',
-              amount: '\$${data.monthCommission.toStringAsFixed(0)}',
-            ),
-            SizedBox(height: 10.h),
-            Divider(color: const Color(0xFFE5E7EB)),
-            SizedBox(height: 8.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'total'.tr(),
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: kEarningsTextMain,
-                  ),
-                ),
-                Text(
-                  '\$${total.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: kEarningsGreenDark,
-                  ),
-                ),
-              ],
+              subtitle: 'commission'.tr(),
+              amount: '${data.commissionRate.toStringAsFixed(0)}%',
             ),
           ],
         ),
@@ -1355,7 +1378,7 @@ class _BreakdownRow extends StatelessWidget {
 }
 
 /// ------------------------------------------------------
-///  RECENT TRANSACTIONS
+///  RECENT WITHDRAWALS
 /// ------------------------------------------------------
 class _RecentTransactions extends StatelessWidget {
   const _RecentTransactions({required this.data});
@@ -1371,7 +1394,7 @@ class _RecentTransactions extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'recent_transactions'.tr(),
+              'recent_withdrawals'.tr(),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
@@ -1394,106 +1417,130 @@ class _RecentTransactions extends StatelessWidget {
           ],
         ),
         SizedBox(height: 8.h),
-        Column(
-          children: data.recentTransactions
-              .map(
-                (tx) => Container(
-                  margin: EdgeInsets.only(bottom: 8.h),
-                  decoration: BoxDecoration(
-                    color: kEarningsCard,
-                    borderRadius: BorderRadius.circular(18.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10.r,
-                        offset: Offset(0, 4.h),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(14.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    tx.job,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: kEarningsTextMain,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    tx.customer,
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      color: kEarningsTextMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              tx.amount,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: kEarningsGreenDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          children: [
-                            Text(
-                              tx.formattedDate,
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: kEarningsTextMuted,
-                              ),
-                            ),
-                            if (tx.status.isNotEmpty) ...[
-                              SizedBox(width: 8.w),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: tx.status == 'PAID'
-                                      ? kEarningsGreen.withOpacity(0.1)
-                                      : Colors.orange.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Text(
-                                  tx.status,
-                                  style: TextStyle(
-                                    fontSize: 9.sp,
-                                    color: tx.status == 'PAID'
-                                        ? kEarningsGreenDark
-                                        : Colors.orange,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+        if (data.recentWithdrawals.isEmpty)
+          Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: kEarningsCard,
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            child: Center(
+              child: Text(
+                'No withdrawals yet',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: kEarningsTextMuted,
+                ),
+              ),
+            ),
+          )
+        else
+          Column(
+            children: data.recentWithdrawals
+                .map(
+                  (withdrawal) => Container(
+                    margin: EdgeInsets.only(bottom: 8.h),
+                    decoration: BoxDecoration(
+                      color: kEarningsCard,
+                      borderRadius: BorderRadius.circular(18.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10.r,
+                          offset: Offset(0, 4.h),
                         ),
                       ],
                     ),
+                    child: Padding(
+                      padding: EdgeInsets.all(14.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      withdrawal.description,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: kEarningsTextMain,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2.h),
+                                    Text(
+                                      withdrawal.sourceType == 'PAYOUT'
+                                          ? 'Payout Request'
+                                          : withdrawal.type,
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: kEarningsTextMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                withdrawal.formattedAmount,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              Text(
+                                withdrawal.formattedDate,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: kEarningsTextMuted,
+                                ),
+                              ),
+                              if (withdrawal.status.isNotEmpty) ...[
+                                SizedBox(width: 8.w),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w,
+                                    vertical: 2.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: withdrawal.status == 'COMPLETED'
+                                        ? kEarningsGreen.withOpacity(0.1)
+                                        : withdrawal.status == 'PENDING'
+                                            ? Colors.orange.withOpacity(0.1)
+                                            : Colors.red.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4.r),
+                                  ),
+                                  child: Text(
+                                    withdrawal.status,
+                                    style: TextStyle(
+                                      fontSize: 9.sp,
+                                      color: withdrawal.status == 'COMPLETED'
+                                          ? kEarningsGreenDark
+                                          : withdrawal.status == 'PENDING'
+                                              ? Colors.orange
+                                              : Colors.red,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              )
-              .toList(),
-        ),
+                )
+                .toList(),
+          ),
       ],
     );
   }
