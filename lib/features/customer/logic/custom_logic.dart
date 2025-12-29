@@ -108,7 +108,7 @@ class CustomerAppController extends StateNotifier<CustomerAppState> {
 
   /// Logout
   Future<void> logout() async {
-    await AuthLocalStorage.clearLoginData;
+    await AuthLocalStorage.clearLoginData();
     state = CustomerAppState.initial();
   }
 }

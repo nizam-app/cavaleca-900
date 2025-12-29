@@ -7,6 +7,9 @@ class TechnicianEarningsSummary {
   final AvailableBonus availableBonus;
   final BonusRate bonusRate;
   final MonthlySalary monthlySalary;
+  final List<Map<String, dynamic>> recentTransactions;
+  final List<Map<String, dynamic>> recentBonuses;
+  final List<Map<String, dynamic>> recentWithdrawals;
 
   TechnicianEarningsSummary({
     required this.totalBonuses,
@@ -14,6 +17,9 @@ class TechnicianEarningsSummary {
     required this.availableBonus,
     required this.bonusRate,
     required this.monthlySalary,
+    required this.recentTransactions,
+    required this.recentBonuses,
+    required this.recentWithdrawals,
   });
 
   factory TechnicianEarningsSummary.fromJson(Map<String, dynamic> json) {
@@ -21,8 +27,20 @@ class TechnicianEarningsSummary {
       totalBonuses: TotalBonuses.fromJson(json['totalBonuses'] ?? {}),
       breakdown: EarningsBreakdown.fromJson(json['breakdown'] ?? {}),
       availableBonus: AvailableBonus.fromJson(json['availableBonus'] ?? {}),
-      bonusRate: BonusRate.fromJson(json['bonusRate'] ?? {}),
+      bonusRate: BonusRate.fromJson(json['commissionRate'] ?? json['bonusRate'] ?? {}),
       monthlySalary: MonthlySalary.fromJson(json['monthlySalary'] ?? {}),
+      recentTransactions: (json['recentTransactions'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
+      recentBonuses: (json['recentBonuses'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
+      recentWithdrawals: (json['recentWithdrawals'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
     );
   }
 

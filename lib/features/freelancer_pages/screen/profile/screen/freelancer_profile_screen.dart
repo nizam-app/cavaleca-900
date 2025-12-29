@@ -9,6 +9,8 @@ import 'package:workpleis/core/widget/log_out_utton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
 import 'package:workpleis/features/freelancer_pages/screen/profile/data/freelancer_profile_data.dart';
+import 'package:workpleis/features/shared/location_update_service.dart';
+import 'package:workpleis/features/shared/screen/edit_profile_screen.dart';
 
 /// ---------------------------------------------------------------------------
 /// Colors
@@ -33,6 +35,7 @@ class FreelancerProfileData {
   final List<String> skills;
   final int verifiedCerts;
   final bool bankLinked;
+  final String? locationStatus;
 
   const FreelancerProfileData({
     required this.initials,
@@ -42,6 +45,7 @@ class FreelancerProfileData {
     required this.skills,
     required this.verifiedCerts,
     required this.bankLinked,
+    this.locationStatus,
   });
 }
 
@@ -116,13 +120,38 @@ class FreelancerProfileScreen extends ConsumerStatefulWidget {
 
 class _FreelancerProfileScreenState
     extends ConsumerState<FreelancerProfileScreen> {
-  bool _isAvailable = true;
+  bool _isLocationUpdating = false;
   AppLanguage _language = AppLanguage.en;
 
   void _showToast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
+  }
+
+  Future<void> _updateLocationStatus(bool isOnline) async {
+    setState(() => _isLocationUpdating = true);
+
+    try {
+      await LocationUpdateService.updateLocationStatus(
+        status: isOnline ? 'ONLINE' : 'OFFLINE',
+      );
+
+      // Invalidate the profile provider to refresh the data
+      ref.invalidate(freelancerProfileProvider);
+
+      if (!mounted) return;
+
+      _showToast('location_status_updated'.tr());
+    } catch (e) {
+      if (!mounted) return;
+
+      _showToast('${'failed_to_update_location_status'.tr()}: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLocationUpdating = false);
+      }
+    }
   }
 
   @override
@@ -138,12 +167,13 @@ class _FreelancerProfileScreenState
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Failed to load profile: $err',
+                '${'failed_to_load_profile'.tr()}: $err',
                 textAlign: TextAlign.center,
               ),
             ),
           ),
           data: (profile) {
+            final isAvailable = profile.locationStatus?.toUpperCase() == 'ONLINE';
             return SingleChildScrollView(
               child: Column(
                 children: [
@@ -152,11 +182,9 @@ class _FreelancerProfileScreenState
                   _ProfileInfoCard(data: profile),
                   SizedBox(height: 14.h),
                   _AvailabilityCard(
-                    isAvailable: _isAvailable,
-                    onChanged: (val) {
-                      setState(() => _isAvailable = val);
-                      // TODO: availability update API
-                    },
+                    isAvailable: isAvailable,
+                    isLoading: _isLocationUpdating,
+                    onChanged: (val) => _updateLocationStatus(val),
                   ),
                   SizedBox(height: 14.h),
                   _SkillsCard(skills: profile.skills),
@@ -205,7 +233,7 @@ class _FreelancerProfileScreenState
               ),
               SizedBox(height: 12.h),
               Text(
-                'Select Language', // chai le pore .tr() korbe
+                'select_language'.tr(),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -214,7 +242,7 @@ class _FreelancerProfileScreenState
               ),
               SizedBox(height: 4.h),
               Text(
-                'Choose your preferred app language',
+                'choose_preferred_language'.tr(),
                 style: TextStyle(fontSize: 12.sp, color: kProfileTextMuted),
               ),
               SizedBox(height: 16.h),
@@ -237,7 +265,7 @@ class _FreelancerProfileScreenState
       setState(() => _language = selected);
 
       // 🔥 3) optional toast
-      _showToast('Language updated to ${selected.display}');
+      _showToast('${'language_updated_to'.tr()} ${selected.display}');
     }
   }
 
@@ -272,18 +300,18 @@ class _FreelancerProfileScreenState
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Confirm'),
-          content: const Text('Are you sure you want to sign out?'),
+          title: Text('confirm'.tr()),
+          content: Text('are_you_sure_you_want_to_sign_out'.tr()),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child:  Text('cancel'.tr()),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Yes',
-                style: TextStyle(color: Color(0xFFC20001)),
+              child: Text(
+                'yes'.tr(),
+                style: const TextStyle(color: Color(0xFFC20001)),
               ),
             ),
           ],
@@ -295,13 +323,13 @@ class _FreelancerProfileScreenState
 
     try {
       await CustomerLogOut.logout();
-      _showToast('Logout successful');
+      _showToast('logout_successful'.tr());
 
       // token clear হয়ে গেছে – এখন role selection এ পাঠিয়ে দাও
       // যদি router এ name ব্যবহার করো তবে: context.goNamed(RoleSelectionScreen.routeName);
       context.go(RoleSelectionScreen.routeName);
     } catch (e) {
-      _showToast('Logout failed: $e');
+      _showToast('${'logout_failed'.tr()}: $e');
     }
   }
 }
@@ -342,7 +370,7 @@ class _Header extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Profile',
+            'profile'.tr(),
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w700,
@@ -351,7 +379,7 @@ class _Header extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Manage your account information',
+            'manage_account_info'.tr(),
             style: TextStyle(
               fontSize: 13.sp,
               color: Colors.white.withOpacity(0.9),
@@ -436,7 +464,7 @@ class _ProfileInfoCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Member since ${data.memberSince}',
+                      '${'member_since'.tr()} ${data.memberSince}',
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: kProfileTextMuted,
@@ -449,8 +477,15 @@ class _ProfileInfoCard extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           GestureDetector(
-            onTap: () {
-              // Edit profile screen navigate করো
+            onTap: () async {
+              final updated = await context.push<bool>(
+                EditProfileScreen.routeName,
+              );
+
+              if (updated == true) {
+                // Profile updated, refresh if needed
+                // You can invalidate the profile provider here if using Riverpod
+              }
             },
             child: Container(
               width: double.infinity,
@@ -461,7 +496,7 @@ class _ProfileInfoCard extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  'Edit Profile',
+                  'edit_profile'.tr(),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
@@ -481,10 +516,15 @@ class _ProfileInfoCard extends StatelessWidget {
 /// Availability status card (switch)
 /// ---------------------------------------------------------------------------
 class _AvailabilityCard extends StatelessWidget {
-  const _AvailabilityCard({required this.isAvailable, required this.onChanged});
+  const _AvailabilityCard({
+    required this.isAvailable,
+    required this.onChanged,
+    this.isLoading = false,
+  });
 
   final bool isAvailable;
   final ValueChanged<bool> onChanged;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +562,7 @@ class _AvailabilityCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Availability Status',
+                  'availability_status'.tr(),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -531,20 +571,27 @@ class _AvailabilityCard extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  'Accept new jobs',
+                  'accept_new_jobs'.tr(),
                   style: TextStyle(fontSize: 12.sp, color: kProfileTextMuted),
                 ),
               ],
             ),
           ),
-          Switch(
-            value: isAvailable,
-            onChanged: onChanged,
-            activeColor: Colors.white,
-            inactiveThumbColor: Colors.white,
-            activeTrackColor: kAccentRed,
-            inactiveTrackColor: const Color(0xFFE5E7EB),
-          ),
+          if (isLoading)
+            SizedBox(
+              width: 20.w,
+              height: 20.w,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Switch(
+              value: isAvailable,
+              onChanged: onChanged,
+              activeColor: Colors.white,
+              inactiveThumbColor: Colors.white,
+              activeTrackColor: kAccentRed,
+              inactiveTrackColor: const Color(0xFFE5E7EB),
+            ),
         ],
       ),
     );
@@ -579,7 +626,7 @@ class _SkillsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Skills & Specializations',
+            'skills_and_specializations'.tr(),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
@@ -593,15 +640,15 @@ class _SkillsCard extends StatelessWidget {
             children: skills.map((s) {
               switch (s.toLowerCase()) {
                 case 'electrical':
-                  return const _SkillChip(
-                    label: 'Electrical',
+                  return _SkillChip(
+                    label: 'electrical'.tr(),
                     start: Color(0xFFFEF3C7),
                     end: Color(0xFFFDE68A),
                     textColor: Color(0xFFB45309),
                   );
                 case 'plumbing':
-                  return const _SkillChip(
-                    label: 'Plumbing',
+                  return _SkillChip(
+                    label: 'plumbing'.tr(),
                     start: Color(0xFFD1FAE5),
                     end: Color(0xFFA7F3D0),
                     textColor: Color(0xFF047857),
@@ -681,8 +728,8 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFFFF7D6),
           icon: Icons.workspace_premium,
           iconColor: const Color(0xFFE5A100),
-          title: 'My Certifications',
-          subtitle: '${profile.verifiedCerts} verified',
+          title: 'my_certifications'.tr(),
+          subtitle: '${profile.verifiedCerts} ${'verified'.tr()}',
           onTap: () {
             onSelectLanguage;
           },
@@ -692,8 +739,8 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFE7FEF2),
           icon: Icons.attach_money_rounded,
           iconColor: const Color(0xFF16A34A),
-          title: 'Payment Settings',
-          subtitle: profile.bankLinked ? 'Bank linked' : 'Add payout method',
+          title: 'payment_settings'.tr(),
+          subtitle: profile.bankLinked ? 'bank_linked'.tr() : 'add_payout_method'.tr(),
           onTap: onSelectLanguage,
         ),
         SizedBox(height: 8.h),
@@ -701,7 +748,7 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFE0F2FE),
           icon: Icons.language_outlined,
           iconColor: const Color(0xFF2563EB),
-          title: 'Language',
+          title: 'language'.tr(),
           subtitle: language.display,
           onTap: onSelectLanguage,
         ),
@@ -710,8 +757,8 @@ class _SettingsSection extends StatelessWidget {
           iconBg: const Color(0xFFFFF4E5),
           icon: Icons.help_outline_rounded,
           iconColor: const Color(0xFFF97316),
-          title: 'Support',
-          subtitle: 'Get help & contact us',
+          title: 'support'.tr(),
+          subtitle: 'get_help_contact_us'.tr(),
           onTap: () {
             // support route
           },

@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
-
 import '../model/map_local_data_map.dart';
 
 /// যদি অন্য কোথাও already define করা থাকে তবে এটা remove করে দিতে পারো
@@ -54,7 +54,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
   bool _isLoadingPredictions = false;
 
   // Nouakchott default
-  static const LatLng _defaultLatLng = LatLng(18.0735, -15.9582);
+  static const LatLng _defaultLatLng = LatLng(18.078576532091493, -15.95974437920102);
   // static const LatLng _dhakaLatLng = LatLng(23.8103, 90.4125);
 
   LatLng get _selectedLatLng => LatLng(_selected.latitude, _selected.longitude);
@@ -136,7 +136,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location service disabled')),
+          SnackBar(content: Text('location_service_disabled'.tr())),
         );
         setState(() => _gpsAvailable = false);
         return;
@@ -149,8 +149,8 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location permission denied, use search instead'),
+          SnackBar(
+            content: Text('location_permission_denied'.tr()),
           ),
         );
         setState(() => _gpsAvailable = false);
@@ -180,7 +180,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
       });
     } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not get current location')),
+        SnackBar(content: Text('could_not_get_current_location'.tr())),
       );
       setState(() => _gpsAvailable = false);
     }
@@ -237,7 +237,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not fetch suggestions')),
+        SnackBar(content: Text('could_not_fetch_suggestions'.tr())),
       );
     } finally {
       if (mounted) {
@@ -294,7 +294,7 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load place details')),
+        SnackBar(content: Text('could_not_load_place_details'.tr())),
       );
     }
   }
@@ -621,8 +621,8 @@ class _MapAddressPickerScreenState extends State<MapAddressPickerScreen> {
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          child: const Text(
-            'CONFIRM',
+          child:  Text(
+            'confirm'.tr(),
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           ),
         ),

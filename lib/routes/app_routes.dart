@@ -8,21 +8,25 @@ import 'package:workpleis/features/customer/model/customer_dashboard_args.dart';
 import 'package:workpleis/features/customer/screen/Customer_guest_home_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_bookings_screen.dart';
 import 'package:workpleis/features/customer/screen/customer_dashboard_screen.dart';
+import 'package:workpleis/features/customer/screen/customer_edit_profile.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
 import 'package:workpleis/features/customer/screen/profile/screen/customer_profile_screen.dart';
 import 'package:workpleis/features/erning/screen/freelancer_earnings_screen.dart';
+import 'package:workpleis/features/erning/screen/payout_request_screen.dart';
+import 'package:workpleis/features/erning/screen/technician_earningsScreen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelancer_home_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/freelarcer_job_screen.dart';
 import 'package:workpleis/features/freelancer_pages/screen/profile/screen/freelancer_profile_screen.dart';
-import 'package:workpleis/features/erning/screen/earningsScreen.dart';
 import 'package:workpleis/features/internal_technician/screen/job/screen/internal_jobs.dart';
 import 'package:workpleis/features/internal_technician/screen/profile/screen/internal_job_profile.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
 import 'package:workpleis/features/splashScreen/screen/splashScreen.dart';
 
+import '../features/freelancer_pages/screen/freelancer_edit_profile.dart';
 import '../features/internal_technician/screen/internal_technician_home.dart';
 import '../features/nav_bar/screen/internal_bottom_nav_bar.dart';
+import '../features/shared/screen/edit_profile_screen.dart';
 import 'error_screen.dart';
 
 class AppRouter {
@@ -209,6 +213,7 @@ class AppRouter {
           );
         },
       ),
+
       GoRoute(
         path: CustomerProfileScreen.routeName,
         name: CustomerProfileScreen.routeName,
@@ -246,6 +251,25 @@ class AppRouter {
           );
         },
       ),
+
+      GoRoute(
+        path: FreelancerEditProfile.routeName,
+        name: FreelancerEditProfile.routeName,
+        builder: (context, state) => const FreelancerEditProfile(),
+      ),
+
+      GoRoute(
+        path: CustomerEditProfile.routeName,
+        name: CustomerEditProfile.routeName,
+        builder: (context, state) => const CustomerEditProfile(),
+      ),
+
+      GoRoute(
+        path: EditProfileScreen.routeName,
+        name: EditProfileScreen.routeName,
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+
       GoRoute(
         path: CustomerAppScreen.routeName, // '/customerApp'
         name: CustomerAppScreen.routeName,
@@ -255,6 +279,11 @@ class AppRouter {
         path: MapAddressPickerScreen.routeName, // '/customerApp'
         name: MapAddressPickerScreen.routeName,
         builder: (context, state) => const MapAddressPickerScreen(),
+      ),
+      GoRoute(
+        path: PayoutRequestScreen.routeName, // '/customerApp'
+        name: PayoutRequestScreen.routeName,
+        builder: (context, state) => const PayoutRequestScreen(),
       ),
 
       // GoRoute(

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:workpleis/features/customer/model/map_local_data_map.dart';
 import 'package:workpleis/features/customer/screen/map.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 import '../screen/service/data/service_data.dart';
 import '../screen/service/model/create_sr_model.dart';
-
+import '../screen/profile/data/customer_profile_data.dart';
 const _kPrimaryRed = Color(0xFFC20001);
 const _kPrimaryRedDark = Color(0xFF9A0001);
 const _kDialogShadow = BoxShadow(
@@ -31,7 +31,7 @@ Future<void> showServiceDetailsDialog(
   return showGeneralDialog(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Service details',
+    barrierLabel: 'service_details'.tr(),
     barrierColor: Colors.black.withOpacity(0.5),
     pageBuilder: (_, __, ___) {
       return _ServiceDetailsDialog(
@@ -93,6 +93,12 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
   LocationData? _selectedLocation; // map থেকে latitude/longitude
 
   @override
+  void initState() {
+    super.initState();
+    _loadCustomerProfile();
+  }
+
+  @override
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
@@ -101,27 +107,126 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     super.dispose();
   }
 
+  Future<void> _loadCustomerProfile() async {
+    try {
+      final profile = await CustomerProfileApi.getProfile();
+      
+      if (!mounted) return;
+      
+      // Auto-fill name, phone, and address if available
+      if (profile.name.isNotEmpty) {
+        _nameCtrl.text = profile.name;
+      }
+      if (profile.phone.isNotEmpty) {
+        _phoneCtrl.text = profile.phone;
+      }
+      if (profile.homeAddress != null && profile.homeAddress!.isNotEmpty) {
+        _addressCtrl.text = profile.homeAddress!;
+      }
+      
+      // Set location if available
+      if (profile.latitude != null && profile.longitude != null) {
+        _selectedLocation = LocationData(
+          latitude: profile.latitude!,
+          longitude: profile.longitude!,
+          address: profile.homeAddress ?? '',
+          placeName: null,
+        );
+      }
+    } catch (e) {
+      // If profile load fails (e.g., user not logged in or guest), just continue
+      // without auto-filling - this is expected for guest users
+      debugPrint('Failed to load customer profile: $e');
+    }
+  }
+
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
+
     final picked = await showDatePicker(
       context: context,
       initialDate: now,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.black87,             // Header & selected date color
+              onPrimary: Colors.white,          // Header text color
+              onSurface: Colors.black,          // Normal text color
+            ),
+            dialogBackgroundColor: Colors.white, // Calendar background
+            datePickerTheme: DatePickerThemeData(
+              todayForegroundColor: MaterialStateProperty.all(Color(0xFFFFB111)),
+              todayBackgroundColor: MaterialStateProperty.all(
+                Colors.blue.withOpacity(0.15),
+              ),
+             // selectedDayBackgroundColor: Colors.blue, // Selected date circle
+              //selectedDayForegroundColor: Colors.white, // Selected date text
+              dayStyle: TextStyle(color: Colors.black),
+              weekdayStyle: TextStyle(color: Colors.blueGrey),
+              headerForegroundColor: Colors.white, // Month-year text
+              headerBackgroundColor:Color(0xFFFFB111),  // Header background
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (picked != null) {
       setState(() {
         _dateText =
-            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+        '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       });
     }
   }
+
+
+  // Future<void> _pickDate() async {
+  //   final now = DateTime.now();
+  //   final picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: now,
+  //     firstDate: now,
+  //     lastDate: now.add(const Duration(days: 365)),
+  //   );
+  //   if (picked != null) {
+  //     setState(() {
+  //       _dateText =
+  //           '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+  //     });
+  //   }
+  // }
 
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.white,              // Picker background
+              dialBackgroundColor: Colors.blue.shade50,   // Clock circle
+              dialHandColor: Colors.white,                 // Clock hand
+              dialTextColor: Colors.black,                // Clock numbers
+              hourMinuteColor: Colors.blue.shade100,      // Hour/min box
+              hourMinuteTextColor: Colors.black,          // Hour/min text
+              entryModeIconColor: Colors.black87,            // Keyboard icon
+            ),
+            colorScheme: ColorScheme.light(
+              primary: Colors.black87,                       // AM/PM select color
+              onSurface: Colors.black,                    // Text color
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (picked != null) {
       setState(() {
         final hour = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
@@ -132,12 +237,28 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     }
   }
 
+
+  // Future<void> _pickTime() async {
+  //   final picked = await showTimePicker(
+  //     context: context,
+  //     initialTime: TimeOfDay.now(),
+  //   );
+  //   if (picked != null) {
+  //     setState(() {
+  //       final hour = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
+  //       final minute = picked.minute.toString().padLeft(2, '0');
+  //       final period = picked.period == DayPeriod.am ? 'AM' : 'PM';
+  //       _timeText = '$hour:$minute $period';
+  //     });
+  //   }
+  // }
+
   Future<void> _submit() async {
     if (_nameCtrl.text.trim().isEmpty ||
         _phoneCtrl.text.trim().isEmpty ||
         _addressCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name, phone & address are required')),
+        SnackBar(content: Text('name_phone_address_required'.tr())),
       );
       return;
     }
@@ -165,8 +286,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
       Navigator.of(context).pop(); // dialog close
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Service request submitted successfully'),
+        SnackBar(
+          content: Text('service_request_submitted_successfully'.tr()),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -174,7 +295,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to submit request: $e'),
+          content: Text('${'failed_to_submit_request'.tr()}: $e'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -219,15 +340,15 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
                             _buildSelectedServiceCard(),
                             const SizedBox(height: 18),
                             _buildTextField(
-                              label: 'Full Name *',
-                              hint: 'Enter your name',
+                              label: 'full_name'.tr(),
+                              hint: 'enter_name'.tr(),
                               controller: _nameCtrl,
                               textInputType: TextInputType.name,
                             ),
                             const SizedBox(height: 12),
                             _buildTextField(
-                              label: 'Phone Number *',
-                              hint: 'Enter your phone number',
+                              label: 'phone_number'.tr(),
+                              hint: 'enter_your_phone_number'.tr(),
                               controller: _phoneCtrl,
                               textInputType: TextInputType.phone,
                             ),
@@ -274,9 +395,9 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children:  [
                 Text(
-                  'Service Details',
+                  'service_details'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -286,7 +407,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Fill in your details to complete booking',
+                  'fill_details_to_complete_booking'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 ),
@@ -332,8 +453,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Selected Service',
+                 Text(
+                  'selected_service'.tr(),
                   style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
@@ -416,8 +537,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Service Address*',
+         Text(
+          'service_address'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -428,7 +549,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
         TextField(
           controller: _addressCtrl,
           decoration: InputDecoration(
-            hintText: 'Tap to select location from map',
+            hintText: 'tap_to_select_location'.tr(),
             prefixIcon: const Icon(Icons.home_outlined, size: 20),
             suffixIcon: Container(
               margin: const EdgeInsets.only(right: 6),
@@ -444,12 +565,31 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
 
                   if (result != null) {
                     setState(() {
-                      // place name + address
-                      final name = result.placeName?.trim();
-                      if (name != null && name.isNotEmpty) {
-                        _addressCtrl.text = '$name, ${result.address}';
+                      // Store location data separately for latitude/longitude
+                      _selectedLocation = result;
+                      
+                      // Set address field with only the address text (not coordinates)
+                      // If address contains coordinates, use placeName instead
+                      final addressText = result.address.trim();
+                      // Match patterns like "18.083651, -15.964036" or "-1.292066, 36.821946"
+                      final isCoordinate = RegExp(r'^-?\d+\.?\d+,\s*-?\d+\.?\d+$').hasMatch(addressText);
+                      
+                      if (isCoordinate) {
+                        // If address is just coordinates, use placeName or a default text
+                        final name = result.placeName?.trim();
+                        if (name != null && name.isNotEmpty) {
+                          _addressCtrl.text = name;
+                        } else {
+                          _addressCtrl.text = 'Selected Location';
+                        }
                       } else {
-                        _addressCtrl.text = result.address;
+                        // Use placeName + address if both available, otherwise just address
+                        final name = result.placeName?.trim();
+                        if (name != null && name.isNotEmpty && name != addressText) {
+                          _addressCtrl.text = '$name, $addressText';
+                        } else {
+                          _addressCtrl.text = addressText;
+                        }
                       }
                     });
                   }
@@ -489,8 +629,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Description (Optional)',
+         Text(
+          'description_optional'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -502,7 +642,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
           controller: _descCtrl,
           maxLines: 3,
           decoration: InputDecoration(
-            hintText: 'Describe any specific requirements or issues',
+            hintText: 'describe_requirements'.tr(),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
@@ -533,8 +673,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Preferred Appointment Date & Time (Optional)',
+         Text(
+          'preferred_appointment_date_time'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -547,7 +687,7 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
             Expanded(
               child: _DateTimeChip(
                 icon: Icons.calendar_today_outlined,
-                label: _dateText ?? 'Date',
+                label: _dateText ?? 'date'.tr(),
                 onTap: _pickDate,
               ),
             ),
@@ -555,15 +695,15 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
             Expanded(
               child: _DateTimeChip(
                 icon: Icons.access_time,
-                label: _timeText ?? 'Time',
+                label: _timeText ?? 'time'.tr(),
                 onTap: _pickTime,
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
-          'We’ll try our best to schedule your service at this time',
+         Text(
+          'appointment_notice'.tr(),
           style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
         ),
       ],
@@ -576,8 +716,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Payment Method *',
+         Text(
+          'payment_method'.tr(),
           style: TextStyle(
             fontSize: 13,
             color: Color(0xFF4B5563),
@@ -586,15 +726,15 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
         ),
         const SizedBox(height: 10),
         _PaymentOptionCard(
-          title: 'Cash Payment',
-          subtitle: 'Pay with cash after service',
+          title: 'cash_payment'.tr(),
+          subtitle: 'pay_with_cash'.tr(),
           selected: _cashSelected,
           onTap: () => setState(() => _cashSelected = true),
         ),
-        const SizedBox(height: 8),
+         SizedBox(height: 8),
         _PaymentOptionCard(
-          title: 'Mobile Money',
-          subtitle: 'Pay via mobile money',
+          title: 'mobile_money'.tr(),
+          subtitle: 'pay_via_mobile_money'.tr(),
           selected: !_cashSelected,
           onTap: () => setState(() => _cashSelected = false),
         ),
@@ -618,8 +758,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
               padding: const EdgeInsets.symmetric(vertical: 14),
               backgroundColor: const Color(0xFFF9FAFB),
             ),
-            child: const Text(
-              'Cancel',
+            child:  Text(
+              'cancel'.tr(),
               style: TextStyle(color: Color(0xFF111827), fontSize: 14),
             ),
           ),
@@ -644,8 +784,8 @@ class _ServiceDetailsDialogState extends State<_ServiceDetailsDialog> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'Submit Request',
+                :  Text(
+                    'submit_request'.tr(),
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
           ),
@@ -689,7 +829,7 @@ class _DateTimeChip extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: label == 'Date' || label == 'Time'
+                    color: label == 'date'.tr() || label == 'time'.tr()
                         ? const Color(0xFF9CA3AF)
                         : const Color(0xFF111827),
                   ),

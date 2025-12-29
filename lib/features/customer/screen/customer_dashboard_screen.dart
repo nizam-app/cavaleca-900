@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:workpleis/features/customer/screen/service/data/service_data.dart';
+import 'package:workpleis/features/customer/screen/service/model/create_sr_model.dart';
 import 'package:workpleis/features/customer/widget/book_a_getagory.dart';
-import 'package:workpleis/features/customer/widget/custom_booking_details.dart';
-
 import 'package:intl/intl.dart';
 import 'package:easy_localization/easy_localization.dart';
-// import 'package:workpleis/features/customer/widget/book_a_service.dart'; // File not found
 
 import 'package:workpleis/features/customer/widget/genarel_maintenance.dart';
 import 'package:workpleis/features/customer/widget/repairs_&_fixes.dart';
@@ -15,8 +12,6 @@ import 'package:workpleis/features/customer/widget/service_details.dart';
 import 'package:workpleis/features/customer/model/customer_booking_model.dart';
 import 'package:workpleis/features/customer/logic/customer_booking_logic.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'service/model/create_sr_model.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
 const Color kPrimaryRedDark = Color(0xFF9A0001);
@@ -46,34 +41,42 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   final ScrollController _categoryScrollController = ScrollController();
   List<CustomerBookingModel> _allBookings = [];
   bool _isLoadingBookings = true;
-
-  // demo data – tumi backend data diye replace korte পারো
-  final List<_ServiceCategory> _categories = const [
-    _ServiceCategory(
-      title: 'General',
-      description: 'Regular maintenance and\nrepairs',
-      serviceCount: 9,
-      icon: Icons.build_rounded,
-    ),
-    _ServiceCategory(
-      title: 'HVAC Services',
-      description: 'Heating, cooling, and\nventilation',
-      serviceCount: 6,
-      icon: Icons.air,
-    ),
-    _ServiceCategory(
-      title: 'Cleaning',
-      description: 'Home & office cleaning\nsolutions',
-      serviceCount: 8,
-      icon: Icons.cleaning_services,
-    ),
-  ];
+  
+  // Categories from API
+  List<FsmCategory> _categories = [];
+  bool _isLoadingCategories = true;
 
   @override
   void initState() {
     super.initState();
+    _loadCategories();
     if (!widget.isGuest) {
       _loadBookings();
+    }
+  }
+
+  @override
+  void dispose() {
+    _categoryScrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+    });
+
+    try {
+      final categories = await FsmCustomerApi.fetchCategories();
+      setState(() {
+        _categories = categories;
+        _isLoadingCategories = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCategories = false;
+      });
+      debugPrint('Failed to load categories: $e');
     }
   }
 
@@ -94,6 +97,14 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       });
       debugPrint('Failed to load bookings: $e');
     }
+  }
+
+  Future<void> _onRefresh() async {
+    // Refresh both categories and bookings in parallel
+    await Future.wait([
+      _loadCategories(),
+      if (!widget.isGuest) _loadBookings(),
+    ]);
   }
 
   List<CustomerBookingModel> _getActiveBookings() {
@@ -187,22 +198,26 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     return Scaffold(
       backgroundColor: kPageBackground,
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _buildHeader(),
-            SizedBox(height: 16.h),
-            _buildCategoriesSection(),
-            SizedBox(height: 24.h),
-            if (!widget.isGuest) ...[
-              _buildActiveRequestsSection(),
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          color: kPrimaryRed,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _buildHeader(),
+              SizedBox(height: 16.h),
+              _buildCategoriesSection(),
               SizedBox(height: 24.h),
-              _buildRecentServicesSection(),
-            ] else ...[
-              _buildGuestNotice(),
+              if (!widget.isGuest) ...[
+                _buildActiveRequestsSection(),
+                SizedBox(height: 24.h),
+                _buildRecentServicesSection(),
+              ] else ...[
+                _buildGuestNotice(),
+              ],
+              SizedBox(height: 24.h),
             ],
-            SizedBox(height: 24.h),
-          ],
+          ),
         ),
       ),
     );
@@ -233,7 +248,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, $_displayName',
+                      '${'hello'.tr()} $_displayName',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -315,8 +330,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                                 SpecificServiceOption(
                                   id: sub.id,
                                   title: sub.name,
-                                  priceRange:
-                                      "Est. ${sub.baseRate.toString()}" ?? '',
+                                  priceRange: sub.baseRate != null
+                                      ? "Est. ${sub.baseRate.toString()}"
+                                      : '',
                                   subservice: sub,
                                 ),
                             ],
@@ -341,7 +357,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to load services: $e')),
+                    SnackBar(content: Text('${'failed_to_load_services'.tr()}: $e')),
                   );
                 }
               },
@@ -353,13 +369,13 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                   borderRadius: BorderRadius.circular(18.r),
                 ),
               ),
-              child: const Row(
+              child:  Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add, size: 20),
                   SizedBox(width: 8),
                   Text(
-                    'Book New Service',
+                    'book_new_service'.tr(),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -381,9 +397,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           child: Row(
             children: [
-              const Expanded(
+               Expanded(
                 child: Text(
-                  'Service Categories',
+                  'service_categories'.tr(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -406,20 +422,111 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         SizedBox(height: 12.h),
         SizedBox(
           height: 156.h,
-          child: ListView.separated(
-            controller: _categoryScrollController,
-            padding: EdgeInsets.only(left: 20.w, right: 16.w),
-            scrollDirection: Axis.horizontal,
-            itemBuilder: (context, index) {
-              final category = _categories[index];
-              return _ServiceCategoryCard(category: category);
-            },
-            separatorBuilder: (_, __) => SizedBox(width: 12.w),
-            itemCount: _categories.length,
-          ),
+          child: _isLoadingCategories
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              : _categories.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text(
+                          'No categories available',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      controller: _categoryScrollController,
+                      padding: EdgeInsets.only(left: 20.w, right: 16.w),
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        return _ServiceCategoryCard(
+                          category: category,
+                          onTap: () => _handleCategoryTap(category),
+                        );
+                      },
+                      separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                      itemCount: _categories.length,
+                    ),
         ),
       ],
     );
+  }
+
+  void _handleCategoryTap(FsmCategory category) async {
+    try {
+      // Load fresh category data to ensure we have latest services
+      final categories = await FsmCustomerApi.fetchCategories();
+      final selectedCategory = categories.firstWhere(
+        (cat) => cat.id == category.id,
+        orElse: () => category,
+      );
+
+      if (!context.mounted) return;
+
+      // Start directly from Step 2: Service Type Dialog (skip category selection)
+      showServiceTypeDialog(
+        context,
+        title: selectedCategory.name,
+        stepText: 'Step 2 of 3 - Select service type',
+        options: [
+          for (final svc in selectedCategory.services)
+            ServiceTypeOption(
+              id: svc.id,
+              title: svc.name,
+              subtitle: svc.description ?? '',
+              service: svc,
+            ),
+        ],
+        onSelect: (ServiceTypeOption svcOpt) {
+          final svc = svcOpt.service;
+
+          // Step 3: Subservice dialog
+          showSubServiceDialog(
+            context,
+            title: svc.name,
+            stepText: 'Step 3 of 3 - Select specific service',
+            options: [
+              for (final sub in svc.subservices)
+                SpecificServiceOption(
+                  id: sub.id,
+                  title: sub.name,
+                  priceRange: sub.baseRate != null
+                      ? "Est. ${sub.baseRate.toString()}"
+                      : '',
+                  subservice: sub,
+                ),
+            ],
+            onSelect: (SpecificServiceOption subOpt) {
+              final sub = subOpt.subservice;
+
+              // Final: Service details dialog + POST /api/sr
+              showServiceDetailsDialog(
+                context,
+                selectedService: sub.name,
+                categoryPath: '${selectedCategory.name} → ${svc.name}',
+                categoryId: selectedCategory.id,
+                serviceId: svc.id,
+                subserviceId: sub.id,
+              );
+            },
+          );
+        },
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load services: $e')),
+      );
+    }
   }
 
   Widget _circleIconButton({
@@ -452,9 +559,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         children: [
           Row(
             children: [
-              const Expanded(
+               Expanded(
                 child: Text(
-                  'Active Requests',
+                  'active_requests'.tr(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -464,8 +571,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
               ),
               GestureDetector(
                 onTap: widget.onViewAllPressed,
-                child: const Text(
-                  'View All',
+                child:  Text(
+                  'view_all'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     color: kPrimaryRed,
@@ -530,8 +637,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent Services',
+           Text(
+            'recent_services'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -567,8 +674,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         ),
         child: Padding(
           padding: EdgeInsets.all(16.r),
-          child: const Text(
-            "You're browsing as a guest. Create an account to view booking history and track your requests.",
+          child:  Text(
+            "guest_browsing_notice".tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Color(0xFF374151)),
           ),
@@ -579,21 +686,6 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 }
 
 // =================== MODELS ===================
-
-class _ServiceCategory {
-  final String title;
-  final String description;
-  final int serviceCount;
-  final IconData icon;
-
-  const _ServiceCategory({
-    required this.title,
-    required this.description,
-    required this.serviceCount,
-    required this.icon,
-  });
-}
-
 
 class _RecentJob {
   final String title;
@@ -610,18 +702,39 @@ class _RecentJob {
 // =================== WIDGETS ===================
 
 class _ServiceCategoryCard extends StatelessWidget {
-  const _ServiceCategoryCard({required this.category});
+  const _ServiceCategoryCard({
+    required this.category,
+    this.onTap,
+  });
 
-  final _ServiceCategory category;
+  final FsmCategory category;
+  final VoidCallback? onTap;
+
+  IconData _getCategoryIcon(String name) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('general') || lowerName.contains('maintenance')) {
+      return Icons.build_rounded;
+    } else if (lowerName.contains('hvac') || lowerName.contains('air')) {
+      return Icons.air;
+    } else if (lowerName.contains('cleaning')) {
+      return Icons.cleaning_services;
+    } else if (lowerName.contains('electrical')) {
+      return Icons.bolt;
+    } else if (lowerName.contains('plumbing')) {
+      return Icons.plumbing;
+    }
+    return Icons.handyman;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final serviceCount = category.services.fold<int>(
+      0,
+      (sum, service) => sum + service.subservices.length,
+    );
+
     return Container(
       width: 160.w,
-      // margin: EdgeInsets.zero,
-      // shape: RoundedRectangleBorder(
-      //   borderRadius: BorderRadius.circular(20.r),
-      // ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10.r),
@@ -629,9 +742,7 @@ class _ServiceCategoryCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20.r),
-        onTap: () {
-          // TODO: category tap logic (booking step 1)
-        },
+        onTap: onTap,
         child: Padding(
           padding: EdgeInsets.all(8.r),
           child: Column(
@@ -649,14 +760,14 @@ class _ServiceCategoryCard extends StatelessWidget {
                   borderRadius: BorderRadius.all(Radius.circular(16.0)),
                 ),
                 child: Icon(
-                  Icons.build_rounded,
+                  _getCategoryIcon(category.name),
                   color: Colors.white,
                   size: 22.r,
                 ),
               ),
               SizedBox(height: 10.h),
               Text(
-                category.title,
+                category.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -667,7 +778,7 @@ class _ServiceCategoryCard extends StatelessWidget {
               ),
               SizedBox(height: 3.h),
               Text(
-                category.description,
+                category.description ?? '',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -678,7 +789,7 @@ class _ServiceCategoryCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '${category.serviceCount} services',
+                '$serviceCount services',
                 style: const TextStyle(
                   fontSize: 11,
                   color: kPrimaryRed,
@@ -740,9 +851,9 @@ class _ActiveRequestCard extends StatelessWidget {
     final Color statusBg = const Color(0xFFEFF6FF);
     final Color statusText = const Color(0xFF1D4ED8);
     final String technicianName =
-        booking.assignedTechnician?.name ?? 'Not Assigned';
+        booking.assignedTechnician?.name ?? 'not_assigned'.tr();
     final String? technicianPhone = booking.assignedTechnician?.phone;
-    final String serviceName = booking.service?.name ?? 'Service';
+    final String serviceName = booking.service?.name ?? 'service'.tr();
     final String categoryName = booking.category?.name ?? '';
 
     return Card(
@@ -776,7 +887,7 @@ class _ActiveRequestCard extends StatelessWidget {
                       ],
                       SizedBox(height: 2.h),
                       Text(
-                        'Technician: $technicianName',
+                        '${'technician_label'.tr()} $technicianName',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF6B7280),
@@ -861,9 +972,9 @@ class _ActiveRequestCard extends StatelessWidget {
                     ),
                   ),
                   onPressed: onViewDetails,
-                  child: const Text(
-                    'View Details',
-                    style: TextStyle(fontSize: 11),
+                  child: Text(
+                    'view_details'.tr(),
+                    style: TextStyle(fontSize: 11.sp),
                   ),
                 ),
               ],
@@ -993,7 +1104,7 @@ class _BookingDetailSheet extends StatelessWidget {
             : const Color(0xFF991B1B);
     final String chipLabel = booking.readableStatus;
 
-    final String technicianName = booking.assignedTechnician?.name ?? 'Not Assigned';
+    final String technicianName = booking.assignedTechnician?.name ?? 'not_assigned'.tr();
     final String? technicianPhone = booking.assignedTechnician?.phone;
     final String initials = _getInitials(technicianName);
 
@@ -1072,11 +1183,11 @@ class _BookingDetailSheet extends StatelessWidget {
               SizedBox(height: 16.h),
 
               // SR Number
-              _buildDetailRow('SR Number', booking.srNumber),
+              _buildDetailRow('sr_number'.tr(), booking.srNumber),
               SizedBox(height: 8.h),
               _buildDetailRow('Status', booking.status),
               SizedBox(height: 8.h),
-              _buildDetailRow('Internal Status', booking.internalStatus),
+              _buildDetailRow('internal_status'.tr(), booking.internalStatus),
               SizedBox(height: 8.h),
               _buildDetailRow('Priority', booking.priority),
               SizedBox(height: 16.h),
@@ -1094,7 +1205,7 @@ class _BookingDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Service',
+                        'service'.tr(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: const Color(0xFF9CA3AF),
@@ -1102,7 +1213,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        booking.service?.name ?? 'N/A',
+                        booking.service?.name ?? 'n_a'.tr(),
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -1137,7 +1248,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       if (booking.subservice != null) ...[
                         SizedBox(height: 12.h),
                         Text(
-                          'Subservice',
+                          'subservice'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1220,7 +1331,7 @@ class _BookingDetailSheet extends StatelessWidget {
                                 booking.preferredAppointmentTime != null) ...[
                               SizedBox(height: 4.h),
                               Text(
-                                'Preferred: ${booking.preferredAppointmentDate ?? ''} ${booking.preferredAppointmentTime ?? ''}',
+                                '${'preferred'.tr()} ${booking.preferredAppointmentDate ?? ''} ${booking.preferredAppointmentTime ?? ''}',
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: const Color(0xFF6B7280),
@@ -1399,21 +1510,21 @@ class _BookingDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Payment Summary',
+                          'payment_summary'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        _buildDetailRow('Total Amount',
+                        _buildDetailRow('total_amount'.tr(),
                             '\$${booking.paymentSummary!.totalAmount.toStringAsFixed(2)}'),
                         SizedBox(height: 4.h),
-                        _buildDetailRow('Payment Status',
+                        _buildDetailRow('payment_status'.tr(),
                             booking.paymentSummary!.paymentStatus),
                         if (booking.paymentSummary!.paymentMethod != null) ...[
                           SizedBox(height: 4.h),
-                          _buildDetailRow('Payment Method',
+                          _buildDetailRow('payment_method'.tr(),
                               booking.paymentSummary!.paymentMethod!),
                         ],
                       ],
@@ -1437,7 +1548,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Technician Rating',
+                          'technician_rating'.tr(),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: const Color(0xFF9CA3AF),
@@ -1476,9 +1587,9 @@ class _BookingDetailSheet extends StatelessWidget {
 
               // Dates
               SizedBox(height: 12.h),
-              _buildDetailRow('Created At', _formatDate(booking.createdAt)),
+              _buildDetailRow('created_at'.tr(), _formatDate(booking.createdAt)),
               SizedBox(height: 4.h),
-              _buildDetailRow('Updated At', _formatDate(booking.updatedAt)),
+              _buildDetailRow('updated_at'.tr(), _formatDate(booking.updatedAt)),
 
               SizedBox(height: 16.h),
 

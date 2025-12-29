@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/features/customer/screen/service/model/create_sr_model.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
@@ -56,8 +57,49 @@ class BookServiceDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // header same as before...
-            // ...
+            // ---- Header (title + close) ----
+            Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 18.h, 12.w, 8.h),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'book_a_service'.tr(),
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          'select_service_in_steps'.tr(),
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close,
+                      size: 22.r,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1.h, color: const Color(0xFFF3F4F6)),
+            SizedBox(height: 8.h),
+
+            // ---- Services list ----
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),

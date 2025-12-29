@@ -1,4 +1,5 @@
 // features/notifications/data/notifications_repository.dart
+import 'dart:async';
 import 'dart:convert';
 
 // features/notifications/logic/notifications_provider.dart
@@ -122,4 +123,59 @@ class NotificationsNotifier extends AsyncNotifier<List<FsNotification>> {
 final notificationsProvider =
     AsyncNotifierProvider<NotificationsNotifier, List<FsNotification>>(
       NotificationsNotifier.new,
+    );
+
+/// Provider that counts unread notifications and auto-refreshes every 2 minutes
+class UnreadNotificationsNotifier extends AutoDisposeAsyncNotifier<int> {
+  Timer? _timer;
+
+  @override
+  Future<int> build() async {
+    // Watch notifications provider to auto-update when notifications change
+    ref.listen(notificationsProvider, (previous, next) {
+      // Update count when notifications change
+      next.whenData((notifications) {
+        final count = notifications.where((n) => !n.isRead).length;
+        state = AsyncValue.data(count);
+      });
+    });
+    
+    // Start auto-refresh timer
+    _startAutoRefresh();
+    
+    // Initial count
+    return _countUnread();
+  }
+
+  int _countUnread() {
+    final notifications = ref.read(notificationsProvider).value ?? [];
+    return notifications.where((n) => !n.isRead).length;
+  }
+
+  void _startAutoRefresh() {
+    // Cancel existing timer if any
+    _timer?.cancel();
+    
+    // Refresh every 2 minutes
+    _timer = Timer.periodic(const Duration(minutes: 2), (_) {
+      _refreshCount();
+    });
+    
+    // Clean up timer when provider is disposed
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
+  }
+
+  Future<void> _refreshCount() async {
+    // Refresh notifications first
+    await ref.read(notificationsProvider.notifier).refresh();
+    
+    // Count will be updated automatically via the listener above
+  }
+}
+
+final unreadNotificationsProvider =
+    AutoDisposeAsyncNotifierProvider<UnreadNotificationsNotifier, int>(
+      UnreadNotificationsNotifier.new,
     );

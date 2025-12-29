@@ -6,6 +6,7 @@ class InternalProfile {
   final String role;
   final bool isBlocked;
   final String? homeAddress;
+  final String? locationStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
   final TechnicianProfile? technicianProfile;
@@ -18,6 +19,7 @@ class InternalProfile {
     required this.role,
     required this.isBlocked,
     required this.homeAddress,
+    this.locationStatus,
     required this.createdAt,
     required this.updatedAt,
     required this.technicianProfile,
@@ -32,6 +34,7 @@ class InternalProfile {
       role: json['role'] ?? '',
       isBlocked: json['isBlocked'] ?? false,
       homeAddress: json['homeAddress'],
+      locationStatus: json['locationStatus'] as String?,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       technicianProfile: json['technicianProfile'] != null

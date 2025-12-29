@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
@@ -101,30 +103,62 @@ class TechnicianJobsApi {
   }
 
   /// PATCH /api/wos/{woId}/complete
-  /// এখনের জন্য simple JSON body, পরে চাইলে multipart + photos add করবে
+  /// Multipart form data with photos, completionNotes, and materialsUsed
   static Future<InternalJob> completeWorkOrder({
     required int woId,
     required String completionNotes,
     required String materialsUsedJson, // উদাহরণ: '[{"item":"Filter","qty":1}]'
+    List<XFile>? photos,
   }) async {
     final token = await _getToken();
     final url = Uri.parse(AuthAPIController.wosComplete(woId));
 
-    final res = await http.patch(
-      url,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'completionNotes': completionNotes,
-        'materialsUsed': materialsUsedJson,
-      }),
-    );
+    final request = http.MultipartRequest('PATCH', url);
+    request.headers.addAll({
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
+
+    // Add form fields
+    request.fields['completionNotes'] = completionNotes;
+    request.fields['materialsUsed'] = materialsUsedJson;
+
+    // Add photos if provided
+    if (photos != null && photos.isNotEmpty) {
+      for (var i = 0; i < photos.length; i++) {
+        final photo = photos[i];
+        final fileExtension = photo.path.split('.').last.toLowerCase();
+        
+        // Determine content type based on file extension
+        String contentType;
+        if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
+          contentType = 'image/jpeg';
+        } else if (fileExtension == 'png') {
+          contentType = 'image/png';
+        } else if (fileExtension == 'pdf') {
+          contentType = 'application/pdf';
+        } else {
+          // Default to jpeg if unknown
+          contentType = 'image/jpeg';
+        }
+        
+        // Read file bytes and create multipart file with proper content type
+        final bytes = await photo.readAsBytes();
+        final fileWithType = http.MultipartFile.fromBytes(
+          'photos', // API expects 'photos' as field name
+          bytes,
+          filename: photo.name.isNotEmpty ? photo.name : 'photo_$i.$fileExtension',
+          contentType: MediaType.parse(contentType),
+        );
+        request.files.add(fileWithType);
+      }
+    }
+
+    final streamedResponse = await request.send();
+    final res = await http.Response.fromStream(streamedResponse);
 
     if (res.statusCode != 200) {
-      throw Exception('Failed to complete work order ($woId)');
+      throw Exception('Failed to complete work order ($woId): ${res.body}');
     }
 
     final body = jsonDecode(res.body);
@@ -149,6 +183,63 @@ class TechnicianJobsApi {
 
     final Map<String, dynamic> data = jsonDecode(res.body);
     return TimeRemaining.fromJson(data);
+  }
+
+  /// POST /api/payments
+  /// Submit payment with multipart form-data
+  static Future<Map<String, dynamic>> submitPayment({
+    required int woId,
+    required double amount,
+    required String method,
+    required String transactionRef,
+    XFile? proofImage, // Optional - not required for CASH payments
+  }) async {
+    final token = await _getToken();
+    final url = Uri.parse(AuthAPIController.createPayment);
+
+    final request = http.MultipartRequest('POST', url);
+    request.headers.addAll({
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
+
+    // Add form fields
+    request.fields['woId'] = woId.toString();
+    request.fields['amount'] = amount.toString();
+    request.fields['method'] = method;
+    request.fields['transactionRef'] = transactionRef;
+
+    // Add proof image only if provided (required for MOBILE_MONEY, optional for CASH)
+    if (proofImage != null) {
+      final fileExtension = proofImage.path.split('.').last.toLowerCase();
+      String contentType;
+      if (fileExtension == 'jpg' || fileExtension == 'jpeg') {
+        contentType = 'image/jpeg';
+      } else if (fileExtension == 'png') {
+        contentType = 'image/png';
+      } else {
+        contentType = 'image/jpeg';
+      }
+
+      final bytes = await proofImage.readAsBytes();
+      final fileWithType = http.MultipartFile.fromBytes(
+        'proof',
+        bytes,
+        filename: proofImage.name.isNotEmpty ? proofImage.name : 'proof.$fileExtension',
+        contentType: MediaType.parse(contentType),
+      );
+      request.files.add(fileWithType);
+    }
+
+    final streamedResponse = await request.send();
+    final res = await http.Response.fromStream(streamedResponse);
+
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception('Failed to submit payment: ${res.body}');
+    }
+
+    final body = jsonDecode(res.body) as Map<String, dynamic>;
+    return body;
   }
 }
 

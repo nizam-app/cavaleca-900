@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
+import 'package:workpleis/core/services/fcm_service.dart';
 import 'package:workpleis/features/auth/model/auth_login_model.dart';
 
 class InternalAuthRepository {
@@ -38,6 +39,10 @@ class InternalAuthRepository {
       token: jsonBody['token'],
       userJson: jsonBody['user'],
     );
+    
+    // Initialize FCM and register token after successful login
+    await FCMService.initialize();
+    
     return InternalLoginResponse.fromJson(jsonBody);
   }
 }

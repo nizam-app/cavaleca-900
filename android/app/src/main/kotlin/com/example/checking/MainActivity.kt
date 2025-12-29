@@ -1,5 +1,6 @@
-package com.example.market_jango
+package com.ibacos.services
 
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity : FlutterActivity()
+
