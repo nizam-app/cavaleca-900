@@ -371,11 +371,18 @@ class FCMService {
 
 /// Top-level function to handle background messages
 /// This must be a top-level function, not a class method
+/// Note: Firebase automatically displays notifications when app is in background,
+/// so we don't need to manually show notifications here to avoid duplicates.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final logger = Logger();
   logger.i('Handling a background message: ${message.messageId}');
   logger.i('Message data: ${message.data}');
+  
+  // Firebase automatically displays notifications when app is in background
+  // We only need to handle data processing/logic here, not display notifications
+  // This prevents duplicate notifications
+  
   if (message.notification != null) {
     logger.i('Message notification: ${message.notification}');
     
@@ -427,9 +434,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
-        sound: 'default',
-        badgeNumber: 1,
-        interruptionLevel: InterruptionLevel.timeSensitive,
       );
       
       final details = NotificationDetails(
