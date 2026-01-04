@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io' show Platform;
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/constants/api_control/notificiaon_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
@@ -42,10 +43,18 @@ class FCMService {
         return;
       }
 
+      // For iOS, wait for APNS token before getting FCM token
+      if (Platform.isIOS) {
+        _log.i('🍎 iOS detected - waiting for APNS token...');
+        await _waitForAPNSToken();
+      }
+
       // Get FCM token
       final token = await getFCMToken();
       if (token != null) {
         await sendTokenToServer(token);
+      } else {
+        _log.w('⚠️ FCM token is null, will retry when APNS token is available');
       }
 
       // Listen for token refresh
@@ -136,6 +145,44 @@ class FCMService {
     _log.i('✅ Local notifications initialized');
   }
 
+  /// Wait for APNS token on iOS (with retries)
+  static Future<void> _waitForAPNSToken() async {
+    try {
+      // Try to get APNS token with multiple retries
+      for (int i = 0; i < 5; i++) {
+        final apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken != null) {
+          _log.i('✅ APNS token received: $apnsToken');
+          return;
+        }
+        _log.w('⚠️ APNS token is null, retry attempt ${i + 1}/5');
+        if (i < 4) {
+          await Future.delayed(Duration(seconds: i + 1)); // Increasing delay
+        }
+      }
+      
+      _log.w('⚠️ Could not get APNS token after 5 attempts');
+      _log.i('💡 Continuing anyway - FCM might still work or token will be available later');
+      
+      // Listen for APNS token updates
+      _messaging.onTokenRefresh.listen((fcmToken) async {
+        _log.i('🔄 Token refreshed (APNS token may now be available): $fcmToken');
+        try {
+          final apnsToken = await _messaging.getAPNSToken();
+          if (apnsToken != null) {
+            _log.i('✅ APNS token now available: $apnsToken');
+            // Send the new FCM token to server
+            await sendTokenToServer(fcmToken);
+          }
+        } catch (e) {
+          _log.w('Error checking APNS token on refresh: $e');
+        }
+      });
+    } catch (e) {
+      _log.w('⚠️ Error waiting for APNS token: $e');
+    }
+  }
+
   /// Show local notification for foreground messages
   static Future<void> _showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
@@ -157,6 +204,9 @@ class FCMService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: 'default',
+      badgeNumber: 1,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
     final details = NotificationDetails(
@@ -212,11 +262,22 @@ class FCMService {
   static Future<String?> getFCMToken() async {
     try {
       final token = await _messaging.getToken();
-      _log.i('FCM Token: $token');
-      return token;
+      if (token != null) {
+        _log.i('✅ FCM Token obtained: ${token.substring(0, 20)}...');
+        return token;
+      } else {
+        _log.w('⚠️ FCM Token is null');
+        return null;
+      }
     } catch (e, stackTrace) {
-      _log.e('Error getting FCM token: $e', error: e, stackTrace: stackTrace);
-      return null;
+      if (e.toString().contains('apns-token-not-set')) {
+        _log.w('⚠️ APNS token not ready yet - FCM token will be available later');
+        _log.i('💡 App will continue to work, notifications will be enabled once APNS token is available');
+        return null;
+      } else {
+        _log.e('❌ Error getting FCM token: $e', error: e, stackTrace: stackTrace);
+        return null;
+      }
     }
   }
 
@@ -324,10 +385,71 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   
   if (message.notification != null) {
     logger.i('Message notification: ${message.notification}');
-    logger.i('✅ Firebase will automatically display this notification');
+    
+    // Initialize local notifications for background
+    final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+    
+    // Create Android notification channel
+    const androidChannel = AndroidNotificationChannel(
+      'high_importance_channel',
+      'High Importance Notifications',
+      description: 'This channel is used for important notifications.',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    // Create channel on Android
+    final androidImplementation = localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      await androidImplementation.createNotificationChannel(androidChannel);
+      logger.i('✅ Android notification channel created in background handler');
+    }
+    
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings();
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+    await localNotifications.initialize(initSettings);
+    
+    // Show notification
+    final notification = message.notification;
+    if (notification != null) {
+      final androidDetails = AndroidNotificationDetails(
+        'high_importance_channel',
+        'High Importance Notifications',
+        channelDescription: 'This channel is used for important notifications.',
+        importance: Importance.max,
+        priority: Priority.max,
+        showWhen: true,
+        playSound: true,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
+      );
+      
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+      
+      final details = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      
+      await localNotifications.show(
+        notification.hashCode,
+        notification.title ?? 'New Notification',
+        notification.body ?? '',
+        details,
+      );
+      
+      logger.i('✅ Background notification shown');
+    }
   }
-  
-  // If you need to process job notifications in background, add logic here
-  // For now, job notifications will be handled when user opens the app
 }
 
