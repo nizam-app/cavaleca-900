@@ -15,9 +15,6 @@ Future<void> main() async {
 
   await Firebase.initializeApp();
 
-  
-
-  
   // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   

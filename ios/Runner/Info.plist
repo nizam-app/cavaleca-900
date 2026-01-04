@@ -45,15 +45,32 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Location Permissions -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to your location to provide location-based services.</string>
+	<string>This app needs access to your location to provide location-based services and show your position on the map.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to your location to provide location-based services.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to provide location-based services.</string>
+	<!-- Camera Permission -->
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to take photos for job completion.</string>
+	<!-- Photo Library Permissions -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to select images for job completion.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to save photos to your photo library.</string>
+	<!-- Notification Permission (for Firebase Cloud Messaging) -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<!-- Allow HTTP requests if needed -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
 </dict>
 </plist>
