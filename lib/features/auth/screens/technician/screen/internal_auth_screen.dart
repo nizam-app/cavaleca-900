@@ -5,6 +5,8 @@ import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/auth/logic/registration_logic.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/nav_bar/screen/internal_bottom_nav_bar.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
+import 'package:workpleis/features/notification/data/notificaion_data.dart';
 import 'package:workpleis/features/shared/background_location_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -82,6 +84,10 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
         if (data != null) {
          if (data.user.role == 'TECH_INTERNAL') {
             _showToast('Login successful!');
+            // Reset bottom nav index to 0 (home page)
+            ref.read(bottomNavIndexProvider.notifier).state = 0;
+            // Refresh notifications
+            ref.invalidate(notificationsProvider);
             // Request location permission and update location silently in background
             BackgroundLocationService.requestAndUpdateLocationInBackground();
             // Navigate to home
@@ -205,6 +211,10 @@ class _InternalAuthScreenState extends ConsumerState<InternalAuthScreen> {
       _showToast(res.message);
 
       // token/user already save হয়েছে RegistrationApi ভেতরে
+      // Reset bottom nav index to 0 (home page)
+      ref.read(bottomNavIndexProvider.notifier).state = 0;
+      // Refresh notifications
+      ref.invalidate(notificationsProvider);
       // Request location permission and update location silently in background
       BackgroundLocationService.requestAndUpdateLocationInBackground();
       // Navigate to home
