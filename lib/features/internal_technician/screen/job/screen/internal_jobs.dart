@@ -1169,6 +1169,8 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                                   final finalUpdated = updated.copyWith(
                                     payment: paymentToUse,
                                     bonus: bonusToUse,
+                                    yourBonus: updated.yourBonus ?? job.yourBonus,
+                                    bonusRate: updated.bonusRate ?? job.bonusRate,
                                   );
                                   
                                   _handleJobUpdate(finalUpdated);
@@ -1446,7 +1448,26 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
       builder: (context) => PaymentSubmitBottomSheet(
         job: job,
         onPaymentSubmitted: () {
-          _loadAllJobs(); // Refresh job list
+          // Optimistically update the job to show "Payment verifying" immediately
+          final optimisticPayment = Payment(
+            id: 0, // Temporary ID
+            status: 'PENDING_VERIFICATION',
+            amount: double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0,
+            method: 'MOBILE_MONEY',
+          );
+          
+          final updatedPayments = <Payment>[...(job.payments ?? <Payment>[]), optimisticPayment];
+          final optimisticJob = job.copyWith(payments: updatedPayments);
+          
+          // Update the job immediately in the UI
+          setState(() {
+            _activeJobs = _activeJobs
+                .map((j) => j.id == job.id ? optimisticJob : j)
+                .toList();
+          });
+          
+          // Then reload from API to get the actual state
+          _loadAllJobs();
         },
       ),
     );

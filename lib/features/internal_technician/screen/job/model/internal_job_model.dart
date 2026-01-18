@@ -9,6 +9,8 @@ class InternalJob {
   final String? time;
   final String payment; // e.g. "$120"
   final String bonus; // e.g. "$6.00"
+  final double? yourBonus; // Actual bonus amount from API (e.g. 45)
+  final double? bonusRate; // Bonus rate percentage from API (e.g. 15)
   final String? description;
   final String? category;
   final JobStatus status;
@@ -29,6 +31,8 @@ class InternalJob {
     this.time,
     required this.payment,
     required this.bonus,
+    this.yourBonus,
+    this.bonusRate,
     this.description,
     this.category,
     required this.status,
@@ -50,6 +54,8 @@ class InternalJob {
     String? time,
     String? payment,
     String? bonus,
+    double? yourBonus,
+    double? bonusRate,
     String? description,
     String? category,
     JobStatus? status,
@@ -70,6 +76,8 @@ class InternalJob {
       time: time ?? this.time,
       payment: payment ?? this.payment,
       bonus: bonus ?? this.bonus,
+      yourBonus: yourBonus ?? this.yourBonus,
+      bonusRate: bonusRate ?? this.bonusRate,
       description: description ?? this.description,
       category: category ?? this.category,
       status: status ?? this.status,
@@ -170,10 +178,13 @@ class InternalJob {
     final double? lng = (json['longitude'] as num?)?.toDouble();
 
     final jobPayment = (json['jobPayment'] as num?)?.toDouble() ?? 0;
-    final bonusRateFromApi = (json['bonusRate'] as num?)?.toDouble() ?? 5;
+    final bonusRateFromApi = (json['bonusRate'] as num?)?.toDouble();
+    final yourBonusFromApi = (json['yourBonus'] as num?)?.toDouble();
     final paymentStr = '\$${jobPayment.toStringAsFixed(2)}';
-    final bonusStr =
-        '\$${(jobPayment * bonusRateFromApi / 100).toStringAsFixed(2)}';
+    
+    // Use yourBonus from API if available, otherwise calculate from bonusRate
+    final bonusAmount = yourBonusFromApi ?? (bonusRateFromApi != null ? (jobPayment * bonusRateFromApi / 100) : 0);
+    final bonusStr = '\$${bonusAmount.toStringAsFixed(2)}';
 
     // ---- title preference: subservice > service > category > WO number ----
     final title =
@@ -195,6 +206,8 @@ class InternalJob {
       time: timeStr,
       payment: paymentStr,
       bonus: bonusStr,
+      yourBonus: yourBonusFromApi,
+      bonusRate: bonusRateFromApi,
       description: json['notes'],
       category: category?['name'],
       status: status,

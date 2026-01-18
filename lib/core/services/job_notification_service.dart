@@ -308,6 +308,7 @@ class JobNotificationService {
           presentBadge: false,
           presentSound: true,
           sound: 'default',
+          interruptionLevel: InterruptionLevel.timeSensitive,
         );
 
         final details = NotificationDetails(

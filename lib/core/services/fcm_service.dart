@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io' show Platform;
+import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/constants/api_control/notificiaon_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
@@ -13,6 +15,10 @@ class FCMService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   static bool _isInitialized = false;
+
+  /// Callback to trigger when a job notification is tapped
+  /// Used to refresh the jobs screen automatically
+  static VoidCallback? onJobNotificationTapped;
 
   /// Initialize FCM and request permissions
   static Future<void> initialize() async {
@@ -42,10 +48,18 @@ class FCMService {
         return;
       }
 
+      // For iOS, wait for APNS token before getting FCM token
+      if (Platform.isIOS) {
+        _log.i('🍎 iOS detected - waiting for APNS token...');
+        await _waitForAPNSToken();
+      }
+
       // Get FCM token
       final token = await getFCMToken();
       if (token != null) {
         await sendTokenToServer(token);
+      } else {
+        _log.w('⚠️ FCM token is null, will retry when APNS token is available');
       }
 
       // Listen for token refresh
@@ -136,6 +150,44 @@ class FCMService {
     _log.i('✅ Local notifications initialized');
   }
 
+  /// Wait for APNS token on iOS (with retries)
+  static Future<void> _waitForAPNSToken() async {
+    try {
+      // Try to get APNS token with multiple retries
+      for (int i = 0; i < 5; i++) {
+        final apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken != null) {
+          _log.i('✅ APNS token received: $apnsToken');
+          return;
+        }
+        _log.w('⚠️ APNS token is null, retry attempt ${i + 1}/5');
+        if (i < 4) {
+          await Future.delayed(Duration(seconds: i + 1)); // Increasing delay
+        }
+      }
+      
+      _log.w('⚠️ Could not get APNS token after 5 attempts');
+      _log.i('💡 Continuing anyway - FCM might still work or token will be available later');
+      
+      // Listen for APNS token updates
+      _messaging.onTokenRefresh.listen((fcmToken) async {
+        _log.i('🔄 Token refreshed (APNS token may now be available): $fcmToken');
+        try {
+          final apnsToken = await _messaging.getAPNSToken();
+          if (apnsToken != null) {
+            _log.i('✅ APNS token now available: $apnsToken');
+            // Send the new FCM token to server
+            await sendTokenToServer(fcmToken);
+          }
+        } catch (e) {
+          _log.w('Error checking APNS token on refresh: $e');
+        }
+      });
+    } catch (e) {
+      _log.w('⚠️ Error waiting for APNS token: $e');
+    }
+  }
+
   /// Show local notification for foreground messages
   static Future<void> _showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
@@ -157,6 +209,9 @@ class FCMService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: 'default',
+      badgeNumber: 1,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
     final details = NotificationDetails(
@@ -200,6 +255,12 @@ class FCMService {
     if (_isJobNotification(message)) {
       _log.i('Job notification tapped, showing mandatory dialog');
       JobNotificationService().handleFCMJobNotification(message.data);
+      
+      // Trigger job screen refresh callback if registered
+      if (onJobNotificationTapped != null) {
+        _log.i('Triggering job screen refresh callback');
+        onJobNotificationTapped!();
+      }
     }
     // You can navigate to specific screen based on notification data
     // For example:
@@ -212,11 +273,22 @@ class FCMService {
   static Future<String?> getFCMToken() async {
     try {
       final token = await _messaging.getToken();
-      _log.i('FCM Token: $token');
-      return token;
+      if (token != null) {
+        _log.i('✅ FCM Token obtained: ${token.substring(0, 20)}...');
+        return token;
+      } else {
+        _log.w('⚠️ FCM Token is null');
+        return null;
+      }
     } catch (e, stackTrace) {
-      _log.e('Error getting FCM token: $e', error: e, stackTrace: stackTrace);
-      return null;
+      if (e.toString().contains('apns-token-not-set')) {
+        _log.w('⚠️ APNS token not ready yet - FCM token will be available later');
+        _log.i('💡 App will continue to work, notifications will be enabled once APNS token is available');
+        return null;
+      } else {
+        _log.e('❌ Error getting FCM token: $e', error: e, stackTrace: stackTrace);
+        return null;
+      }
     }
   }
 
@@ -310,11 +382,18 @@ class FCMService {
 
 /// Top-level function to handle background messages
 /// This must be a top-level function, not a class method
+/// Note: Firebase automatically displays notifications when app is in background,
+/// so we don't need to manually show notifications here to avoid duplicates.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final logger = Logger();
   logger.i('Handling a background message: ${message.messageId}');
   logger.i('Message data: ${message.data}');
+  
+  // Firebase automatically displays notifications when app is in background
+  // We only need to handle data processing/logic here, not display notifications
+  // This prevents duplicate notifications
+  
   if (message.notification != null) {
     logger.i('Message notification: ${message.notification}');
     

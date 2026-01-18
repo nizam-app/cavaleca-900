@@ -309,7 +309,9 @@ class Viewjobdetails extends StatelessWidget {
 
   // ---------------- BONUS CARD ----------------
   Widget _buildBonusCard() {
-    final bonus = _calculateBonus(job.payment);
+    // Use yourBonus from API if available, otherwise calculate from bonusRate
+    final bonusAmount = job.yourBonus ?? _calculateBonus(job.payment);
+    
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -327,14 +329,16 @@ class Viewjobdetails extends StatelessWidget {
               Icon(Icons.attach_money_rounded, size: 20.sp, color: kPrimaryGreen),
               SizedBox(width: 4.w),
               Text(
-                "performance_bonus".tr(),
+                job.bonusRate != null 
+                    ? "Performance Commission (${job.bonusRate!.toStringAsFixed(0)}%)"
+                    : "performance_bonus".tr(),
                 style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: kPrimaryGreen),
               ),
             ],
           ),
           SizedBox(height: 12.h),
           Text(
-            "\$${bonus.toStringAsFixed(2)}",
+            "\$${bonusAmount.toStringAsFixed(2)}",
             style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700, color: kPrimaryGreen),
           ),
           SizedBox(height: 4.h),
@@ -376,6 +380,8 @@ class Viewjobdetails extends StatelessWidget {
                 final finalUpdated = updated.copyWith(
                   payment: paymentToUse,
                   bonus: bonusToUse,
+                  yourBonus: updated.yourBonus ?? job.yourBonus,
+                  bonusRate: updated.bonusRate ?? job.bonusRate,
                 );
                 
                 // Notify parent about job update

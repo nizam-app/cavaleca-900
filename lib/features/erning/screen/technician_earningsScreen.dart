@@ -636,11 +636,10 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                       ],
                     ),
                     SizedBox(height: 24.h),
-                    // Amount field (read-only)
+                    // Amount field (editable)
                     TextFormField(
                       controller: amountController,
-                      readOnly: true,
-                      enabled: false,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -666,12 +665,40 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                           ),
                         ),
                         filled: true,
-                        fillColor: Colors.grey.shade100,
-                        disabledBorder: OutlineInputBorder(
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16.r),
                           borderSide: BorderSide(
                             color: Colors.grey.shade300,
                             width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: BorderSide(
+                            color: const Color(0xFF0A77FF),
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
                           ),
                         ),
                         contentPadding: EdgeInsets.symmetric(
@@ -679,6 +706,19 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                           vertical: 16.h,
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter an amount';
+                        }
+                        final amount = double.tryParse(value.trim());
+                        if (amount == null || amount <= 0) {
+                          return 'Please enter a valid amount';
+                        }
+                        if (amount > available) {
+                          return 'Amount cannot exceed available balance';
+                        }
+                        return null;
+                      },
                     ),
                     SizedBox(height: 16.h),
                     // Payment Method dropdown

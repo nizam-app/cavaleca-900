@@ -48,9 +48,11 @@ class _ComplitejobState extends State<Complitejob> {
   }
 
   double _calculateBonus(String payment) {
+    // Use bonusRate from API if available, otherwise default to 5%
+    final bonusRate = widget.job.bonusRate ?? 5.0;
     final sanitized = payment.replaceAll('\$', '').replaceAll(',', '');
     final amount = double.tryParse(sanitized) ?? 0;
-    return amount * 0.05; // 5% commission
+    return (amount * bonusRate) / 100;
   }
 
   Future<void> _showImageSourceDialog() async {
@@ -242,7 +244,10 @@ class _ComplitejobState extends State<Complitejob> {
   @override
   Widget build(BuildContext context) {
     final paymentAmount = double.tryParse(widget.job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0;
-    final bonus = _calculateBonus(widget.job.payment);
+    // Use yourBonus from API if available, otherwise calculate
+    final bonusAmount = widget.job.yourBonus ?? _calculateBonus(widget.job.payment);
+    // Use bonusRate from API if available, otherwise default to 5%
+    final bonusRate = (widget.job.bonusRate ?? 5.0) / 100; // Convert percentage to decimal
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -267,7 +272,7 @@ class _ComplitejobState extends State<Complitejob> {
                   SizedBox(height: 14.h),
                   _buildNotesField(),
                   SizedBox(height: 14.h),
-                  _buildBonusCard(paymentAmount, 0.05, bonus),
+                  _buildBonusCard(paymentAmount, bonusRate, bonusAmount),
                   SizedBox(height: 20.h),
                   _buildBottomButtons(context),
                 ],
