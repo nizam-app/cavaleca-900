@@ -12,6 +12,7 @@ import 'package:workpleis/features/internal_technician/widget/viewJobDetails.dar
 import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/core/widget/screen_refresh_provider.dart';
 import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
+import 'package:workpleis/core/services/fcm_service.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 
@@ -67,6 +68,20 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
   void initState() {
     super.initState();
     _loadAllJobs();
+    
+    // Register callback for auto-refresh when job notifications are tapped
+    FCMService.onJobNotificationTapped = () {
+      if (mounted) {
+        _loadAllJobs();
+      }
+    };
+  }
+
+  @override
+  void dispose() {
+    // Clean up the callback to prevent memory leaks
+    FCMService.onJobNotificationTapped = null;
+    super.dispose();
   }
 
   Future<void> _loadAllJobs() async {
@@ -436,7 +451,7 @@ class _JobsTabs extends StatelessWidget {
           children: [
             Expanded(
               child: _TabChip(
-                label: _capitalizeFirst('active'.tr()),
+                label: _capitalizeFirst('incoming'.tr()),
                 selected: currentTab == FreelancerJobsTab.active,
                 onTap: () => onTabChanged(FreelancerJobsTab.active),
               ),
