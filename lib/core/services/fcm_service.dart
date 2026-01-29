@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io' show Platform;
+import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/constants/api_control/notificiaon_api.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
@@ -14,6 +15,10 @@ class FCMService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   static bool _isInitialized = false;
+
+  /// Callback to trigger when a job notification is tapped
+  /// Used to refresh the jobs screen automatically
+  static VoidCallback? onJobNotificationTapped;
 
   /// Initialize FCM and request permissions
   static Future<void> initialize() async {
@@ -250,6 +255,12 @@ class FCMService {
     if (_isJobNotification(message)) {
       _log.i('Job notification tapped, showing mandatory dialog');
       JobNotificationService().handleFCMJobNotification(message.data);
+      
+      // Trigger job screen refresh callback if registered
+      if (onJobNotificationTapped != null) {
+        _log.i('Triggering job screen refresh callback');
+        onJobNotificationTapped!();
+      }
     }
     // You can navigate to specific screen based on notification data
     // For example:
