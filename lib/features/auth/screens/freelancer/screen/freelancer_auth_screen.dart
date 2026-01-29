@@ -7,6 +7,8 @@ import 'package:workpleis/features/auth/logic/auth_login_flow.dart';
 import 'package:workpleis/features/auth/logic/registration_logic.dart';
 import 'package:workpleis/features/auth/model/auth_login_model.dart';
 import 'package:workpleis/features/nav_bar/screen/freelancer_bottom_nav_bar.dart';
+import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
+import 'package:workpleis/features/notification/data/notificaion_data.dart';
 import 'package:workpleis/features/shared/background_location_service.dart';
 
 const Color kPrimaryRed = Color(0xFFC20001);
@@ -115,6 +117,10 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
           // backend theke asha user object use korbo
           if (res.user.role == 'TECH_FREELANCER') {
           _showToast('Login successful!');
+            // Reset bottom nav index to 0 (home page)
+            ref.read(bottomNavIndexProvider.notifier).state = 0;
+            // Refresh notifications
+            ref.invalidate(notificationsProvider);
             // Request location permission and update location silently in background
             BackgroundLocationService.requestAndUpdateLocationInBackground();
             // Navigate to home
@@ -248,6 +254,10 @@ class _FreelancerAuthScreenState extends ConsumerState<FreelancerAuthScreen> {
 
       _showSnack(res.message);
       // token save হয়েছে, এখন nav + callback
+      // Reset bottom nav index to 0 (home page)
+      ref.read(bottomNavIndexProvider.notifier).state = 0;
+      // Refresh notifications
+      ref.invalidate(notificationsProvider);
       // Request location permission and update location silently in background
       BackgroundLocationService.requestAndUpdateLocationInBackground();
       // Navigate to home

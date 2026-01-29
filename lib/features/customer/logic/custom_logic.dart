@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
 import 'package:workpleis/features/nav_bar/screen/bottom_nav_bar.dart';
+import 'package:workpleis/features/notification/data/notificaion_data.dart';
 
 final _log = Logger();
 
@@ -39,15 +40,22 @@ class CustomerAppState {
 /// -------------------- Controller --------------------
 
 class CustomerAppController extends StateNotifier<CustomerAppState> {
-  CustomerAppController() : super(CustomerAppState.initial()) {
+  CustomerAppController(this._ref) : super(CustomerAppState.initial()) {
     _initFromLocal();
   }
+
+  final Ref _ref;
+
   void authComplete({required bool isGuest, String? name, String? phone}) {
     state = state.copyWith(
       isAuthenticated: true,
       userData: CustomerUserData(isGuest: isGuest, name: name, phone: phone),
       activeIndex: 0,
     );
+    // Refresh notifications for logged-in users
+    if (!isGuest) {
+      _ref.invalidate(notificationsProvider);
+    }
   }
 
   /// Splash/first load এ লোকাল থেকে user hydrate করার কাজ
@@ -104,6 +112,8 @@ class CustomerAppController extends StateNotifier<CustomerAppState> {
       ),
       activeIndex: 0,
     );
+    // Refresh notifications
+    _ref.invalidate(notificationsProvider);
   }
 
   /// Logout
@@ -117,5 +127,5 @@ class CustomerAppController extends StateNotifier<CustomerAppState> {
 
 final customerAppControllerProvider =
     StateNotifierProvider<CustomerAppController, CustomerAppState>((ref) {
-      return CustomerAppController();
+      return CustomerAppController(ref);
     });
