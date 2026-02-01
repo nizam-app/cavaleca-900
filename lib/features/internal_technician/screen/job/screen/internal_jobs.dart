@@ -164,7 +164,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     }
 
     // Rule 2: If payments has at least one item with status == "PENDING_VERIFICATION" 
-    // → disable payment submission and show: "Payment verifying" (cannot upload proof again)
+    // → show "Resubmit payment" (enabled button)
     // IMPORTANT: Check PENDING_VERIFICATION FIRST (highest priority)
     final hasPendingVerification = payments.any((p) {
       final status = p.status.toUpperCase().trim();
@@ -172,7 +172,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     });
     
     if (hasPendingVerification) {
-      return PaymentButtonState.verifying;
+      return PaymentButtonState.resubmit;
     }
 
     // Rule 3: If payments is not empty and there is NO "PENDING_VERIFICATION", 
