@@ -1,6 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:easy_localization/easy_localization.dart';
+
 import '../screen/job/model/internal_job_model.dart';
 
 /// ------------------- COLORS --------------------
@@ -100,7 +101,7 @@ class IncomingJobDetails extends StatelessWidget {
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Icon(Icons.close, size: 20.sp, color: Colors.grey),
-            )
+            ),
           ],
         ),
         SizedBox(height: 4.h),
@@ -133,18 +134,18 @@ class IncomingJobDetails extends StatelessWidget {
             job.priority == JobPriority.high
                 ? "high_priority".tr()
                 : job.priority == JobPriority.medium
-                    ? "medium_priority".tr()
-                    : "low_priority".tr(),
+                ? "medium_priority".tr()
+                : "low_priority".tr(),
             job.priority == JobPriority.high
                 ? const Color(0xFFFFE5E5)
                 : job.priority == JobPriority.medium
-                    ? const Color(0xFFFFF0D5)
-                    : const Color(0xFFE5F5E5),
+                ? const Color(0xFFFFF0D5)
+                : const Color(0xFFE5F5E5),
             job.priority == JobPriority.high
                 ? Colors.red.shade700
                 : job.priority == JobPriority.medium
-                    ? Colors.orange.shade700
-                    : Colors.green.shade700,
+                ? Colors.orange.shade700
+                : Colors.green.shade700,
           ),
           SizedBox(width: 6.w),
         ],
@@ -162,7 +163,11 @@ class IncomingJobDetails extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w500, color: color),
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w500,
+          color: color,
+        ),
       ),
     );
   }
@@ -175,13 +180,21 @@ class IncomingJobDetails extends StatelessWidget {
         children: [
           Text(
             job.title,
-            style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600, color: kTextMain),
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: kTextMain,
+            ),
           ),
           if (job.category != null) ...[
             SizedBox(height: 4.h),
             Text(
               job.category!,
-              style: TextStyle(fontSize: 12.sp, color: Colors.red.shade500, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.red.shade500,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
           if (job.description != null && job.description!.isNotEmpty) ...[
@@ -207,18 +220,30 @@ class IncomingJobDetails extends StatelessWidget {
               children: [
                 Text(
                   "customer".tr(),
-                  style: TextStyle(fontSize: 11.sp, color: kTextSubtle, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: kTextSubtle,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 SizedBox(height: 6.h),
                 Text(
                   job.customer,
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: kTextMain),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: kTextMain,
+                  ),
                 ),
                 if (job.customerPhone != null) ...[
                   SizedBox(height: 3.h),
                   Text(
                     job.customerPhone!,
-                    style: TextStyle(fontSize: 12.sp, color: kTextMuted, fontWeight: FontWeight.w400),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: kTextMuted,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ],
@@ -245,7 +270,11 @@ class IncomingJobDetails extends StatelessWidget {
     return _card(
       Row(
         children: [
-          _circleIcon(Icons.location_on_rounded, Colors.red.shade100, Colors.red),
+          _circleIcon(
+            Icons.location_on_rounded,
+            Colors.red.shade100,
+            Colors.red,
+          ),
           SizedBox(width: 10.w),
           Expanded(
             child: Column(
@@ -253,12 +282,20 @@ class IncomingJobDetails extends StatelessWidget {
               children: [
                 Text(
                   "location".tr(),
-                  style: TextStyle(fontSize: 11.sp, color: kTextSubtle, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: kTextSubtle,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   address,
-                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: kTextMain),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    color: kTextMain,
+                  ),
                 ),
               ],
             ),
@@ -274,7 +311,11 @@ class IncomingJobDetails extends StatelessWidget {
     return _card(
       Row(
         children: [
-          _circleIcon(Icons.calendar_month_rounded, Colors.blue.shade50, Colors.blue.shade600),
+          _circleIcon(
+            Icons.calendar_month_rounded,
+            Colors.blue.shade50,
+            Colors.blue.shade600,
+          ),
           SizedBox(width: 10.w),
           Expanded(
             child: Column(
@@ -282,12 +323,20 @@ class IncomingJobDetails extends StatelessWidget {
               children: [
                 Text(
                   "scheduled".tr(),
-                  style: TextStyle(fontSize: 11.sp, color: kTextSubtle, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: kTextSubtle,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   dateTime,
-                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: kTextMain),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    color: kTextMain,
+                  ),
                 ),
               ],
             ),
@@ -297,8 +346,25 @@ class IncomingJobDetails extends StatelessWidget {
     );
   }
 
+  double _ratePercent(InternalJob job) {
+    final r = job.bonusRate;
+    if (r == null) return 5; // fallback
+    return r <= 1 ? r * 100 : r; // 0.21 হলে 21 বানাবে, 21 হলে 21 রাখবে
+  }
+
+  double _commissionAmount(InternalJob job) {
+    if (job.yourBonus != null) return job.yourBonus!;
+    final payment =
+        double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ??
+        0;
+    final rate = _ratePercent(job);
+    return payment * rate / 100;
+  }
+
   // ---------------- BONUS CARD ----------------
   Widget _buildBonusCard(double bonus) {
+    final rate = _ratePercent(job);
+    final amount = _commissionAmount(job);
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -313,23 +379,39 @@ class IncomingJobDetails extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.attach_money_rounded, size: 20.sp, color: kPrimaryGreen),
+              Icon(
+                Icons.attach_money_rounded,
+                size: 20.sp,
+                color: kPrimaryGreen,
+              ),
               SizedBox(width: 4.w),
               Text(
-                "performance_bonus".tr(),
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: kPrimaryGreen),
+                "performance_bonus".tr() + "(${rate.toStringAsFixed(0)}%)",
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: kPrimaryGreen,
+                ),
               ),
             ],
           ),
           SizedBox(height: 12.h),
           Text(
-            "\$${bonus.toStringAsFixed(2)}",
-            style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700, color: kPrimaryGreen),
+            "\$${amount.toStringAsFixed(2)}",
+            style: TextStyle(
+              fontSize: 22.sp,
+              fontWeight: FontWeight.w700,
+              color: kPrimaryGreen,
+            ),
           ),
           SizedBox(height: 4.h),
           Text(
             "from ${job.payment} job",
-            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w400, color: kPrimaryGreen),
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: kPrimaryGreen,
+            ),
           ),
         ],
       ),
@@ -381,11 +463,19 @@ class IncomingJobDetails extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle_outline, color: Colors.white, size: 20.sp),
+                Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 20.sp,
+                ),
                 SizedBox(width: 8.w),
                 Text(
                   "accept".tr(),
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.white),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -414,7 +504,11 @@ class IncomingJobDetails extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Text(
                   "reject".tr(),
-                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: kTextMain),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    color: kTextMain,
+                  ),
                 ),
               ],
             ),
@@ -437,7 +531,7 @@ class IncomingJobDetails extends StatelessWidget {
             color: Colors.black.withOpacity(0.04),
             blurRadius: 8.r,
             offset: Offset(0, 3.h),
-          )
+          ),
         ],
       ),
       child: child,
@@ -456,4 +550,3 @@ class IncomingJobDetails extends StatelessWidget {
     );
   }
 }
-

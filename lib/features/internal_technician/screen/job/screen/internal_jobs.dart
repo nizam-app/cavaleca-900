@@ -1,17 +1,18 @@
 import 'dart:io';
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
-import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:workpleis/core/widget/screen_refresh_provider.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
+import 'package:workpleis/features/internal_technician/widget/gPSCheckInPopup.dart';
 import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
+import '../../../widget/incomingJobDetails.dart';
 import '../../../widget/jobDetails.dart';
 import '../../../widget/viewJobDetails.dart';
-import '../../../widget/incomingJobDetails.dart';
 import '../model/internal_job_model.dart';
 
 enum PaymentButtonState {
@@ -73,19 +74,17 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
       // - All jobs from 'active' endpoint
       // - Jobs with status COMPLETED_PENDING_PAYMENT (from any endpoint)
       final allJobsForActive = [...active, ...done, ...incoming];
-      final filteredActive = allJobsForActive
-          .where((job) {
-            // Include if it's a normal active job
-            if (job.status == JobStatus.assigned || 
-                job.status == JobStatus.inProgress ||
-                job.status == JobStatus.completed) {
-              // But exclude if it's PAID_VERIFIED (should be in completed tab)
-              return job.status != JobStatus.paidVerified;
-            }
-            // Include if it needs payment
-            return job.status == JobStatus.completedPendingPayment;
-          })
-          .toList();
+      final filteredActive = allJobsForActive.where((job) {
+        // Include if it's a normal active job
+        if (job.status == JobStatus.assigned ||
+            job.status == JobStatus.inProgress ||
+            job.status == JobStatus.completed) {
+          // But exclude if it's PAID_VERIFIED (should be in completed tab)
+          return job.status != JobStatus.paidVerified;
+        }
+        // Include if it needs payment
+        return job.status == JobStatus.completedPendingPayment;
+      }).toList();
 
       setState(() {
         _incomingJobs = incoming
@@ -137,18 +136,20 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
   String _formatStatusString(String backendStatus) {
     return backendStatus
         .split('_')
-        .map((word) => word.isEmpty
-            ? ''
-            : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .map(
+          (word) => word.isEmpty
+              ? ''
+              : word[0].toUpperCase() + word.substring(1).toLowerCase(),
+        )
         .join(' ');
   }
 
   /// Determine payment button state for COMPLETED_PENDING_PAYMENT jobs
   /// Rules:
   /// 1. If payments is empty ([]) or null → show action: "Please submit payment"
-  /// 2. If payments has at least one item with status == "PENDING_VERIFICATION" → 
+  /// 2. If payments has at least one item with status == "PENDING_VERIFICATION" →
   ///    disable payment submission and show: "Payment verifying" (cannot upload proof again)
-  /// 3. If payments is not empty and there is NO "PENDING_VERIFICATION", and all existing 
+  /// 3. If payments is not empty and there is NO "PENDING_VERIFICATION", and all existing
   ///    payments are "REJECTED" → show action: "Resubmit payment"
   PaymentButtonState _getPaymentButtonState(InternalJob job) {
     // Only check for COMPLETED_PENDING_PAYMENT status
@@ -157,31 +158,31 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     }
 
     final payments = job.payments ?? [];
-    
+
     // Rule 1: If payments is empty ([]) or null → show action: "Please submit payment"
     if (payments.isEmpty) {
       return PaymentButtonState.submit;
     }
 
-    // Rule 2: If payments has at least one item with status == "PENDING_VERIFICATION" 
+    // Rule 2: If payments has at least one item with status == "PENDING_VERIFICATION"
     // → show "Resubmit payment" (enabled button)
     // IMPORTANT: Check PENDING_VERIFICATION FIRST (highest priority)
     final hasPendingVerification = payments.any((p) {
       final status = p.status.toUpperCase().trim();
       return status == 'PENDING_VERIFICATION';
     });
-    
+
     if (hasPendingVerification) {
       return PaymentButtonState.resubmit;
     }
 
-    // Rule 3: If payments is not empty and there is NO "PENDING_VERIFICATION", 
+    // Rule 3: If payments is not empty and there is NO "PENDING_VERIFICATION",
     // and all existing payments are "REJECTED" → show action: "Resubmit payment"
     final allRejected = payments.every((p) {
       final status = p.status.toUpperCase().trim();
       return status == 'REJECTED';
     });
-    
+
     if (allRejected) {
       return PaymentButtonState.resubmit;
     }
@@ -198,9 +199,13 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     );
 
     // Preserve payment and bonus if API response has $0.00
-    final paymentToUse = updatedJob.payment == '\$0.00' ? existingJob.payment : updatedJob.payment;
-    final bonusToUse = updatedJob.bonus == '\$0.00' ? existingJob.bonus : updatedJob.bonus;
-    
+    final paymentToUse = updatedJob.payment == '\$0.00'
+        ? existingJob.payment
+        : updatedJob.payment;
+    final bonusToUse = updatedJob.bonus == '\$0.00'
+        ? existingJob.bonus
+        : updatedJob.bonus;
+
     final finalUpdated = updatedJob.copyWith(
       payment: paymentToUse,
       bonus: bonusToUse,
@@ -228,11 +233,9 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
         action: 'ACCEPT',
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('work_order_accepted'.tr()),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('work_order_accepted'.tr())));
 
       setState(() {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
@@ -240,9 +243,9 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
         _activeJobs = [..._activeJobs, updated];
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${'failed_to_accept_job'.tr()}: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${'failed_to_accept_job'.tr()}: $e')),
+      );
     }
   }
 
@@ -261,9 +264,9 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${'failed_to_decline_job'.tr()}: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${'failed_to_decline_job'.tr()}: $e')),
+      );
     }
   }
 
@@ -274,7 +277,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Listen for refresh triggers when this screen becomes visible
     ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
       final currentIndex = ref.read(bottomNavIndexProvider);
@@ -338,9 +341,16 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
 
                 // ---------- Content (একটাই Expanded) ----------
                 Expanded(
-                  child: _isLoading && _incomingJobs.isEmpty && _activeJobs.isEmpty && _completedJobs.isEmpty
+                  child:
+                      _isLoading &&
+                          _incomingJobs.isEmpty &&
+                          _activeJobs.isEmpty &&
+                          _completedJobs.isEmpty
                       ? const Center(child: CircularProgressIndicator())
-                      : _errorMessage != null && _incomingJobs.isEmpty && _activeJobs.isEmpty && _completedJobs.isEmpty
+                      : _errorMessage != null &&
+                            _incomingJobs.isEmpty &&
+                            _activeJobs.isEmpty &&
+                            _completedJobs.isEmpty
                       ? Center(
                           child: Padding(
                             padding: EdgeInsets.all(16.w),
@@ -365,8 +375,12 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                                 SizedBox(height: 16.h),
                                 if (_isLoading)
                                   Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 20.h),
-                                    child: const Center(child: CircularProgressIndicator()),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 20.h,
+                                    ),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
                                   )
                                 else if (_selectedTab == 0)
                                   _buildIncomingTab()
@@ -603,6 +617,8 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
   }
 
   Widget _buildIncomingJobCard(InternalJob job) {
+    final rate = _ratePercent(job);
+    final amount = _commissionAmount(job);
     final gradient = const LinearGradient(
       colors: [
         Color(0xFFFFF5F5), // red-50
@@ -774,7 +790,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Your Commission ($bonusRate%)',
+                          'Your Commission (${rate.toStringAsFixed(0)}%)',
                           style: TextStyle(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 11.sp,
@@ -782,7 +798,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          '\$${_calculateBonus(job.payment).toStringAsFixed(2)}',
+                          '\$${amount.toStringAsFixed(2)}',
                           style: TextStyle(
                             color: const Color(0xFF059669),
                             fontSize: 14.sp,
@@ -882,9 +898,25 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     );
   }
 
+  double _ratePercent(InternalJob job) {
+    final r = job.bonusRate;
+    if (r == null) return 5; // fallback
+    return r <= 1 ? r * 100 : r; // 0.21 হলে 21 বানাবে, 21 হলে 21 রাখবে
+  }
+
+  double _commissionAmount(InternalJob job) {
+    if (job.yourBonus != null) return job.yourBonus!;
+    final payment =
+        double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ??
+        0;
+    final rate = _ratePercent(job);
+    return payment * rate / 100;
+  }
+
   Widget _buildActiveJobCard(InternalJob job) {
     final bool isInProgress = job.status == JobStatus.inProgress;
-
+    final rate = _ratePercent(job);
+    final amount = _commissionAmount(job);
     final BoxDecoration decoration = isInProgress
         ? BoxDecoration(
             gradient: const LinearGradient(
@@ -1039,7 +1071,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'Your Commission ($bonusRate%)',
+                            'Your Commission (${rate.toStringAsFixed(0)}%)',
                             style: TextStyle(
                               color: const Color(0xFF9CA3AF),
                               fontSize: 11.sp,
@@ -1047,7 +1079,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                           ),
                           SizedBox(height: 2.h),
                           Text(
-                            '\$${_calculateBonus(job.payment).toStringAsFixed(2)}',
+                            '\$${amount.toStringAsFixed(2)}',
                             style: TextStyle(
                               color: const Color(0xFF059669),
                               fontSize: 14.sp,
@@ -1075,135 +1107,154 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
               // Hide Start/Continue buttons if payment is pending
               if (job.status != JobStatus.completedPendingPayment)
                 if (isInProgress)
-                SizedBox(
-                  width: double.infinity,
-                  height: 40.h,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14.r),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 40.h,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                      ),
+                      onPressed: () async {
+                        // Continue Job -> details popup
+                        await showDialog(
+                          context: context,
+                          barrierDismissible: true,
+                          builder: (_) => Jobdetails(job: job),
+                        );
+                      },
+                      child: Text(
+                        'Continue Job',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                    onPressed: () async {
-                      // Continue Job -> details popup
-                      await showDialog(
-                        context: context,
-                        barrierDismissible: true,
-                        builder: (_) => Jobdetails(job: job),
-                      );
-                    },
-                    child: Text(
-                      'Continue Job',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w500,
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFD1D5DB)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                          ),
+                          onPressed: () {
+                            // View Details -> same as InternalDashboardV2Screen
+                            showDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (_) => Viewjobdetails(
+                                job: job,
+                                onJobUpdate: (updatedJob) =>
+                                    _handleJobUpdate(updatedJob),
+                                bonusRate: bonusRate.toDouble(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'View Details',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF111827),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                          ),
+                          onPressed: () async {
+                            // Start Job flow (GPS popup -> Map screen -> API call)
+                            await showDialog(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (_) => Gpscheckinpopup(
+                                jobAddress: job.address ?? job.location,
+                                onLocationVerified: (lat, lng) async {
+                                  // Location verified from map, now start the job
+                                  try {
+                                    final updated =
+                                        await TechnicianJobsApi.startWorkOrder(
+                                          woId: job.id,
+                                          lat: lat,
+                                          lng: lng,
+                                        );
+
+                                    // Preserve payment and bonus if API response has $0.00
+                                    final paymentToUse =
+                                        updated.payment == '\$0.00'
+                                        ? job.payment
+                                        : updated.payment;
+                                    final bonusToUse = updated.bonus == '\$0.00'
+                                        ? job.bonus
+                                        : updated.bonus;
+
+                                    final finalUpdated = updated.copyWith(
+                                      payment: paymentToUse,
+                                      bonus: bonusToUse,
+                                      yourBonus:
+                                          updated.yourBonus ?? job.yourBonus,
+                                      bonusRate:
+                                          updated.bonusRate ?? job.bonusRate,
+                                    );
+
+                                    _handleJobUpdate(finalUpdated);
+
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'job_started_successfully'.tr(),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${'failed_to_start_job'.tr()}: $e',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Start Job',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFD1D5DB)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                        ),
-                        onPressed: () {
-                          // View Details -> same as InternalDashboardV2Screen
-                          showDialog(
-                            context: context,
-                            barrierDismissible: true,
-                            builder: (_) => Viewjobdetails(
-                              job: job,
-                              onJobUpdate: (updatedJob) => _handleJobUpdate(updatedJob),
-                              bonusRate: bonusRate.toDouble(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          'View Details',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF111827),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                        ),
-                        onPressed: () async {
-                          // Start Job flow (GPS popup -> Map screen -> API call)
-                          await showDialog(
-                            context: context,
-                            barrierDismissible: true,
-                            builder: (_) => Gpscheckinpopup(
-                              jobAddress: job.address ?? job.location,
-                              onLocationVerified: (lat, lng) async {
-                                // Location verified from map, now start the job
-                                try {
-                                  final updated = await TechnicianJobsApi.startWorkOrder(
-                                    woId: job.id,
-                                    lat: lat,
-                                    lng: lng,
-                                  );
-                                  
-                                  // Preserve payment and bonus if API response has $0.00
-                                  final paymentToUse = updated.payment == '\$0.00' ? job.payment : updated.payment;
-                                  final bonusToUse = updated.bonus == '\$0.00' ? job.bonus : updated.bonus;
-                                  
-                                  final finalUpdated = updated.copyWith(
-                                    payment: paymentToUse,
-                                    bonus: bonusToUse,
-                                    yourBonus: updated.yourBonus ?? job.yourBonus,
-                                    bonusRate: updated.bonusRate ?? job.bonusRate,
-                                  );
-                                  
-                                  _handleJobUpdate(finalUpdated);
-                                  
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('job_started_successfully'.tr()),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('${'failed_to_start_job'.tr()}: $e')),
-                                    );
-                                  }
-                                }
-                              },
-                            ),
-                          );
-                        },
-                        child: Text(
-                          'Start Job',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
             ],
           ),
         ),
@@ -1278,10 +1329,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 8.w,
-        vertical: 4.h,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(999.r),
@@ -1308,16 +1356,22 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     }
 
     final payments = job.payments ?? [];
-    
+
     // If payments is empty, don't show status
     if (payments.isEmpty) {
       return const SizedBox.shrink();
     }
 
     // Check overall payment status (priority: PENDING > REJECTED > VERIFIED)
-    final pendingCount = payments.where((p) => p.status.toUpperCase() == 'PENDING_VERIFICATION').length;
-    final rejectedCount = payments.where((p) => p.status.toUpperCase() == 'REJECTED').length;
-    final verifiedCount = payments.where((p) => p.status.toUpperCase() == 'VERIFIED').length;
+    final pendingCount = payments
+        .where((p) => p.status.toUpperCase() == 'PENDING_VERIFICATION')
+        .length;
+    final rejectedCount = payments
+        .where((p) => p.status.toUpperCase() == 'REJECTED')
+        .length;
+    final verifiedCount = payments
+        .where((p) => p.status.toUpperCase() == 'VERIFIED')
+        .length;
 
     String statusText = '';
     Color statusColor = const Color(0xFF6B7280);
@@ -1352,11 +1406,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            statusIcon,
-            size: 14.sp,
-            color: statusColor,
-          ),
+          Icon(statusIcon, size: 14.sp, color: statusColor),
           SizedBox(width: 6.w),
           Text(
             statusText,
@@ -1373,7 +1423,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
 
   Widget _buildPaymentActionButton(InternalJob job) {
     final buttonState = _getPaymentButtonState(job);
-    
+
     // Debug: Print payment state for troubleshooting
     // if (job.status == JobStatus.completedPendingPayment) {
     //   print('Job ${job.id} - Button State: $buttonState');
@@ -1384,7 +1434,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
     //     }
     //   }
     // }
-    
+
     if (buttonState == PaymentButtonState.none) {
       return const SizedBox.shrink();
     }
@@ -1426,15 +1476,10 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
             borderRadius: BorderRadius.circular(14.r),
           ),
         ),
-        onPressed: isEnabled
-            ? () => _showPaymentSubmitDialog(job)
-            : null,
+        onPressed: isEnabled ? () => _showPaymentSubmitDialog(job) : null,
         child: Text(
           buttonText,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500),
         ),
       ),
     );
@@ -1452,20 +1497,27 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
           final optimisticPayment = Payment(
             id: 0, // Temporary ID
             status: 'PENDING_VERIFICATION',
-            amount: double.tryParse(job.payment.replaceAll('\$', '').replaceAll(',', '')) ?? 0,
+            amount:
+                double.tryParse(
+                  job.payment.replaceAll('\$', '').replaceAll(',', ''),
+                ) ??
+                0,
             method: 'MOBILE_MONEY',
           );
-          
-          final updatedPayments = <Payment>[...(job.payments ?? <Payment>[]), optimisticPayment];
+
+          final updatedPayments = <Payment>[
+            ...(job.payments ?? <Payment>[]),
+            optimisticPayment,
+          ];
           final optimisticJob = job.copyWith(payments: updatedPayments);
-          
+
           // Update the job immediately in the UI
           setState(() {
             _activeJobs = _activeJobs
                 .map((j) => j.id == job.id ? optimisticJob : j)
                 .toList();
           });
-          
+
           // Then reload from API to get the actual state
           _loadAllJobs();
         },
@@ -1494,6 +1546,8 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
 
   Widget _buildCompletedJobCard(InternalJob job) {
     final bonus = _calculateBonus(job.payment);
+    final rate = _ratePercent(job);
+    final amount = _commissionAmount(job);
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -1615,7 +1669,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Commission Earned ($bonusRate%)',
+                      'Commission Earned (${rate.toStringAsFixed(0)}%)',
                       style: TextStyle(
                         color: const Color(0xFF9CA3AF),
                         fontSize: 11.sp,
@@ -1623,7 +1677,7 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      '\$${bonus.toStringAsFixed(2)}',
+                      '\$${amount.toStringAsFixed(2)}',
                       style: TextStyle(
                         color: const Color(0xFF059669),
                         fontSize: 14.sp,
@@ -1699,7 +1753,8 @@ class PaymentSubmitBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<PaymentSubmitBottomSheet> createState() => _PaymentSubmitBottomSheetState();
+  State<PaymentSubmitBottomSheet> createState() =>
+      _PaymentSubmitBottomSheetState();
 }
 
 class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
@@ -1707,7 +1762,7 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
   late final TextEditingController _amountController;
   final _transactionRefController = TextEditingController();
   final _imagePicker = ImagePicker();
-  
+
   String _selectedMethod = 'MOBILE_MONEY';
   XFile? _proofImage;
   bool _isSubmitting = false;
@@ -1716,9 +1771,11 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
   void initState() {
     super.initState();
     // Auto-populate amount from job.payment
-    final paymentAmount = double.tryParse(
-      widget.job.payment.replaceAll('\$', '').replaceAll(',', ''),
-    ) ?? 0.0;
+    final paymentAmount =
+        double.tryParse(
+          widget.job.payment.replaceAll('\$', '').replaceAll(',', ''),
+        ) ??
+        0.0;
     _amountController = TextEditingController(
       text: paymentAmount.toStringAsFixed(2),
     );
@@ -1772,9 +1829,9 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
       }
     }
   }
@@ -1787,7 +1844,9 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
     // Only require proof image for MOBILE_MONEY
     if (_selectedMethod != 'CASH' && _proofImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload proof image for mobile payment')),
+        const SnackBar(
+          content: Text('Please upload proof image for mobile payment'),
+        ),
       );
       return;
     }
@@ -1798,7 +1857,7 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
 
     try {
       final amount = double.parse(_amountController.text.trim());
-      
+
       await TechnicianJobsApi.submitPayment(
         woId: widget.job.id,
         amount: amount,
@@ -1816,9 +1875,9 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit payment: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to submit payment: $e')));
       }
     } finally {
       if (mounted) {
@@ -1869,8 +1928,11 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                   // Amount field (read-only or auto-populated)
                   TextFormField(
                     controller: _amountController,
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    readOnly: true, // Make it read-only to prevent manual editing
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    readOnly:
+                        true, // Make it read-only to prevent manual editing
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
@@ -1931,10 +1993,7 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                       ),
                     ),
                     items: const [
-                      DropdownMenuItem(
-                        value: 'CASH',
-                        child: Text('Cash'),
-                      ),
+                      DropdownMenuItem(value: 'CASH', child: Text('Cash')),
                       DropdownMenuItem(
                         value: 'MOBILE_MONEY',
                         child: Text('Mobile Money (bKash/Nagad/Bank Transfer)'),
@@ -1958,8 +2017,8 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                   TextFormField(
                     controller: _transactionRefController,
                     decoration: InputDecoration(
-                      labelText: _selectedMethod == 'CASH' 
-                          ? 'Transaction Reference (Optional)' 
+                      labelText: _selectedMethod == 'CASH'
+                          ? 'Transaction Reference (Optional)'
                           : 'Transaction Reference',
                       hintText: _selectedMethod == 'CASH'
                           ? 'Enter transaction reference (optional)'
@@ -1971,7 +2030,8 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                     ),
                     validator: (value) {
                       // Transaction ref is required only for MOBILE_MONEY
-                      if (_selectedMethod != 'CASH' && (value == null || value.trim().isEmpty)) {
+                      if (_selectedMethod != 'CASH' &&
+                          (value == null || value.trim().isEmpty)) {
                         return 'Transaction reference is required for mobile payment';
                       }
                       return null;
@@ -2023,77 +2083,81 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                     child: Opacity(
                       opacity: _selectedMethod == 'CASH' ? 0.5 : 1.0,
                       child: Container(
-                      height: 120.h,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(
-                          color: const Color(0xFFE5E7EB),
-                          width: 1,
+                        height: 120.h,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(
+                            color: const Color(0xFFE5E7EB),
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: _proofImage != null
-                          ? Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  child: Image.file(
-                                    File(_proofImage!.path),
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Center(
-                                        child: Icon(Icons.image, size: 48),
-                                      );
-                                    },
+                        child: _proofImage != null
+                            ? Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    child: Image.file(
+                                      File(_proofImage!.path),
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return const Center(
+                                              child: Icon(
+                                                Icons.image,
+                                                size: 48,
+                                              ),
+                                            );
+                                          },
+                                    ),
                                   ),
-                                ),
-                                Positioned(
-                                  top: 4.h,
-                                  right: 4.w,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _proofImage = null;
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.all(4.w),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 16,
+                                  Positioned(
+                                    top: 4.h,
+                                    right: 4.w,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _proofImage = null;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.all(4.w),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.cloud_upload_outlined,
-                                  size: 40.sp,
-                                  color: const Color(0xFF9CA3AF),
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  _selectedMethod == 'CASH'
-                                      ? 'Not required for cash'
-                                      : 'Tap to upload proof image',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    color: const Color(0xFF6B7280),
+                                ],
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_upload_outlined,
+                                    size: 40.sp,
+                                    color: const Color(0xFF9CA3AF),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    _selectedMethod == 'CASH'
+                                        ? 'Not required for cash'
+                                        : 'Tap to upload proof image',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                   ),
@@ -2141,7 +2205,9 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                                   width: 20.w,
                                   child: const CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : Text(
