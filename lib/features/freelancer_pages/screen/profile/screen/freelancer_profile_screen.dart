@@ -173,7 +173,8 @@ class _FreelancerProfileScreenState
             ),
           ),
           data: (profile) {
-            final isAvailable = profile.locationStatus?.toUpperCase() == 'ONLINE';
+            final isAvailable =
+                profile.locationStatus?.toUpperCase() == 'ONLINE';
             return SingleChildScrollView(
               child: Column(
                 children: [
@@ -305,7 +306,7 @@ class _FreelancerProfileScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child:  Text('cancel'.tr()),
+              child: Text('cancel'.tr()),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -740,8 +741,13 @@ class _SettingsSection extends StatelessWidget {
           icon: Icons.attach_money_rounded,
           iconColor: const Color(0xFF16A34A),
           title: 'payment_settings'.tr(),
-          subtitle: profile.bankLinked ? 'bank_linked'.tr() : 'add_payout_method'.tr(),
-          onTap: onSelectLanguage,
+          subtitle: profile.bankLinked
+              ? 'bank_linked'.tr()
+              : 'add_payout_method'.tr(),
+          onTap: () {
+            //Payment setting
+          },
+          //onSelectLanguage,
         ),
         SizedBox(height: 8.h),
         _SettingsTile(

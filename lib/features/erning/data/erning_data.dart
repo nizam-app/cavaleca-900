@@ -76,9 +76,22 @@ class TechnicianEarningsApi {
     );
 
     if (res.statusCode != 201 && res.statusCode != 200) {
-      throw Exception(
-        'Failed to request payout (${res.statusCode}): ${res.body}',
-      );
+      String errorMessage =
+          'Failed to request payout (${res.statusCode}). Please try again.';
+
+      try {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map<String, dynamic>) {
+          final backendMessage = decoded['message'];
+          if (backendMessage is String && backendMessage.trim().isNotEmpty) {
+            errorMessage = backendMessage;
+          }
+        }
+      } catch (_) {
+        // Ignore JSON parse errors and fall back to the default message
+      }
+
+      throw Exception(errorMessage);
     }
   }
 }
