@@ -1,12 +1,13 @@
 import 'dart:io';
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:workpleis/core/widget/screen_refresh_provider.dart';
 import 'package:workpleis/features/erning/data/erning_data.dart';
 import 'package:workpleis/features/erning/model/erninig_model.dart';
-import 'package:workpleis/core/widget/screen_refresh_provider.dart';
 import 'package:workpleis/features/nav_bar/logic/botton_nav_index_logic.dart';
 
 class Earningsscreen extends ConsumerStatefulWidget {
@@ -22,7 +23,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
   @override
   Widget build(BuildContext context) {
     final asyncSummary = ref.watch(internalEarningsProvider);
-    
+
     // Listen for refresh triggers when this screen becomes visible
     ref.listen<int>(screenRefreshTriggerProvider, (previous, next) {
       final currentIndex = ref.read(bottomNavIndexProvider);
@@ -166,10 +167,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
           SizedBox(height: 6.h),
           Text(
             "track_bonus".tr(),
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.white70,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: Colors.white70),
           ),
           SizedBox(height: 18.h),
           Container(
@@ -473,7 +471,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
             builder: (sheetContext, setState) {
               // Check if payment method requires image
               bool requiresImage = paymentMethod != 'CASH';
-              
+
               Future<void> pickProofImage() async {
                 try {
                   final source = await showModalBottomSheet<ImageSource>(
@@ -482,7 +480,9 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                     builder: (context) => Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(20.r),
+                        ),
                       ),
                       child: SafeArea(
                         child: Column(
@@ -491,12 +491,14 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                             ListTile(
                               leading: const Icon(Icons.photo_library),
                               title: const Text('Gallery'),
-                              onTap: () => Navigator.pop(context, ImageSource.gallery),
+                              onTap: () =>
+                                  Navigator.pop(context, ImageSource.gallery),
                             ),
                             ListTile(
                               leading: const Icon(Icons.camera_alt),
                               title: const Text('Camera'),
-                              onTap: () => Navigator.pop(context, ImageSource.camera),
+                              onTap: () =>
+                                  Navigator.pop(context, ImageSource.camera),
                             ),
                             SizedBox(height: 10.h),
                           ],
@@ -533,7 +535,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                   });
                   return;
                 }
-                
+
                 // Clear error if image is present
                 setState(() {
                   imageError = null;
@@ -567,9 +569,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                 } catch (e) {
                   setState(() => isSubmitting = false);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to submit request: $e'),
-                    ),
+                    SnackBar(content: Text('Failed to submit request: $e')),
                   );
                 }
               }
@@ -581,485 +581,491 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    // Drag handle
-                    Center(
-                      child: Container(
-                        width: 48.w,
-                        height: 4.h,
-                        margin: EdgeInsets.only(bottom: 20.h),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
-                    ),
-                    // Title with icon
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(10.r),
+                      // Drag handle
+                      Center(
+                        child: Container(
+                          width: 48.w,
+                          height: 4.h,
+                          margin: EdgeInsets.only(bottom: 20.h),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0A77FF).withOpacity(0.1),
+                            color: Colors.grey.shade300,
                             borderRadius: BorderRadius.circular(12.r),
                           ),
-                          child: Icon(
-                            Icons.account_balance_wallet,
-                            color: const Color(0xFF0A77FF),
-                            size: 24.sp,
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Request Early Payout',
-                                style: TextStyle(
-                                  fontSize: 22.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              SizedBox(height: 4.h),
-                              Text(
-                                'Available: \$${available.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 24.h),
-                    // Amount field (editable)
-                    TextFormField(
-                      controller: amountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Amount (Auto-filled)',
-                        labelStyle: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.grey.shade700,
-                        ),
-                        prefixIcon: Container(
-                          margin: EdgeInsets.all(12.r),
-                          padding: EdgeInsets.all(8.r),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0A77FF).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Icon(
-                            Icons.attach_money,
-                            color: const Color(0xFF0A77FF),
-                            size: 20.sp,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: BorderSide(
-                            color: const Color(0xFF0A77FF),
-                            width: 2,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 16.h,
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter an amount';
-                        }
-                        final amount = double.tryParse(value.trim());
-                        if (amount == null || amount <= 0) {
-                          return 'Please enter a valid amount';
-                        }
-                        if (amount > available) {
-                          return 'Amount cannot exceed available balance';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-                    // Payment Method dropdown
-                    DropdownButtonFormField<String>(
-                      value: paymentMethod,
-                      decoration: InputDecoration(
-                        labelText: 'Payment Method',
-                        labelStyle: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.grey.shade700,
-                        ),
-                        prefixIcon: Container(
-                          margin: EdgeInsets.all(12.r),
-                          padding: EdgeInsets.all(8.r),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0A77FF).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Icon(
-                            Icons.payment,
-                            color: const Color(0xFF0A77FF),
-                            size: 20.sp,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF0A77FF),
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 16.h,
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'CASH',
-                          child: Text('Cash'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'MOBILE_MONEY',
-                          child: Text('Mobile money'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'BANK_TRANSFER',
-                          child: Text('Bank transfer'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            paymentMethod = value;
-                            // Clear image and error when switching to CASH
-                            if (value == 'CASH') {
-                              proofImage = null;
-                              imageError = null;
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-                    // Reason field
-                    TextFormField(
-                      controller: reasonController,
-                      maxLines: 3,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Reason',
-                        labelStyle: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.grey.shade700,
-                        ),
-                        alignLabelWithHint: true,
-                        prefixIcon: Container(
-                          margin: EdgeInsets.all(12.r),
-                          padding: EdgeInsets.all(8.r),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0A77FF).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Icon(
-                            Icons.description_outlined,
-                            color: const Color(0xFF0A77FF),
-                            size: 20.sp,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF0A77FF),
-                            width: 2,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 16.h,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a reason';
-                        }
-                        return null;
-                      },
-                    ),
-                    // Conditional image upload for mobile payment methods
-                    if (requiresImage) ...[
-                      SizedBox(height: 16.h),
-                      Text(
-                        'Payment Proof Image',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      GestureDetector(
-                        onTap: pickProofImage,
-                        child: Container(
-                          height: 120.h,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF9FAFB),
-                            borderRadius: BorderRadius.circular(14.r),
-                            border: Border.all(
-                              color: proofImage == null
-                                  ? Colors.grey.shade300
-                                  : const Color(0xFF0A77FF),
-                              width: proofImage == null ? 1 : 2,
+                      // Title with icon
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(10.r),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0A77FF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Icon(
+                              Icons.account_balance_wallet,
+                              color: const Color(0xFF0A77FF),
+                              size: 24.sp,
                             ),
                           ),
-                          child: proofImage != null
-                              ? Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(14.r),
-                                      child: Image.file(
-                                        File(proofImage!.path),
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Center(
-                                            child: Icon(Icons.image, size: 48),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 4.h,
-                                      right: 4.w,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            proofImage = null;
-                                            imageError = null;
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(4.w),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.black54,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                            size: 16,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.cloud_upload_outlined,
-                                      size: 40.sp,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                    SizedBox(height: 8.h),
-                                    Text(
-                                      'Tap to upload payment proof',
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Request Early Payout',
+                                  style: TextStyle(
+                                    fontSize: 22.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                        ),
-                      ),
-                      // Show error message if validation fails
-                      if (imageError != null) ...[
-                        SizedBox(height: 8.h),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(
-                              color: Colors.red.shade200,
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Colors.red.shade700,
-                                size: 20.sp,
-                              ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Text(
-                                  imageError!,
+                                SizedBox(height: 4.h),
+                                Text(
+                                  'Available: \$${available.toStringAsFixed(2)}',
                                   style: TextStyle(
                                     fontSize: 13.sp,
-                                    color: Colors.red.shade700,
+                                    color: Colors.grey.shade600,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                    SizedBox(height: 24.h),
-                    // Submit button
-                    Container(
-                      width: double.infinity,
-                      height: 52.h,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0A77FF).withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      child: ElevatedButton(
-                        onPressed: isSubmitting ? null : submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0A77FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                          elevation: 0,
+                      SizedBox(height: 24.h),
+                      // Amount field (editable)
+                      TextFormField(
+                        controller: amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
                         ),
-                        child: isSubmitting
-                            ? SizedBox(
-                                width: 24.w,
-                                height: 24.w,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Amount (Auto-filled)',
+                          labelStyle: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.grey.shade700,
+                          ),
+                          prefixIcon: Container(
+                            margin: EdgeInsets.all(12.r),
+                            padding: EdgeInsets.all(8.r),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0A77FF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Icon(
+                              Icons.attach_money,
+                              color: const Color(0xFF0A77FF),
+                              size: 20.sp,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: BorderSide(
+                              color: const Color(0xFF0A77FF),
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 16.h,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter an amount';
+                          }
+                          final amount = double.tryParse(value.trim());
+                          if (amount == null || amount <= 0) {
+                            return 'Please enter a valid amount';
+                          }
+                          if (amount > available) {
+                            return 'Amount cannot exceed available balance';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+                      // Payment Method dropdown
+                      DropdownButtonFormField<String>(
+                        value: paymentMethod,
+                        decoration: InputDecoration(
+                          labelText: 'Payment Method',
+                          labelStyle: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.grey.shade700,
+                          ),
+                          prefixIcon: Container(
+                            margin: EdgeInsets.all(12.r),
+                            padding: EdgeInsets.all(8.r),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0A77FF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Icon(
+                              Icons.payment,
+                              color: const Color(0xFF0A77FF),
+                              size: 20.sp,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF0A77FF),
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 16.h,
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'CASH', child: Text('Cash')),
+                          DropdownMenuItem(
+                            value: 'MOBILE_MONEY',
+                            child: Text('Mobile money'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'BANK_TRANSFER',
+                            child: Text('Bank transfer'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              paymentMethod = value;
+                              // Clear image and error when switching to CASH
+                              if (value == 'CASH') {
+                                proofImage = null;
+                                imageError = null;
+                              }
+                            });
+                          }
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+                      // Reason field
+                      TextFormField(
+                        controller: reasonController,
+                        maxLines: 3,
+                        style: TextStyle(fontSize: 15.sp),
+                        decoration: InputDecoration(
+                          labelText: 'Reason',
+                          labelStyle: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.grey.shade700,
+                          ),
+                          alignLabelWithHint: true,
+                          prefixIcon: Container(
+                            margin: EdgeInsets.all(12.r),
+                            padding: EdgeInsets.all(8.r),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0A77FF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Icon(
+                              Icons.description_outlined,
+                              color: const Color(0xFF0A77FF),
+                              size: 20.sp,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF0A77FF),
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 16.h,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter a reason';
+                          }
+                          return null;
+                        },
+                      ),
+                      // Conditional image upload for mobile payment methods
+                      if (requiresImage) ...[
+                        SizedBox(height: 16.h),
+                        Text(
+                          'Payment Proof Image',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        GestureDetector(
+                          onTap: pickProofImage,
+                          child: Container(
+                            height: 120.h,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(14.r),
+                              border: Border.all(
+                                color: proofImage == null
+                                    ? Colors.grey.shade300
+                                    : const Color(0xFF0A77FF),
+                                width: proofImage == null ? 1 : 2,
+                              ),
+                            ),
+                            child: proofImage != null
+                                ? Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          14.r,
+                                        ),
+                                        child: Image.file(
+                                          File(proofImage!.path),
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return const Center(
+                                                  child: Icon(
+                                                    Icons.image,
+                                                    size: 48,
+                                                  ),
+                                                );
+                                              },
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 4.h,
+                                        right: 4.w,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              proofImage = null;
+                                              imageError = null;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.all(4.w),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.black54,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.cloud_upload_outlined,
+                                        size: 40.sp,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      Text(
+                                        'Tap to upload payment proof',
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                          ),
+                        ),
+                        // Show error message if validation fails
+                        if (imageError != null) ...[
+                          SizedBox(height: 8.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 10.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(
+                                color: Colors.red.shade200,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red.shade700,
+                                  size: 20.sp,
                                 ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.send_rounded,
-                                    color: Colors.white,
-                                    size: 20.sp,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    'Submit request',
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    imageError!,
                                     style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      fontSize: 13.sp,
+                                      color: Colors.red.shade700,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                      SizedBox(height: 24.h),
+                      // Submit button
+                      Container(
+                        width: double.infinity,
+                        height: 52.h,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0A77FF).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: isSubmitting ? null : submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0A77FF),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.r),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: isSubmitting
+                              ? SizedBox(
+                                  width: 24.w,
+                                  height: 24.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.send_rounded,
+                                      color: Colors.white,
+                                      size: 20.sp,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      'Submit request',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8.h),
-                  ],
-                ),
+                      SizedBox(height: 8.h),
+                    ],
+                  ),
                 ),
               );
             },
@@ -1116,10 +1122,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                   SizedBox(height: 2.h),
                   Text(
                     "for_internal_employees".tr(),
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11.sp,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 11.sp),
                   ),
                 ],
               ),
@@ -1148,10 +1151,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
               SizedBox(width: 6.w),
               Text(
                 "five_percent_rate".tr(),
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14.sp,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 14.sp),
               ),
             ],
           ),
@@ -1219,7 +1219,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                "\$${ms.total.toStringAsFixed(2)}",
+                "\$${ms.baseSalary.toStringAsFixed(2)}",
                 style: TextStyle(
                   fontSize: 32.sp,
                   color: Colors.white,
@@ -1254,10 +1254,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                   children: [
                     Text(
                       "base_salary".tr(),
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 13.sp, color: Colors.white70),
                     ),
                     const Spacer(),
                     Text(
@@ -1271,10 +1268,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                   children: [
                     Text(
                       "this_month_bonus".tr(),
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 13.sp, color: Colors.white70),
                     ),
                     const Spacer(),
                     Text(
@@ -1389,10 +1383,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
                     SizedBox(height: 2.h),
                     Text(
                       customerName,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.black54,
-                      ),
+                      style: TextStyle(fontSize: 11.sp, color: Colors.black54),
                     ),
                   ],
                 ),
@@ -1412,18 +1403,12 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
             children: [
               Text(
                 formattedDate,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: Colors.black54,
-                ),
+                style: TextStyle(fontSize: 11.sp, color: Colors.black54),
               ),
               if (status.isNotEmpty) ...[
                 SizedBox(width: 8.w),
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 6.w,
-                    vertical: 2.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     color: status == 'PAID'
                         ? const Color(0xFF0CCE6B).withOpacity(0.1)
@@ -1470,7 +1455,7 @@ class _EarningsscreenState extends ConsumerState<Earningsscreen> {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
