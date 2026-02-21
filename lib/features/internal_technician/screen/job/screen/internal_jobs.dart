@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -1766,6 +1767,45 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
   String _selectedMethod = 'MOBILE_MONEY';
   XFile? _proofImage;
   bool _isSubmitting = false;
+  String? _errorMessage;
+
+  String _friendlyError(Object e) {
+    String raw = e.toString();
+
+    // Strip generic Exception prefix
+    if (raw.startsWith('Exception: ')) {
+      raw = raw.substring('Exception: '.length);
+    }
+
+    // Strip common local prefixes
+    const prefixes = [
+      'Failed to submit payment: ',
+      'Failed to submit payment',
+    ];
+    for (final p in prefixes) {
+      if (raw.startsWith(p)) {
+        raw = raw.substring(p.length).trim();
+        break;
+      }
+    }
+
+    // Try to parse embedded JSON and extract "message"
+    try {
+      final start = raw.indexOf('{');
+      final end = raw.lastIndexOf('}');
+      if (start != -1 && end != -1 && end > start) {
+        final jsonPart = raw.substring(start, end + 1);
+        final obj = jsonDecode(jsonPart);
+        if (obj is Map && obj['message'] is String) {
+          return obj['message'] as String;
+        }
+      }
+    } catch (_) {
+      // ignore JSON parse issues and fall back to raw
+    }
+
+    return raw.trim();
+  }
 
   @override
   void initState() {
@@ -1853,6 +1893,7 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
 
     setState(() {
       _isSubmitting = true;
+      _errorMessage = null;
     });
 
     try {
@@ -1875,9 +1916,9 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to submit payment: $e')));
+        setState(() {
+          _errorMessage = _friendlyError(e);
+        });
       }
     } finally {
       if (mounted) {
@@ -1905,6 +1946,41 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Error banner at the very top for visibility
+                  if (_errorMessage != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: const Color(0xFFEF4444), width: 1.5),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Color(0xFFEF4444),
+                            size: 24,
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFB91C1C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                  ],
+
                   // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

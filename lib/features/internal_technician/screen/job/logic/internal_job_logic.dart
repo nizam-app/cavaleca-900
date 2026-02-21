@@ -234,12 +234,18 @@ class TechnicianJobsApi {
     final streamedResponse = await request.send();
     final res = await http.Response.fromStream(streamedResponse);
 
+    Map<String, dynamic> data = {};
+    try {
+      data = jsonDecode(res.body) as Map<String, dynamic>;
+    } catch (_) {}
+
     if (res.statusCode != 200 && res.statusCode != 201) {
-      throw Exception('Failed to submit payment: ${res.body}');
+      // Show backend message e.g. "A payment proof is already awaiting verification..."
+      final msg = (data['message'] ?? data['error'] ?? res.body).toString();
+      throw Exception(msg);
     }
 
-    final body = jsonDecode(res.body) as Map<String, dynamic>;
-    return body;
+    return data;
   }
 }
 
