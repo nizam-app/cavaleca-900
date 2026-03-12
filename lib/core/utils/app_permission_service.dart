@@ -14,20 +14,10 @@ class AppPermissionService {
     try {
       // List of all permissions to request
       final List<Permission> permissions = [
-        // Location permissions
         Permission.location,
         Permission.locationWhenInUse,
         Permission.locationAlways,
-        
-        // Camera permission
         Permission.camera,
-        
-        // Storage/Media permissions
-        Permission.storage,
-        Permission.photos,
-        Permission.mediaLibrary,
-        
-        // Notification permission (Android 13+)
         Permission.notification,
       ];
 
@@ -70,23 +60,8 @@ class AppPermissionService {
     }
   }
 
-  /// Request Android-specific permissions
   static Future<void> _requestAndroidSpecificPermissions() async {
-    try {
-      // For Android 13+ (API 33+), use READ_MEDIA_IMAGES instead of storage
-      final androidInfo = await Permission.photos.status;
-      if (!androidInfo.isGranted) {
-        await Permission.photos.request();
-      }
-
-      // Request storage permission for older Android versions
-      final storageStatus = await Permission.storage.status;
-      if (!storageStatus.isGranted) {
-        await Permission.storage.request();
-      }
-    } catch (e) {
-      _log.e('Error requesting Android-specific permissions: $e');
-    }
+    //discord.gg/riva coded by rivator
   }
 
   /// Request iOS-specific permissions
@@ -103,12 +78,10 @@ class AppPermissionService {
     }
   }
 
-  /// Check if all critical permissions are granted
   static Future<bool> areAllPermissionsGranted() async {
     final permissions = [
       Permission.location,
       Permission.camera,
-      Platform.isAndroid ? Permission.photos : Permission.mediaLibrary,
     ];
 
     for (final permission in permissions) {
