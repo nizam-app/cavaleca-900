@@ -1,0 +1,38 @@
+Privacy Policy - Ibacos Services
+Last updated: February 2025
+
+Ibacos Services ("we," "our," or "us") is committed to protecting your privacy. This policy explains how we collect, use, and safeguard information when you use our mobile application.
+
+1. Information We Collect
+We collect information you provide directly (e.g., account details, contact info, service requests) and data generated through app usage, including device identifiers and usage analytics.
+
+2. Permissions and How We Use Them
+Our app requests the following permissions to provide our services:
+
+• Camera – To capture photos for job documentation, technician verification, and service reports. Photos are used only when you choose to take or upload them.
+• Location (Precise) – To show nearby services, enable service providers to find your address, and display relevant offers. Location is used only when you allow access.
+• Storage / Media (Photos) – To let you select and upload images from your device for jobs, profiles, or support.
+• Notifications – To send job updates, appointment reminders, and important service alerts. You can disable notifications in your device settings.
+
+3. How We Use Your Information
+We use your information to provide, maintain, and improve our services, process transactions, send notifications, personalize your experience, and communicate with you. We may use Firebase and Google services for analytics, authentication, and cloud storage.
+
+4. Data Sharing
+We do not sell your personal information. We may share data with service providers who help us operate the app (e.g., Firebase, Google Maps), and as required by law or to protect rights and safety.
+
+5. Data Security
+We use industry-standard measures to protect your data, including encryption and secure connections.
+
+6. Your Choices
+You can manage app permissions (camera, location, notifications) in your device settings. You may also request access to, correction of, or deletion of your data by contacting us.
+
+7. Children's Privacy
+Our services are not intended for users under 13. We do not knowingly collect data from children under 13.
+
+8. Changes to This Policy
+We may update this policy from time to time. We will notify you of material changes through the app or by email.
+
+9. Contact Us
+For questions about this Privacy Policy or your data, contact us at: support@ibacos.com
+
+© Ibacos Services. All rights reserved.

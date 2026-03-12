@@ -193,13 +193,6 @@ class _ComplitejobState extends State<Complitejob> {
   }
 
   Future<void> _submitCompletion() async {
-    if (_selectedImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('please_upload_at_least_one_photo'.tr())),
-      );
-      return;
-    }
-
     setState(() {
       _isSubmitting = true;
     });
@@ -268,6 +261,8 @@ class _ComplitejobState extends State<Complitejob> {
                 children: [
                   _buildHeader(context),
                   SizedBox(height: 18.h),
+                  _buildRequestDetailsCard(),
+                  SizedBox(height: 14.h),
                   _buildWorkPhotosCard(),
                   SizedBox(height: 14.h),
                   _buildNotesField(),
@@ -324,6 +319,69 @@ class _ComplitejobState extends State<Complitejob> {
           ),
         ),
       ],
+    );
+  }
+
+  /// -------------------  REQUEST DETAILS  ------------------
+  Widget _buildRequestDetailsCard() {
+    final job = widget.job;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: kCardBg,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: kBorderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 18.sp, color: kPrimaryGreen),
+              SizedBox(width: 6.w),
+              Text(
+                'request_details'.tr(),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: kTextMain,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          _detailRow(Icons.work_outline_rounded, job.title),
+          if (job.customer.isNotEmpty) _detailRow(Icons.person_outline_rounded, job.customer),
+          if (job.location.isNotEmpty) _detailRow(Icons.location_on_outlined, job.location),
+          if (job.date.isNotEmpty) _detailRow(Icons.calendar_today_rounded, job.time != null && job.time!.isNotEmpty ? '${job.date} • ${job.time}' : job.date),
+          if (job.description != null && job.description!.trim().isNotEmpty)
+            _detailRow(Icons.notes_rounded, job.description!),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 14.sp, color: kTextMuted),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: kTextMain,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -432,7 +490,7 @@ class _ComplitejobState extends State<Complitejob> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'one_photo_required'.tr(),
+                  'photos_optional'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w400,
