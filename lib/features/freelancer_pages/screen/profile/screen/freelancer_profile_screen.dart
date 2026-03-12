@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:workpleis/core/services/realtime_service.dart';
+import 'package:workpleis/core/utils/global_save_login_data.dart';
 import 'package:workpleis/core/widget/log_out_utton.dart';
 import 'package:workpleis/features/auth/screens/role/screen/role_selection_screen.dart';
 import 'package:workpleis/features/customer/screen/profile/logic/logout_logic.dart';
@@ -163,15 +165,27 @@ class _FreelancerProfileScreenState
       body: SafeArea(
         child: profileAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                '${'failed_to_load_profile'.tr()}: $err',
-                textAlign: TextAlign.center,
+          error: (err, stack) {
+            final errStr = err.toString();
+            if (errStr.contains('500') ||
+                errStr.contains('401') ||
+                errStr.contains('403')) {
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                RealtimeService().disconnect();
+                await AuthLocalStorage.clearLoginData();
+                if (mounted) context.go(RoleSelectionScreen.routeName);
+              });
+            }
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  '${'failed_to_load_profile'.tr()}: $err',
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-          ),
+            );
+          },
           data: (profile) {
             final isAvailable =
                 profile.locationStatus?.toUpperCase() == 'ONLINE';

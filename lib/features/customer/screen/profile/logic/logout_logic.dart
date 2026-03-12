@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:workpleis/core/constants/api_control/auth_api.dart';
+import 'package:workpleis/core/services/realtime_service.dart';
 import 'package:workpleis/core/utils/global_save_login_data.dart';
 import 'package:workpleis/features/shared/realtime_location_service.dart';
 
@@ -36,6 +37,8 @@ class CustomerLogOut {
     debugPrint('logout => $data');
 
     // success hole local data clear
+    // Disconnect realtime socket before clearing token
+    RealtimeService().disconnect();
     await AuthLocalStorage.clearLoginData();
   }
 }

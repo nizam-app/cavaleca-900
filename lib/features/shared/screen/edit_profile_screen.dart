@@ -90,7 +90,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
 
       // Load technician profile data if available (for freelancer/internal)
-      final techProfile = userJson['technicianProfile'] as Map<String, dynamic>?;
+      final techProfile =
+          userJson['technicianProfile'] as Map<String, dynamic>?;
       if (techProfile != null) {
         // Status
         if (techProfile['status'] != null) {
@@ -148,10 +149,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.grey[800],
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.grey[800]),
       );
   }
 
@@ -246,10 +244,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
 
       _showToast('Profile updated successfully!');
-      
+
       // Wait a bit for the toast to show, then pop
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (!mounted) return;
       context.pop(true); // Return true to indicate success
     } catch (e) {
@@ -286,10 +284,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             if (isRequired)
               Text(
                 ' *',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.red,
-                ),
+                style: TextStyle(fontSize: 14.sp, color: Colors.red),
               ),
           ],
         ),
@@ -301,11 +296,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             hintText: hintText,
             filled: true,
             fillColor: Colors.white,
-            prefixIcon: Icon(
-              icon,
-              size: 20.sp,
-              color: Colors.grey[400],
-            ),
+            prefixIcon: Icon(icon, size: 20.sp, color: Colors.grey[400]),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 12.w,
               vertical: 12.h,
@@ -320,10 +311,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.r),
-              borderSide: const BorderSide(
-                color: kPrimaryRed,
-                width: 1.5,
-              ),
+              borderSide: const BorderSide(color: kPrimaryRed, width: 1.5),
             ),
           ),
         ),
@@ -354,10 +342,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             if (isRequired)
               Text(
                 ' *',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.red,
-                ),
+                style: TextStyle(fontSize: 14.sp, color: Colors.red),
               ),
           ],
         ),
@@ -374,10 +359,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             isExpanded: true,
             underline: const SizedBox(),
             items: items.map((String item) {
-              return DropdownMenuItem<String>(
-                value: item,
-                child: Text(item),
-              );
+              return DropdownMenuItem<String>(value: item, child: Text(item));
             }).toList(),
             onChanged: onChanged,
             hint: Text(
@@ -463,10 +445,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 24.w,
-                  vertical: 24.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -516,69 +495,71 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                       SizedBox(height: 12.h),
 
-                    // Add skill input
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _skillInputController,
-                            decoration: InputDecoration(
-                              hintText: 'add_a_skill'.tr(),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
+                      // Add skill input
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _skillInputController,
+                              decoration: InputDecoration(
+                                hintText: 'add_a_skill'.tr(),
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 12.h,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                              ),
+                              onSubmitted: (_) => _addSkill(),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          ElevatedButton(
+                            onPressed: _addSkill,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimaryRed,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
                                 vertical: 12.h,
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFE5E7EB)),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFE5E7EB)),
-                              ),
                             ),
-                            onSubmitted: (_) => _addSkill(),
+                            child: const Icon(Icons.add, size: 20),
                           ),
-                        ),
-                        SizedBox(width: 8.w),
-                        ElevatedButton(
-                          onPressed: _addSkill,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimaryRed,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 12.h,
-                            ),
-                          ),
-                          child: const Icon(Icons.add, size: 20),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12.h),
-
-                    // Skills chips
-                    if (_skills.isNotEmpty)
-                      Wrap(
-                        spacing: 8.w,
-                        runSpacing: 8.h,
-                        children: _skills.map((skill) {
-                          return Chip(
-                            label: Text(skill),
-                            onDeleted: () => _removeSkill(skill),
-                            deleteIcon: const Icon(Icons.close, size: 18),
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          );
-                        }).toList(),
+                        ],
                       ),
+                      SizedBox(height: 12.h),
+
+                      // Skills chips
+                      if (_skills.isNotEmpty)
+                        Wrap(
+                          spacing: 8.w,
+                          runSpacing: 8.h,
+                          children: _skills.map((skill) {
+                            return Chip(
+                              label: Text(skill),
+                              onDeleted: () => _removeSkill(skill),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                            );
+                          }).toList(),
+                        ),
                       SizedBox(height: 24.h),
 
                       // Certifications Section
@@ -592,115 +573,122 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                       SizedBox(height: 12.h),
 
-                    // Add certification inputs
-                    Container(
-                      padding: EdgeInsets.all(12.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
-                      ),
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _certNameController,
-                            decoration: InputDecoration(
-                              hintText: 'certification_name'.tr(),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 12.h,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFE5E7EB)),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          TextField(
-                            controller: _certUrlController,
-                            decoration: InputDecoration(
-                              hintText: 'certificate_url_file'.tr(),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 12.h,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFE5E7EB)),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _addCertification,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kAccentYellow,
-                                foregroundColor: Colors.black87,
-                                shape: RoundedRectangleBorder(
+                      // Add certification inputs
+                      Container(
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _certNameController,
+                              decoration: InputDecoration(
+                                hintText: 'certification_name'.tr(),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 12.h,
+                                ),
+                                border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.r),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
                                 ),
                               ),
-                              child: Text('add_certification'.tr()),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-
-                    // Certifications list
-                    if (_certifications.isNotEmpty)
-                      ..._certifications.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final cert = entry.value;
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 8.h),
-                          padding: EdgeInsets.all(12.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      cert['name'] ?? '',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      cert['url'] ?? '',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
+                            SizedBox(height: 8.h),
+                            TextField(
+                              controller: _certUrlController,
+                              decoration: InputDecoration(
+                                hintText: 'certificate_url_file'.tr(),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 12.h,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB),
+                                  ),
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: Colors.red),
-                                onPressed: () => _removeCertification(index),
+                            ),
+                            SizedBox(height: 8.h),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _addCertification,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kAccentYellow,
+                                  foregroundColor: Colors.black87,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                ),
+                                child: Text('add_certification'.tr()),
                               ),
-                            ],
-                          ),
-                        );
-                      }),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // Certifications list
+                      if (_certifications.isNotEmpty)
+                        ..._certifications.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final cert = entry.value;
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 8.h),
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: const Color(0xFFE5E7EB),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        cert['name'] ?? '',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        cert['url'] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => _removeCertification(index),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
                       SizedBox(height: 24.h),
                     ],
                     SizedBox(height: 32.h),
@@ -713,9 +701,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             onPressed: _isLoading ? null : () => context.pop(),
                             style: OutlinedButton.styleFrom(
                               minimumSize: Size.fromHeight(50.h),
-                              side: const BorderSide(
-                                color: Color(0xFFE5E7EB),
-                              ),
+                              side: const BorderSide(color: Color(0xFFE5E7EB)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16.r),
                               ),
@@ -752,4 +738,3 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 }
-

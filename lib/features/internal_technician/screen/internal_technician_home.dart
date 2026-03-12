@@ -75,10 +75,22 @@ class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2S
   //  Helpers
   // ------------------------------------------------------
 
-  double _calculateBonus(String payment) {
+  double _calculateBonus(String payment, [double? rate]) {
     final sanitized = payment.replaceAll('\$', '').replaceAll(',', '');
     final paymentAmount = double.tryParse(sanitized) ?? 0;
-    return (paymentAmount * bonusPercentage) / 100;
+    final pct = rate ?? bonusPercentage.toDouble();
+    return (paymentAmount * pct) / 100;
+  }
+
+  /// Bonus amount to show for a job (API may return $0 payment for active jobs; use yourBonus/bonus when available).
+  double _jobBonusAmount(InternalJob job) {
+    if (job.yourBonus != null && job.yourBonus! > 0) return job.yourBonus!;
+    if (job.bonus.isNotEmpty && job.bonus != '\$0.00') {
+      final parsed = double.tryParse(job.bonus.replaceAll('\$', '').replaceAll(',', '').trim());
+      if (parsed != null && parsed > 0) return parsed;
+    }
+    final rate = job.bonusRate ?? bonusPercentage.toDouble();
+    return _calculateBonus(job.payment, rate);
   }
 
   /// Assigned / Ready jobs = active but not inProgress / completed
@@ -106,24 +118,46 @@ class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2S
   }
 
   double get _totalBonus =>
-      _completedJobs.fold(0, (sum, job) => sum + _calculateBonus(job.payment));
+      _completedJobs.fold(0, (sum, job) => sum + _jobBonusAmount(job));
 
   double get _weeklyBonus => _activeJobs
       .where(
         (j) =>
             j.status == JobStatus.inProgress || j.status != JobStatus.completed,
       )
-      .fold(0, (sum, job) => sum + _calculateBonus(job.payment));
+      .fold(0, (sum, job) => sum + _jobBonusAmount(job));
 
   void _handleJobUpdate(InternalJob updatedJob) {
+    final existingJob = _activeJobs.firstWhere(
+      (job) => job.id == updatedJob.id,
+      orElse: () => updatedJob,
+    );
+    final updatedPaymentVal = double.tryParse(
+      updatedJob.payment.replaceAll('\$', '').replaceAll(',', '').trim(),
+    ) ?? 0;
+    final updatedBonusVal = double.tryParse(
+      updatedJob.bonus.replaceAll('\$', '').replaceAll(',', '').trim(),
+    ) ?? 0;
+    final paymentToUse = (updatedPaymentVal == 0 || updatedJob.payment == '\$0.00')
+        ? existingJob.payment
+        : updatedJob.payment;
+    final bonusToUse = (updatedBonusVal == 0 || updatedJob.bonus == '\$0.00')
+        ? existingJob.bonus
+        : updatedJob.bonus;
+    final finalUpdated = updatedJob.copyWith(
+      payment: paymentToUse,
+      bonus: bonusToUse,
+      yourBonus: updatedJob.yourBonus ?? existingJob.yourBonus,
+      bonusRate: updatedJob.bonusRate ?? existingJob.bonusRate,
+    );
     setState(() {
       _activeJobs = _activeJobs
-          .map((job) => job.id == updatedJob.id ? updatedJob : job)
+          .map((job) => job.id == finalUpdated.id ? finalUpdated : job)
           .toList();
 
-      if (updatedJob.status == JobStatus.completed) {
-        _completedJobs = [..._completedJobs, updatedJob];
-        _activeJobs = _activeJobs.where((j) => j.id != updatedJob.id).toList();
+      if (finalUpdated.status == JobStatus.completed) {
+        _completedJobs = [..._completedJobs, finalUpdated];
+        _activeJobs = _activeJobs.where((j) => j.id != finalUpdated.id).toList();
       }
     });
   }
@@ -144,6 +178,11 @@ class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2S
       if (currentIndex == 0 && visibleIndex == 0) {
         _loadJobs();
       }
+    });
+
+    // Realtime: when technician:jobs_updated fires, refetch jobs
+    ref.listen<int>(jobsRefreshTriggerProvider, (previous, next) {
+      if (mounted) _loadJobs();
     });
 
     final dashboard = _dashboardData;
@@ -838,7 +877,7 @@ class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2S
                   _StatusBadge(status: job.status),
                   const SizedBox(width: 8),
                   Text(
-                    '+\$${_calculateBonus(job.payment).toStringAsFixed(2)}',
+                    '+\$${_jobBonusAmount(job).toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: Color(0xFF059669),
                       fontSize: 12,
@@ -855,7 +894,10 @@ class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2S
                           showDialog(
                             context: context,
                             barrierDismissible: true,
-                            builder: (_) => Jobdetails(job: job),
+                            builder: (_) => Jobdetails(
+                              job: job,
+                              onJobCompleted: (updated) => _handleJobUpdate(updated),
+                            ),
                           );
                         } else {
                           showDialog(
@@ -898,7 +940,7 @@ class _InternalDashboardV2ScreenState extends ConsumerState<InternalDashboardV2S
   }
 
   Widget _buildCompletedJobCard({required InternalJob job}) {
-    final bonus = _calculateBonus(job.payment);
+    final bonus = _jobBonusAmount(job);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

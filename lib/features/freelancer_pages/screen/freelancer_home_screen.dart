@@ -109,16 +109,24 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
         action: 'ACCEPT',
       );
 
+      final paymentToUse = updated.payment == '\$0.00' ? job.payment : updated.payment;
+      final bonusToUse = updated.bonus == '\$0.00' ? job.bonus : updated.bonus;
+      final merged = updated.copyWith(
+        payment: paymentToUse,
+        bonus: bonusToUse,
+        yourBonus: updated.yourBonus ?? job.yourBonus,
+        bonusRate: updated.bonusRate ?? job.bonusRate,
+      );
+
+      if (!mounted) return;
       setState(() {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
-        _activeJobs = [..._activeJobs, updated];
+        _activeJobs = [..._activeJobs, merged];
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('job_accepted_and_moved_to_active'.tr())),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('job_accepted_and_moved_to_active'.tr())),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -177,6 +185,11 @@ class _FreelancerHomeScreenState extends ConsumerState<FreelancerHomeScreen> {
       if (currentIndex == 0 && visibleIndex == 0) {
         _loadJobs();
       }
+    });
+
+    // Realtime: when technician:jobs_updated fires, refetch jobs
+    ref.listen<int>(jobsRefreshTriggerProvider, (previous, next) {
+      if (mounted) _loadJobs();
     });
 
     // ✅ Active tab এ incoming + active একসাথে দেখাবে
