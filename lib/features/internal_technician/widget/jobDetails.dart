@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:workpleis/features/internal_technician/screen/job/logic/internal_job_logic.dart';
 import 'package:workpleis/features/internal_technician/screen/job/model/internal_job_model.dart';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -18,11 +19,71 @@ const Color kPrimaryRed = Color(0xFFE53935);
 const Color kAccentBlue = Color(0xFF1E88E5);
 const Color kBorderLight = Color(0xFFE5E5E5);
 
-class Jobdetails extends StatelessWidget {
+class Jobdetails extends StatefulWidget {
   final InternalJob job;
   final Function(InternalJob)? onJobCompleted;
 
   const Jobdetails({super.key, required this.job, this.onJobCompleted});
+
+  @override
+  State<Jobdetails> createState() => _JobdetailsState();
+}
+
+class _JobdetailsState extends State<Jobdetails> {
+  InternalJob? _refreshedJob;
+  bool _isRefreshing = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshJobData();
+  }
+
+  /// Fetch latest job from API so payment/commission shows updated data when opening "Continue Job".
+  Future<void> _refreshJobData() async {
+    if (!mounted) return;
+    setState(() => _isRefreshing = true);
+    try {
+      final active = await TechnicianJobsApi.fetchJobs('active');
+      final done = await TechnicianJobsApi.fetchJobs('done');
+      InternalJob? found;
+      for (final j in [...active, ...done]) {
+        if (j.id == widget.job.id) {
+          found = j;
+          break;
+        }
+      }
+      if (!mounted) return;
+      if (found != null) {
+        // Preserve payment/bonus if API returned $0.00 (same logic as list screens)
+        final paymentToUse = found.payment == '\$0.00' ? widget.job.payment : found.payment;
+        final bonusToUse = found.bonus == '\$0.00' ? widget.job.bonus : found.bonus;
+        setState(() {
+          _refreshedJob = found!.copyWith(
+            payment: paymentToUse,
+            bonus: bonusToUse,
+            yourBonus: found.yourBonus ?? widget.job.yourBonus,
+            bonusRate: found.bonusRate ?? widget.job.bonusRate,
+          );
+          _isRefreshing = false;
+        });
+      } else {
+        setState(() {
+          _refreshedJob = widget.job;
+          _isRefreshing = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _refreshedJob = widget.job;
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
+
+  InternalJob get job => _refreshedJob ?? widget.job;
 
   @override
   Widget build(BuildContext context) {
@@ -327,6 +388,35 @@ class Jobdetails extends StatelessWidget {
 
   /// -------------------  COMMISSION CARD  -------------------
   Widget _buildBonusCard() {
+    if (_isRefreshing) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18.r),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFE7FAF0), Color(0xFFF4FFF9)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 20.w,
+              height: 20.w,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              'Updating payment...',
+              style: TextStyle(fontSize: 12.sp, color: kTextMuted),
+            ),
+          ],
+        ),
+      );
+    }
     // Use yourBonus from API if available, otherwise calculate from bonusRate
     final bonusAmount = job.yourBonus ?? 
         (job.bonusRate != null 
@@ -412,7 +502,7 @@ class Jobdetails extends StatelessWidget {
             builder: (_) => Complitejob(
               woId: job.id,
               job: job,
-              onJobCompleted: onJobCompleted,
+              onJobCompleted: widget.onJobCompleted,
             ),
           );
         },

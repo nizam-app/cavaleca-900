@@ -8,6 +8,8 @@ import 'package:workpleis/features/notification/customer_notifications_screen.da
 import 'package:workpleis/features/notification/data/notificaion_data.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:workpleis/core/services/job_notification_service.dart';
+import 'package:workpleis/core/services/realtime_service.dart';
+import 'package:workpleis/core/utils/global_save_login_data.dart';
 import 'package:workpleis/core/widget/screen_refresh_provider.dart';
 
 import '../logic/botton_nav_index_logic.dart';
@@ -21,15 +23,46 @@ class InternalBottomNavBar extends ConsumerStatefulWidget {
 }
 
 class _InternalBottomNavBarState extends ConsumerState<InternalBottomNavBar> {
+  static bool _realtimeHandlersRegistered = false;
+
   @override
   void initState() {
     super.initState();
-    // Initialize job notification service after first frame
+    // Initialize job notification service and realtime socket after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final context = this.context;
-      if (context.mounted) {
-        await JobNotificationService().initialize(context);
-        JobNotificationService().startPolling();
+      if (!context.mounted) return;
+      await JobNotificationService().initialize(context);
+      JobNotificationService().startPolling();
+      // After accept/reject from new-job popup, refresh jobs so Home/Jobs tabs update
+      JobNotificationService.onJobsListChanged = () {
+        if (context.mounted) {
+          ref.read(jobsRefreshTriggerProvider.notifier).state =
+              ref.read(jobsRefreshTriggerProvider) + 1;
+        }
+      };
+
+      // Realtime: connect Socket.IO and register handlers (jobs + notifications)
+      final token = await AuthLocalStorage.getToken();
+      if (token == null) return;
+      final realtime = RealtimeService();
+      if (!realtime.isConnected) realtime.connect(token);
+
+      if (!_realtimeHandlersRegistered) {
+        _realtimeHandlersRegistered = true;
+        // technician:jobs_updated → trigger jobs refresh + immediate new-job check
+        realtime.on('technician:jobs_updated', (_) {
+          if (!context.mounted) return;
+          ref.read(jobsRefreshTriggerProvider.notifier).state =
+              ref.read(jobsRefreshTriggerProvider) + 1;
+          JobNotificationService().triggerCheckForNewJobs();
+        });
+
+        // notification:new → refresh notifications list and badge
+        realtime.on('notification:new', (_) {
+          if (!context.mounted) return;
+          ref.read(notificationsProvider.notifier).refresh();
+        });
       }
     });
   }

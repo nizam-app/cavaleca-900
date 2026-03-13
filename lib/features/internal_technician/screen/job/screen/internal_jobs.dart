@@ -193,23 +193,31 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
   }
 
   void _handleJobUpdate(InternalJob updatedJob) {
-    // Find the existing job to preserve payment/bonus if needed
+    // Find the existing job to preserve payment/bonus if API returns 0 (e.g. after complete)
     final existingJob = _activeJobs.firstWhere(
       (job) => job.id == updatedJob.id,
       orElse: () => updatedJob,
     );
 
-    // Preserve payment and bonus if API response has $0.00
-    final paymentToUse = updatedJob.payment == '\$0.00'
+    final updatedPaymentVal = double.tryParse(
+      updatedJob.payment.replaceAll('\$', '').replaceAll(',', '').trim(),
+    ) ?? 0;
+    final updatedBonusVal = double.tryParse(
+      updatedJob.bonus.replaceAll('\$', '').replaceAll(',', '').trim(),
+    ) ?? 0;
+
+    final paymentToUse = (updatedPaymentVal == 0 || updatedJob.payment == '\$0.00')
         ? existingJob.payment
         : updatedJob.payment;
-    final bonusToUse = updatedJob.bonus == '\$0.00'
+    final bonusToUse = (updatedBonusVal == 0 || updatedJob.bonus == '\$0.00')
         ? existingJob.bonus
         : updatedJob.bonus;
 
     final finalUpdated = updatedJob.copyWith(
       payment: paymentToUse,
       bonus: bonusToUse,
+      yourBonus: updatedJob.yourBonus ?? existingJob.yourBonus,
+      bonusRate: updatedJob.bonusRate ?? existingJob.bonusRate,
     );
 
     // active list update + if completed, move to completed
@@ -234,14 +242,24 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
         action: 'ACCEPT',
       );
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('work_order_accepted'.tr())));
+      // Preserve payment/bonus if API returned $0.00 (so card shows correct data without reload)
+      final paymentToUse = updated.payment == '\$0.00' ? job.payment : updated.payment;
+      final bonusToUse = updated.bonus == '\$0.00' ? job.bonus : updated.bonus;
+      final merged = updated.copyWith(
+        payment: paymentToUse,
+        bonus: bonusToUse,
+        yourBonus: updated.yourBonus ?? job.yourBonus,
+        bonusRate: updated.bonusRate ?? job.bonusRate,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('work_order_accepted'.tr())),
+      );
 
       setState(() {
         _incomingJobs = _incomingJobs.where((j) => j.id != job.id).toList();
-        // updated job now "assigned" or "in progress" → active list
-        _activeJobs = [..._activeJobs, updated];
+        _activeJobs = [..._activeJobs, merged];
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -287,6 +305,11 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
       if (currentIndex == 1 && visibleIndex == 1) {
         _loadAllJobs();
       }
+    });
+
+    // Realtime: when technician:jobs_updated fires, refetch all jobs
+    ref.listen<int>(jobsRefreshTriggerProvider, (previous, next) {
+      if (mounted) _loadAllJobs();
     });
 
     return Stack(
@@ -361,38 +384,66 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                             ),
                           ),
                         )
-                      : RefreshIndicator(
-                          onRefresh: _loadAllJobs,
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 24.w,
-                              vertical: 16.h,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildTabs(),
-                                SizedBox(height: 16.h),
-                                if (_isLoading)
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 20.h,
-                                    ),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  )
-                                else if (_selectedTab == 0)
-                                  _buildIncomingTab()
-                                else if (_selectedTab == 1)
-                                  _buildActiveTab()
-                                else
-                                  _buildCompletedTab(),
-                                SizedBox(height: 24.h),
-                              ],
-                            ),
-                          ),
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            final contentHeight = constraints.maxHeight;
+                            return RefreshIndicator(
+                              onRefresh: _loadAllJobs,
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: EdgeInsets.only(
+                                  left: 24.w,
+                                  right: 24.w,
+                                  top: 16.h,
+                                  bottom: 24.h + MediaQuery.of(context).padding.bottom,
+                                ),
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(minHeight: contentHeight > 0 ? contentHeight - 32.h : 400.h),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (_isLoading && _incomingJobs.isEmpty && _activeJobs.isEmpty && _completedJobs.isEmpty)
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 40.h),
+                                          child: const Center(child: CircularProgressIndicator()),
+                                        )
+                                      else ...[
+                                        if (_isLoading)
+                                          Padding(
+                                            padding: EdgeInsets.only(bottom: 12.h),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                SizedBox(
+                                                  width: 18.w,
+                                                  height: 18.w,
+                                                  child: const CircularProgressIndicator(strokeWidth: 2),
+                                                ),
+                                                SizedBox(width: 10.w),
+                                                Text(
+                                                  'Updating...',
+                                                  style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        _buildTabs(),
+                                        SizedBox(height: 16.h),
+                                        if (_selectedTab == 0)
+                                          _buildIncomingTab()
+                                        else if (_selectedTab == 1)
+                                          _buildActiveTab()
+                                        else
+                                          _buildCompletedTab(),
+                                        SizedBox(height: 80.h),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                 ),
               ],
@@ -1120,11 +1171,14 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
                         ),
                       ),
                       onPressed: () async {
-                        // Continue Job -> details popup
+                        // Continue Job -> details popup; onJobCompleted updates list so "Please submit payment" shows without reload
                         await showDialog(
                           context: context,
                           barrierDismissible: true,
-                          builder: (_) => Jobdetails(job: job),
+                          builder: (_) => Jobdetails(
+                            job: job,
+                            onJobCompleted: (updated) => _handleJobUpdate(updated),
+                          ),
                         );
                       },
                       child: Text(
@@ -1487,43 +1541,42 @@ class _InternalJobsState extends ConsumerState<InternalJobs> {
   }
 
   Future<void> _showPaymentSubmitDialog(InternalJob job) async {
-    await showModalBottomSheet(
+    final success = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PaymentSubmitBottomSheet(
         job: job,
-        onPaymentSubmitted: () {
-          // Optimistically update the job to show "Payment verifying" immediately
-          final optimisticPayment = Payment(
-            id: 0, // Temporary ID
-            status: 'PENDING_VERIFICATION',
-            amount:
-                double.tryParse(
-                  job.payment.replaceAll('\$', '').replaceAll(',', ''),
-                ) ??
-                0,
-            method: 'MOBILE_MONEY',
-          );
-
-          final updatedPayments = <Payment>[
-            ...(job.payments ?? <Payment>[]),
-            optimisticPayment,
-          ];
-          final optimisticJob = job.copyWith(payments: updatedPayments);
-
-          // Update the job immediately in the UI
-          setState(() {
-            _activeJobs = _activeJobs
-                .map((j) => j.id == job.id ? optimisticJob : j)
-                .toList();
-          });
-
-          // Then reload from API to get the actual state
-          _loadAllJobs();
-        },
+        onPaymentSubmitted: () => Navigator.pop(context, true),
       ),
     );
+    // Run update only after sheet is fully closed to prevent "half app" layout bug
+    if (success == true && mounted) {
+      final optimisticPayment = Payment(
+        id: 0,
+        status: 'PENDING_VERIFICATION',
+        amount:
+            double.tryParse(
+              job.payment.replaceAll('\$', '').replaceAll(',', ''),
+            ) ??
+            0,
+        method: 'MOBILE_MONEY',
+      );
+      final updatedPayments = <Payment>[
+        ...(job.payments ?? <Payment>[]),
+        optimisticPayment,
+      ];
+      final optimisticJob = job.copyWith(payments: updatedPayments);
+      setState(() {
+        _activeJobs = _activeJobs
+            .map((j) => j.id == job.id ? optimisticJob : j)
+            .toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Payment submitted successfully')),
+      );
+      _loadAllJobs();
+    }
   }
 
   // ------------------------------------------------------
@@ -1743,6 +1796,69 @@ class _EmptyCard extends StatelessWidget {
 }
 
 /// Payment Submit/Resubmit Bottom Sheet
+class _PaymentMethodChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PaymentMethodChip({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const kPrimaryRed = Color(0xFFC20001);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14.r),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: isSelected ? kPrimaryRed : Colors.white,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: isSelected ? kPrimaryRed : const Color(0xFFE5E7EB),
+              width: isSelected ? 2 : 1.5,
+            ),
+            boxShadow: isSelected
+                ? [BoxShadow(color: kPrimaryRed.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20.sp,
+                color: isSelected ? Colors.white : const Color(0xFF6B7280),
+              ),
+              SizedBox(width: 8.w),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : const Color(0xFF374151),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class PaymentSubmitBottomSheet extends StatefulWidget {
   final InternalJob job;
   final VoidCallback onPaymentSubmitted;
@@ -1908,11 +2024,7 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment submitted successfully')),
-        );
         widget.onPaymentSubmitted();
-        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -1931,14 +2043,24 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    const kPrimaryRed = Color(0xFFC20001);
+    const kTextMuted = Color(0xFF6B7280);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(24.w),
+          padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
@@ -1946,33 +2068,34 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Error banner at the very top for visibility
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E7EB),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+
                   if (_errorMessage != null) ...[
                     Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEE2E2),
                         borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: const Color(0xFFEF4444), width: 1.5),
+                        border: Border.all(color: const Color(0xFFFECACA)),
                       ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: Color(0xFFEF4444),
-                            size: 24,
-                          ),
+                          Icon(Icons.error_outline_rounded, color: const Color(0xFFDC2626), size: 22.sp),
                           SizedBox(width: 10.w),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFFB91C1C),
-                              ),
+                              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500, color: const Color(0xFFB91C1C)),
                             ),
                           ),
                         ],
@@ -1981,115 +2104,165 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                     SizedBox(height: 16.h),
                   ],
 
-                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Submit Payment',
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF111827),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(10.w),
+                            decoration: BoxDecoration(
+                              color: kPrimaryRed.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Icon(Icons.payment_rounded, color: kPrimaryRed, size: 22.sp),
+                          ),
+                          SizedBox(width: 12.w),
+                          Text(
+                            'Submit Payment',
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF111827),
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(20.r),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.w),
+                            child: Icon(Icons.close_rounded, color: kTextMuted, size: 22.sp),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 24.h),
 
-                  // Amount field (read-only or auto-populated)
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.numberWithOptions(
-                      decimal: true,
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: const Color(0xFF10B981), width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF10B981).withOpacity(0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    readOnly:
-                        true, // Make it read-only to prevent manual editing
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF111827),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
+                          child: Icon(Icons.attach_money_rounded, color: Colors.white, size: 28.sp),
+                        ),
+                        SizedBox(width: 16.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Payable Amount',
+                                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextMuted),
+                              ),
+                              SizedBox(height: 6.h),
+                              TextFormField(
+                                controller: _amountController,
+                                readOnly: true,
+                                style: TextStyle(
+                                  fontSize: 26.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF047857),
+                                  letterSpacing: -0.5,
+                                ),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) return 'Amount is required';
+                                  if (double.tryParse(value.trim()) == null) return 'Please enter a valid number';
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.all(8.w),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Icon(Icons.lock_rounded, size: 20.sp, color: const Color(0xFF047857)),
+                        ),
+                      ],
                     ),
-                    decoration: InputDecoration(
-                      labelText: 'Amount',
-                      hintText: 'Amount',
-                      prefixIcon: const Icon(Icons.attach_money),
-                      suffixIcon: Icon(
-                        Icons.lock_outline,
-                        size: 18,
-                        color: Colors.grey.shade400,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                        borderSide: BorderSide(color: Colors.grey.shade400),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Amount is required';
-                      }
-                      if (double.tryParse(value.trim()) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
                   ),
                   SizedBox(height: 8.h),
                   Text(
                     'Service price (auto-filled)',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
-                    ),
+                    style: TextStyle(fontSize: 11.sp, color: kTextMuted, fontStyle: FontStyle.italic),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 24.h),
 
-                  // Method dropdown
-                  DropdownButtonFormField<String>(
-                    value: _selectedMethod,
-                    decoration: InputDecoration(
-                      labelText: 'Payment Method',
-                      prefixIcon: const Icon(Icons.payment),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14.r),
+                  Text(
+                    'Payment Method',
+                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: const Color(0xFF111827)),
+                  ),
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _PaymentMethodChip(
+                          label: 'Cash',
+                          icon: Icons.payments_rounded,
+                          isSelected: _selectedMethod == 'CASH',
+                          onTap: () {
+                            setState(() {
+                              _selectedMethod = 'CASH';
+                              _proofImage = null;
+                            });
+                          },
+                        ),
                       ),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'CASH', child: Text('Cash')),
-                      DropdownMenuItem(
-                        value: 'MOBILE_MONEY',
-                        child: Text('Mobile Money (bKash/Nagad/Bank Transfer)'),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: _PaymentMethodChip(
+                          label: 'Mobile Money',
+                          icon: Icons.phone_android_rounded,
+                          isSelected: _selectedMethod == 'MOBILE_MONEY',
+                          onTap: () => setState(() => _selectedMethod = 'MOBILE_MONEY'),
+                        ),
                       ),
                     ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedMethod = value;
-                          // Clear proof image when switching to CASH
-                          if (value == 'CASH') {
-                            _proofImage = null;
-                          }
-                        });
-                      }
-                    },
                   ),
-                  SizedBox(height: 16.h),
+                  if (_selectedMethod == 'MOBILE_MONEY')
+                    Padding(
+                      padding: EdgeInsets.only(top: 6.h),
+                      child: Text(
+                        'bKash / Nagad / Bank Transfer',
+                        style: TextStyle(fontSize: 11.sp, color: kTextMuted, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  SizedBox(height: 18.h),
 
-                  // Transaction Ref field (required only for MOBILE_MONEY)
                   TextFormField(
                     controller: _transactionRefController,
                     decoration: InputDecoration(
@@ -2097,118 +2270,88 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                           ? 'Transaction Reference (Optional)'
                           : 'Transaction Reference',
                       hintText: _selectedMethod == 'CASH'
-                          ? 'Enter transaction reference (optional)'
+                          ? 'Enter reference (optional)'
                           : 'Enter transaction reference',
-                      prefixIcon: const Icon(Icons.receipt),
-                      border: OutlineInputBorder(
+                      prefixIcon: Icon(Icons.receipt_long_rounded, size: 20.sp, color: kTextMuted),
+                      filled: true,
+                      fillColor: const Color(0xFFF9FAFB),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14.r),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                        borderSide: BorderSide(color: kPrimaryRed, width: 1.5),
                       ),
                     ),
                     validator: (value) {
-                      // Transaction ref is required only for MOBILE_MONEY
-                      if (_selectedMethod != 'CASH' &&
-                          (value == null || value.trim().isEmpty)) {
+                      if (_selectedMethod != 'CASH' && (value == null || value.trim().isEmpty)) {
                         return 'Transaction reference is required for mobile payment';
                       }
                       return null;
                     },
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 18.h),
 
-                  // Proof image upload (only for MOBILE_MONEY)
-                  if (_selectedMethod != 'CASH') ...[
-                    Text(
-                      'Proof Image *',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF111827),
-                      ),
+                  Text(
+                    _selectedMethod != 'CASH' ? 'Proof Image *' : 'Proof Image',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _selectedMethod != 'CASH' ? const Color(0xFF374151) : kTextMuted,
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      'Required for mobile payments',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ] else ...[
-                    Text(
-                      'Proof Image',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      'Not required for cash payment',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey.shade500,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    _selectedMethod != 'CASH'
+                        ? 'Required for mobile payments'
+                        : 'Not required for cash payment',
+                    style: TextStyle(fontSize: 11.sp, color: kTextMuted, fontStyle: FontStyle.italic),
+                  ),
                   SizedBox(height: 8.h),
                   GestureDetector(
                     onTap: _selectedMethod != 'CASH' ? _pickProofImage : null,
                     child: Opacity(
-                      opacity: _selectedMethod == 'CASH' ? 0.5 : 1.0,
+                      opacity: _selectedMethod == 'CASH' ? 0.6 : 1.0,
                       child: Container(
                         height: 120.h,
                         decoration: BoxDecoration(
                           color: const Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(14.r),
+                          borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
-                            color: const Color(0xFFE5E7EB),
-                            width: 1,
+                            color: _selectedMethod != 'CASH'
+                                ? kPrimaryRed.withOpacity(0.3)
+                                : const Color(0xFFE5E7EB),
+                            width: 1.5,
                           ),
                         ),
                         child: _proofImage != null
                             ? Stack(
                                 children: [
                                   ClipRRect(
-                                    borderRadius: BorderRadius.circular(14.r),
+                                    borderRadius: BorderRadius.circular(16.r),
                                     child: Image.file(
                                       File(_proofImage!.path),
                                       fit: BoxFit.cover,
                                       width: double.infinity,
                                       height: double.infinity,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                            return const Center(
-                                              child: Icon(
-                                                Icons.image,
-                                                size: 48,
-                                              ),
-                                            );
-                                          },
+                                      errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.image, size: 48)),
                                     ),
                                   ),
                                   Positioned(
-                                    top: 4.h,
-                                    right: 4.w,
+                                    top: 8.h,
+                                    right: 8.w,
                                     child: GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _proofImage = null;
-                                        });
-                                      },
+                                      onTap: () => setState(() => _proofImage = null),
                                       child: Container(
-                                        padding: EdgeInsets.all(4.w),
-                                        decoration: const BoxDecoration(
+                                        padding: EdgeInsets.all(6.w),
+                                        decoration: BoxDecoration(
                                           color: Colors.black54,
                                           shape: BoxShape.circle,
+                                          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, offset: const Offset(0, 2))],
                                         ),
-                                        child: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
+                                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
                                       ),
                                     ),
                                   ),
@@ -2218,17 +2361,18 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    Icons.cloud_upload_outlined,
-                                    size: 40.sp,
-                                    color: const Color(0xFF9CA3AF),
+                                    _selectedMethod == 'CASH' ? Icons.cloud_off_rounded : Icons.add_photo_alternate_rounded,
+                                    size: 44.sp,
+                                    color: _selectedMethod != 'CASH' ? kPrimaryRed.withOpacity(0.6) : const Color(0xFF9CA3AF),
                                   ),
-                                  SizedBox(height: 8.h),
+                                  SizedBox(height: 10.h),
                                   Text(
                                     _selectedMethod == 'CASH'
                                         ? 'Not required for cash'
                                         : 'Tap to upload proof image',
                                     style: TextStyle(
                                       fontSize: 13.sp,
+                                      fontWeight: FontWeight.w500,
                                       color: const Color(0xFF6B7280),
                                     ),
                                   ),
@@ -2237,61 +2381,50 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 28.h),
 
-                  // Submit and Cancel buttons
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => Navigator.pop(context),
+                          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFFD1D5DB)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 14.h),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            foregroundColor: const Color(0xFF374151),
                           ),
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          child: Text('Cancel', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600)),
                         ),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: 14.w),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: _isSubmitting ? null : _submitPayment,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC20001),
+                            backgroundColor: kPrimaryRed,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 14.h),
+                            elevation: 2,
+                            shadowColor: kPrimaryRed.withOpacity(0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
                           ),
                           child: _isSubmitting
                               ? SizedBox(
-                                  height: 20.h,
-                                  width: 20.w,
+                                  height: 22.h,
+                                  width: 22.w,
                                   child: const CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                   ),
                                 )
-                              : Text(
-                                  'Submit',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, size: 20.sp, color: Colors.white),
+                                    SizedBox(width: 8.w),
+                                    Text('Submit', style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600)),
+                                  ],
                                 ),
                         ),
                       ),

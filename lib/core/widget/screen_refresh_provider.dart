@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Used to trigger refresh when navigating to screens in IndexedStack
 final screenRefreshTriggerProvider = StateProvider<int>((ref) => 0);
 
+/// Trigger for jobs list refresh (realtime: technician:jobs_updated).
+/// InternalJobs and InternalDashboardV2Screen listen and refetch jobs.
+final jobsRefreshTriggerProvider = StateProvider<int>((ref) => 0);
+
 /// Provider to track current visible screen index
 final currentVisibleScreenIndexProvider = StateProvider<int?>((ref) => null);
 

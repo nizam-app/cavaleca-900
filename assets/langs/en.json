@@ -220,6 +220,8 @@
   "work_photos": "Work Photos *",
   "tap_to_upload": "Tap to upload photos",
   "one_photo_required": "At least 1 photo required",
+  "photos_optional": "Photos optional",
+  "request_details": "Request details",
   "work_notes": "Work Notes (Optional)",
   "work_notes_optional": "Work Notes (Optional)",
   "add_notes": "Add any notes about the work completed",
