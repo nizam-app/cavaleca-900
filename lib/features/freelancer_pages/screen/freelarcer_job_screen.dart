@@ -1748,6 +1748,16 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                       ];
                     },
                     items: [
+                       DropdownMenuItem(
+                        value: 'CASH',
+                        child: Row(
+                          children: const [
+                            Icon(Icons.attach_money, color: kJobsSuccess),
+                            SizedBox(width: 8),
+                            Text('Cash'),
+                          ],
+                        ),
+                      ),
                       DropdownMenuItem(
                         value: 'MOBILE_MONEY',
                         child: Row(
@@ -1758,16 +1768,7 @@ class _PaymentSubmitBottomSheetState extends State<PaymentSubmitBottomSheet> {
                           ],
                         ),
                       ),
-                      DropdownMenuItem(
-                        value: 'CASH',
-                        child: Row(
-                          children: const [
-                            Icon(Icons.attach_money, color: kJobsSuccess),
-                            SizedBox(width: 8),
-                            Text('Cash'),
-                          ],
-                        ),
-                      ),
+                     
                       DropdownMenuItem(
                         value: 'BANK_TRANSFER',
                         child: Row(
