@@ -94,22 +94,68 @@ class _ComplitejobState extends State<Complitejob> {
 
   Future<bool> _requestStoragePermission() async {
     if (Platform.isAndroid) {
-      // For Android 13+ (API 33+), use READ_MEDIA_IMAGES
+      // Android 13+ (API 33+): READ_MEDIA_IMAGES (Permission.photos)
+      if (await Permission.photos.isGranted) {
+        return true;
+      }
+      PermissionStatus status = await Permission.photos.request();
+      if (status.isGranted) {
+        return true;
+      }
+      if (status.isPermanentlyDenied && mounted) {
+        _showStoragePermissionDeniedDialog();
+        return false;
+      }
+      // Android 12 and below: READ_EXTERNAL_STORAGE
+      if (await Permission.storage.isGranted) {
+        return true;
+      }
+      status = await Permission.storage.request();
+      if (status.isGranted) {
+        return true;
+      }
+      if (status.isPermanentlyDenied && mounted) {
+        _showStoragePermissionDeniedDialog();
+      }
+      return false;
+    }
+    // iOS: photos permission is requested by image_picker when needed
+    if (Platform.isIOS) {
       if (await Permission.photos.isGranted) {
         return true;
       }
       final status = await Permission.photos.request();
-      if (status.isGranted) {
-        return true;
+      if (status.isPermanentlyDenied && mounted) {
+        _showStoragePermissionDeniedDialog();
       }
-      // Fallback to storage permission for older Android versions
-      if (await Permission.storage.isGranted) {
-        return true;
-      }
-      final storageStatus = await Permission.storage.request();
-      return storageStatus.isGranted;
+      return status.isGranted;
     }
-    return true; // iOS handles permissions automatically
+    return true;
+  }
+
+  void _showStoragePermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('storage_permission_required'.tr()),
+        content: Text(
+          'Allow storage access in app settings to select images from gallery.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              openAppSettings();
+            },
+            child: Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool> _requestCameraPermission() async {
@@ -193,13 +239,6 @@ class _ComplitejobState extends State<Complitejob> {
   }
 
   Future<void> _submitCompletion() async {
-    if (_selectedImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('please_upload_at_least_one_photo'.tr())),
-      );
-      return;
-    }
-
     setState(() {
       _isSubmitting = true;
     });
@@ -268,6 +307,8 @@ class _ComplitejobState extends State<Complitejob> {
                 children: [
                   _buildHeader(context),
                   SizedBox(height: 18.h),
+                  _buildRequestDetailsCard(),
+                  SizedBox(height: 14.h),
                   _buildWorkPhotosCard(),
                   SizedBox(height: 14.h),
                   _buildNotesField(),
@@ -324,6 +365,69 @@ class _ComplitejobState extends State<Complitejob> {
           ),
         ),
       ],
+    );
+  }
+
+  /// -------------------  REQUEST DETAILS  ------------------
+  Widget _buildRequestDetailsCard() {
+    final job = widget.job;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: kCardBg,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: kBorderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 18.sp, color: kPrimaryGreen),
+              SizedBox(width: 6.w),
+              Text(
+                'request_details'.tr(),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: kTextMain,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          _detailRow(Icons.work_outline_rounded, job.title),
+          if (job.customer.isNotEmpty) _detailRow(Icons.person_outline_rounded, job.customer),
+          if (job.location.isNotEmpty) _detailRow(Icons.location_on_outlined, job.location),
+          if (job.date.isNotEmpty) _detailRow(Icons.calendar_today_rounded, job.time != null && job.time!.isNotEmpty ? '${job.date} • ${job.time}' : job.date),
+          if (job.description != null && job.description!.trim().isNotEmpty)
+            _detailRow(Icons.notes_rounded, job.description!),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 14.sp, color: kTextMuted),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: kTextMain,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -432,7 +536,7 @@ class _ComplitejobState extends State<Complitejob> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'one_photo_required'.tr(),
+                  'photos_optional'.tr(),
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w400,

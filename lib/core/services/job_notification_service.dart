@@ -75,6 +75,11 @@ class JobNotificationService {
     _stopPolling();
   }
 
+  /// Trigger an immediate check for new incoming jobs (e.g. from realtime socket).
+  Future<void> triggerCheckForNewJobs() async {
+    await _checkForNewJobs();
+  }
+
   void _stopPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = null;
@@ -350,21 +355,26 @@ class JobNotificationService {
     }
   }
 
+  /// Called after accept/reject so UI can refresh jobs list (e.g. set from nav bar with ref).
+  static void Function()? onJobsListChanged;
+
   /// Handle accept action
   Future<void> _handleAccept(InternalJob job) async {
     try {
       // Stop alarm sound immediately
       await _stopAlarmSound();
-      
+
       await TechnicianJobsApi.respondToWorkOrder(
         woId: job.id,
         action: 'ACCEPT',
       );
       _log.i('Job ${job.id} accepted');
-      
+
       // Remove from known jobs and closed jobs
       _knownJobIds.remove(job.id);
       _closedJobs.remove(job.id);
+
+      onJobsListChanged?.call();
     } catch (e) {
       _log.e('Error accepting job: $e');
       rethrow;
@@ -376,16 +386,18 @@ class JobNotificationService {
     try {
       // Stop alarm sound immediately
       await _stopAlarmSound();
-      
+
       await TechnicianJobsApi.respondToWorkOrder(
         woId: job.id,
         action: 'DECLINE',
       );
       _log.i('Job ${job.id} rejected');
-      
+
       // Remove from known jobs and closed jobs
       _knownJobIds.remove(job.id);
       _closedJobs.remove(job.id);
+
+      onJobsListChanged?.call();
     } catch (e) {
       _log.e('Error rejecting job: $e');
       rethrow;

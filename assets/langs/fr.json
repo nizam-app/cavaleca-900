@@ -219,6 +219,8 @@
   "work_photos": "Photos du travail *",
   "tap_to_upload": "Appuyez pour télécharger des photos",
   "one_photo_required": "Au moins une photo requise",
+  "photos_optional": "Photos optionnelles",
+  "request_details": "Détails de la demande",
   "work_notes": "Notes de travail (optionnel)",
   "work_notes_optional": "Notes de travail (Optionnel)",
   "add_notes": "Ajoutez des notes sur le travail effectué",

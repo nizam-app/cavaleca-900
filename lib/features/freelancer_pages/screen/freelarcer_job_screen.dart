@@ -290,6 +290,11 @@ class _FreelarcerJobScreenState extends ConsumerState<FreelarcerJobScreen> {
       }
     });
 
+    // Realtime: when technician:jobs_updated fires, refetch all jobs
+    ref.listen<int>(jobsRefreshTriggerProvider, (previous, next) {
+      if (mounted) _loadAllJobs();
+    });
+
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: kJobsBg,
